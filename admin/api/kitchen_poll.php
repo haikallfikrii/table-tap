@@ -1,7 +1,6 @@
 <?php
 /**
- * Kitchen/drinks polling — filter by kategori
- * GET ?kategori=makanan|minuman&since_id=N&lang=my|en
+ * Kitchen/drinks polling — shop-scoped, filter by kategori
  */
 
 declare(strict_types=1);
@@ -16,13 +15,12 @@ if ($kategori === 'makanan') {
     requireLoginApi(['minuman', 'owner']);
 }
 
+$shopId = requireShopIdApi();
 $sinceId = max(0, (int) ($_GET['since_id'] ?? 0));
 $lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
 
 $pdo = db();
 
-// Active unpaid/in-progress parent orders only; items not yet selesai
-// Show unfinished items even if already paid — dapur still needs to cook
 $stmt = $pdo->prepare(
     "SELECT oi.id, oi.order_id, oi.qty, oi.catatan, oi.status_item,
             oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
@@ -30,7 +28,8 @@ $stmt = $pdo->prepare(
      FROM order_items oi
      INNER JOIN orders o ON o.id = oi.order_id
      INNER JOIN tables t ON t.id = o.table_id
-     WHERE oi.kategori_saat_order = ?
+     WHERE o.shop_id = ?
+       AND oi.kategori_saat_order = ?
        AND oi.status_item IN ('menunggu', 'sedang_dimasak')
        AND o.status_order != 'dibatalkan'
      ORDER BY
@@ -38,7 +37,7 @@ $stmt = $pdo->prepare(
        o.waktu_order ASC,
        oi.id ASC"
 );
-$stmt->execute([$kategori]);
+$stmt->execute([$shopId, $kategori]);
 $items = $stmt->fetchAll();
 
 $maxId = $sinceId;
@@ -50,7 +49,6 @@ foreach ($items as $it) {
     if ($id > $maxId) {
         $maxId = $id;
     }
-    // New = newly appeared menunggu items since last poll
     if ($id > $sinceId && $it['status_item'] === 'menunggu') {
         $newIds[] = $id;
     }

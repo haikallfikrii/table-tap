@@ -3,3 +3,5 @@ assets/uploads/menu/*
 !assets/uploads/menu/.gitkeep
 .DS_Store
 *.log
+.env
+.env.*

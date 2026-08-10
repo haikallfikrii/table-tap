@@ -11,6 +11,7 @@ require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 requireLogin(['owner']);
 
 $user = currentUser();
+$shopId = requireShopId();
 $lang = currentLang();
 $config = getConfig();
 $pageTitle = t('manage_menu');
@@ -79,10 +80,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if ($action === 'create') {
                 $stmt = $pdo->prepare(
                     'INSERT INTO menu_items
-                     (nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, foto_url, status_stok, urutan)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                     (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, foto_url, status_stok, urutan)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
-                $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $fotoUrl, $stok, $urutan]);
+                $stmt->execute([$shopId, $namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $fotoUrl, $stok, $urutan]);
                 $flash = 'OK';
             } else {
                 if ($id <= 0) {
@@ -92,16 +93,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     $stmt = $pdo->prepare(
                         'UPDATE menu_items SET
                          nama_my=?, nama_en=?, deskripsi_my=?, deskripsi_en=?, harga=?, kategori=?, foto_url=?, status_stok=?, urutan=?
-                         WHERE id=?'
+                         WHERE id=? AND shop_id=?'
                     );
-                    $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $fotoUrl, $stok, $urutan, $id]);
+                    $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $fotoUrl, $stok, $urutan, $id, $shopId]);
                 } else {
                     $stmt = $pdo->prepare(
                         'UPDATE menu_items SET
                          nama_my=?, nama_en=?, deskripsi_my=?, deskripsi_en=?, harga=?, kategori=?, status_stok=?, urutan=?
-                         WHERE id=?'
+                         WHERE id=? AND shop_id=?'
                     );
-                    $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $stok, $urutan, $id]);
+                    $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $stok, $urutan, $id, $shopId]);
                 }
                 $flash = 'OK';
             }
@@ -113,14 +114,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $pdo->prepare(
                 "UPDATE menu_items
                  SET status_stok = IF(status_stok = 'tersedia', 'habis', 'tersedia')
-                 WHERE id = ?"
-            )->execute([$id]);
+                 WHERE id = ? AND shop_id = ?"
+            )->execute([$id, $shopId]);
             redirect(baseUrl('admin/owner/menu.php?ok=1'));
         }
 
         if ($action === 'delete') {
             $id = (int) ($_POST['id'] ?? 0);
-            $pdo->prepare('UPDATE menu_items SET is_active = 0 WHERE id = ?')->execute([$id]);
+            $pdo->prepare('UPDATE menu_items SET is_active = 0 WHERE id = ? AND shop_id = ?')->execute([$id, $shopId]);
             redirect(baseUrl('admin/owner/menu.php?ok=1'));
         }
     } catch (Throwable $e) {
@@ -131,14 +132,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 $editId = (int) ($_GET['edit'] ?? 0);
 $editItem = null;
 if ($editId > 0) {
-    $s = $pdo->prepare('SELECT * FROM menu_items WHERE id = ? AND is_active = 1 LIMIT 1');
-    $s->execute([$editId]);
+    $s = $pdo->prepare('SELECT * FROM menu_items WHERE id = ? AND shop_id = ? AND is_active = 1 LIMIT 1');
+    $s->execute([$editId, $shopId]);
     $editItem = $s->fetch() ?: null;
 }
 
-$items = $pdo->query(
-    'SELECT * FROM menu_items WHERE is_active = 1 ORDER BY kategori, urutan, id'
-)->fetchAll();
+$itemsStmt = $pdo->prepare(
+    'SELECT * FROM menu_items WHERE shop_id = ? AND is_active = 1 ORDER BY kategori, urutan, id'
+);
+$itemsStmt->execute([$shopId]);
+$items = $itemsStmt->fetchAll();
 
 if (isset($_GET['ok'])) {
     $flash = 'OK';

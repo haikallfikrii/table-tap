@@ -12,6 +12,7 @@ require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 requireLogin(['owner']);
 
 $user = currentUser();
+$shopId = requireShopId();
 $lang = currentLang();
 $config = getConfig();
 $pageTitle = t('manage_tables');
@@ -31,25 +32,25 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             }
             $token = generateToken(24);
             $stmt = $pdo->prepare(
-                'INSERT INTO tables (nomor_meja, token_akses, status) VALUES (?, ?, ?)'
+                'INSERT INTO tables (shop_id, nomor_meja, token_akses, status) VALUES (?, ?, ?, ?)'
             );
-            $stmt->execute([$nomor, $token, 'aktif']);
+            $stmt->execute([$shopId, $nomor, $token, 'aktif']);
             redirect(baseUrl('admin/owner/tables.php?ok=1'));
         }
         if ($action === 'regen') {
             $id = (int) ($_POST['id'] ?? 0);
             $token = generateToken(24);
-            $pdo->prepare('UPDATE tables SET token_akses = ? WHERE id = ?')->execute([$token, $id]);
+            $pdo->prepare('UPDATE tables SET token_akses = ? WHERE id = ? AND shop_id = ?')->execute([$token, $id, $shopId]);
             redirect(baseUrl('admin/owner/tables.php?ok=1'));
         }
         if ($action === 'deactivate') {
             $id = (int) ($_POST['id'] ?? 0);
-            $pdo->prepare("UPDATE tables SET status = 'tidak_aktif' WHERE id = ?")->execute([$id]);
+            $pdo->prepare("UPDATE tables SET status = 'tidak_aktif' WHERE id = ? AND shop_id = ?")->execute([$id, $shopId]);
             redirect(baseUrl('admin/owner/tables.php?ok=1'));
         }
         if ($action === 'activate') {
             $id = (int) ($_POST['id'] ?? 0);
-            $pdo->prepare("UPDATE tables SET status = 'aktif' WHERE id = ?")->execute([$id]);
+            $pdo->prepare("UPDATE tables SET status = 'aktif' WHERE id = ? AND shop_id = ?")->execute([$id, $shopId]);
             redirect(baseUrl('admin/owner/tables.php?ok=1'));
         }
     } catch (Throwable $e) {
@@ -57,7 +58,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     }
 }
 
-$tables = $pdo->query('SELECT * FROM tables ORDER BY CAST(nomor_meja AS UNSIGNED), nomor_meja')->fetchAll();
+$tablesStmt = $pdo->prepare(
+    'SELECT * FROM tables WHERE shop_id = ? ORDER BY CAST(nomor_meja AS UNSIGNED), nomor_meja'
+);
+$tablesStmt->execute([$shopId]);
+$tables = $tablesStmt->fetchAll();
 ?>
 <?php require dirname(__DIR__, 2) . '/includes/admin_header.php'; ?>
 <?php require __DIR__ . '/_nav.php'; ?>

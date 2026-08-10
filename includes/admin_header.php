@@ -25,7 +25,12 @@ $showSound = $showSound ?? false;
   <header class="admin-topbar">
     <div>
       <h1><?= e($pageTitle) ?></h1>
-      <div class="meta"><?= e($user['nama'] ?: $user['username']) ?> · <?= e($user['role']) ?></div>
+      <div class="meta">
+        <?php if (!empty($user['shop_name'])): ?>
+          <?= e($user['shop_name']) ?> ·
+        <?php endif; ?>
+        <?= e($user['nama'] ?: $user['username']) ?> · <?= e($user['role']) ?>
+      </div>
     </div>
     <div class="admin-actions">
       <?php if ($showSound): ?>

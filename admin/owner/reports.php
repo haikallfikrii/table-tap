@@ -11,6 +11,7 @@ require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 requireLogin(['owner']);
 
 $user = currentUser();
+$shopId = requireShopId();
 $lang = currentLang();
 $config = getConfig();
 $pageTitle = t('reports');
@@ -55,9 +56,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['action'] ?? '') ==
             throw new RuntimeException('Data pengeluaran tidak lengkap');
         }
         $stmt = $pdo->prepare(
-            'INSERT INTO expenses (kategori, jumlah, tanggal, catatan, created_by) VALUES (?, ?, ?, ?, ?)'
+            'INSERT INTO expenses (shop_id, kategori, jumlah, tanggal, catatan, created_by) VALUES (?, ?, ?, ?, ?, ?)'
         );
-        $stmt->execute([$kategori, $jumlah, $tanggal, $catatan ?: null, $user['id']]);
+        $stmt->execute([$shopId, $kategori, $jumlah, $tanggal, $catatan ?: null, $user['id']]);
         redirect(baseUrl('admin/owner/reports.php?filter=' . urlencode($filter) . '&from=' . urlencode($dateFrom) . '&to=' . urlencode($dateTo) . '&ok=1'));
     } catch (Throwable $e) {
         $error = $e->getMessage();
@@ -66,41 +67,41 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['action'] ?? '') ==
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['action'] ?? '') === 'delete_expense') {
     $id = (int) ($_POST['id'] ?? 0);
-    $pdo->prepare('DELETE FROM expenses WHERE id = ?')->execute([$id]);
+    $pdo->prepare('DELETE FROM expenses WHERE id = ? AND shop_id = ?')->execute([$id, $shopId]);
     redirect(baseUrl('admin/owner/reports.php?filter=' . urlencode($filter) . '&ok=1'));
 }
 
 $inc = $pdo->prepare(
     "SELECT COALESCE(SUM(total_harga), 0)
      FROM orders
-     WHERE status_bayar = 'lunas'
+     WHERE shop_id = ? AND status_bayar = 'lunas'
        AND DATE(waktu_lunas) BETWEEN ? AND ?"
 );
-$inc->execute([$dateFrom, $dateTo]);
+$inc->execute([$shopId, $dateFrom, $dateTo]);
 $income = (float) $inc->fetchColumn();
 
 $exp = $pdo->prepare(
-    'SELECT COALESCE(SUM(jumlah), 0) FROM expenses WHERE tanggal BETWEEN ? AND ?'
+    'SELECT COALESCE(SUM(jumlah), 0) FROM expenses WHERE shop_id = ? AND tanggal BETWEEN ? AND ?'
 );
-$exp->execute([$dateFrom, $dateTo]);
+$exp->execute([$shopId, $dateFrom, $dateTo]);
 $expenses = (float) $exp->fetchColumn();
 
 $ordersList = $pdo->prepare(
-    "SELECT o.id, o.total_harga, o.waktu_lunas, t.nomor_meja
+    "SELECT o.id, o.total_harga, o.subtotal, o.sst_jumlah, o.waktu_lunas, t.nomor_meja
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
-     WHERE o.status_bayar = 'lunas'
+     WHERE o.shop_id = ? AND o.status_bayar = 'lunas'
        AND DATE(o.waktu_lunas) BETWEEN ? AND ?
      ORDER BY o.waktu_lunas DESC
      LIMIT 100"
 );
-$ordersList->execute([$dateFrom, $dateTo]);
+$ordersList->execute([$shopId, $dateFrom, $dateTo]);
 $paidOrders = $ordersList->fetchAll();
 
 $expList = $pdo->prepare(
-    'SELECT * FROM expenses WHERE tanggal BETWEEN ? AND ? ORDER BY tanggal DESC, id DESC LIMIT 100'
+    'SELECT * FROM expenses WHERE shop_id = ? AND tanggal BETWEEN ? AND ? ORDER BY tanggal DESC, id DESC LIMIT 100'
 );
-$expList->execute([$dateFrom, $dateTo]);
+$expList->execute([$shopId, $dateFrom, $dateTo]);
 $expenseRows = $expList->fetchAll();
 ?>
 <?php require dirname(__DIR__, 2) . '/includes/admin_header.php'; ?>

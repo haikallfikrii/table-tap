@@ -28,6 +28,12 @@ if (!$table) {
     jsonError('Invalid table access', 403);
 }
 
+$shopId = (int) $table['shop_id'];
+$shop = findShopById($shopId);
+if (!$shop || $shop['status'] !== 'aktif') {
+    jsonError('Shop inactive', 403);
+}
+
 // Normalize & validate items
 $normalized = [];
 foreach ($items as $row) {
@@ -65,16 +71,16 @@ $ids = array_keys($normalized);
 $stmt = $pdo->prepare(
     "SELECT id, nama_my, nama_en, harga, kategori, status_stok, is_active
      FROM menu_items
-     WHERE id IN ($placeholders)"
+     WHERE shop_id = ? AND id IN ($placeholders)"
 );
-$stmt->execute($ids);
+$stmt->execute(array_merge([$shopId], $ids));
 $menuRows = $stmt->fetchAll();
 $menuById = [];
 foreach ($menuRows as $m) {
     $menuById[(int) $m['id']] = $m;
 }
 
-$total = 0.0;
+$subtotal = 0.0;
 $lines = [];
 foreach ($normalized as $menuId => $line) {
     if (!isset($menuById[$menuId])) {
@@ -86,7 +92,7 @@ foreach ($normalized as $menuId => $line) {
     }
     $harga = (float) $m['harga'];
     $qty = (int) $line['qty'];
-    $total += $harga * $qty;
+    $subtotal += $harga * $qty;
     $lines[] = [
         'menu_item_id' => $menuId,
         'qty' => $qty,
@@ -98,18 +104,25 @@ foreach ($normalized as $menuId => $line) {
     ];
 }
 
+$totals = calculateTotals($subtotal, $shop);
+
 try {
     $pdo->beginTransaction();
 
     $insOrder = $pdo->prepare(
-        'INSERT INTO orders (table_id, waktu_order, status_order, status_bayar, total_harga)
-         VALUES (?, NOW(), ?, ?, ?)'
+        'INSERT INTO orders
+         (shop_id, table_id, waktu_order, status_order, status_bayar, subtotal, sst_rate, sst_jumlah, total_harga)
+         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)'
     );
     $insOrder->execute([
+        $shopId,
         (int) $table['id'],
         'menunggu',
         'belum_bayar',
-        round($total, 2),
+        $totals['subtotal'],
+        $totals['sst_rate'],
+        $totals['sst_jumlah'],
+        $totals['total'],
     ]);
     $orderId = (int) $pdo->lastInsertId();
 
@@ -146,6 +159,8 @@ $redirect = baseUrl('public/confirmation.php?order=' . $orderId . '&meja=' . url
 jsonResponse([
     'ok' => true,
     'order_id' => $orderId,
-    'total' => round($total, 2),
+    'subtotal' => $totals['subtotal'],
+    'sst' => $totals['sst_jumlah'],
+    'total' => $totals['total'],
     'redirect' => $redirect,
 ]);

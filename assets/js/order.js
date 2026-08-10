@@ -35,8 +35,19 @@
     return cart.reduce((s, i) => s + i.qty, 0);
   }
 
-  function cartTotal() {
+  function cartSubtotal() {
     return cart.reduce((s, i) => s + i.harga * i.qty, 0);
+  }
+
+  function cartSst(subtotal) {
+    if (!i18n.sst_enabled) return 0;
+    const rate = Number(i18n.sst_rate) || 0;
+    return Math.round(subtotal * (rate / 100) * 100) / 100;
+  }
+
+  function cartTotal() {
+    const sub = cartSubtotal();
+    return sub + cartSst(sub);
   }
 
   function findLine(id) {
@@ -67,6 +78,8 @@
       body.innerHTML = '<div class="empty-cart">' + escapeHtml(i18n.cart_empty || 'Empty') + '</div>';
       if (totalEl) totalEl.textContent = money(0);
       if (submitBtn) submitBtn.disabled = true;
+      const sstRowsEmpty = document.getElementById('cart-sst-rows');
+      if (sstRowsEmpty) sstRowsEmpty.innerHTML = '';
       return;
     }
 
@@ -91,6 +104,23 @@
 
     if (totalEl) totalEl.textContent = money(cartTotal());
     if (submitBtn) submitBtn.disabled = false;
+
+    const sstRows = document.getElementById('cart-sst-rows');
+    if (sstRows) {
+      if (i18n.sst_enabled && cart.length > 0) {
+        const sub = cartSubtotal();
+        const sst = cartSst(sub);
+        sstRows.innerHTML =
+          '<div class="cart-total-row" style="font-size:0.95rem;font-weight:600;color:var(--ink-muted)">' +
+            '<span>' + escapeHtml(i18n.subtotal || 'Subtotal') + '</span><span>' + money(sub) + '</span>' +
+          '</div>' +
+          '<div class="cart-total-row" style="font-size:0.95rem;font-weight:600;color:var(--ink-muted)">' +
+            '<span>' + escapeHtml(i18n.sst || 'SST') + ' (' + (Number(i18n.sst_rate) || 0) + '%)</span><span>' + money(sst) + '</span>' +
+          '</div>';
+      } else {
+        sstRows.innerHTML = '';
+      }
+    }
   }
 
   function escapeHtml(str) {

@@ -9,6 +9,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 
 requireLoginApi(['kasir', 'owner']);
+$shopId = requireShopIdApi();
 requirePost();
 
 $body = readJsonBody();
@@ -19,9 +20,11 @@ if ($orderId <= 0) {
 
 $pdo = db();
 $stmt = $pdo->prepare(
-    "SELECT id, status_bayar FROM orders WHERE id = ? AND status_order != 'dibatalkan' LIMIT 1"
+    "SELECT id, status_bayar FROM orders
+     WHERE id = ? AND shop_id = ? AND status_order != 'dibatalkan'
+     LIMIT 1"
 );
-$stmt->execute([$orderId]);
+$stmt->execute([$orderId, $shopId]);
 $order = $stmt->fetch();
 
 if (!$order) {
@@ -37,8 +40,8 @@ $upd = $pdo->prepare(
      SET status_bayar = 'lunas',
          status_order = CASE WHEN status_order = 'menunggu' THEN 'diproses' ELSE status_order END,
          waktu_lunas = NOW()
-     WHERE id = ?"
+     WHERE id = ? AND shop_id = ?"
 );
-$upd->execute([$orderId]);
+$upd->execute([$orderId, $shopId]);
 
 jsonResponse(['ok' => true, 'order_id' => $orderId]);

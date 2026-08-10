@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/shop.php';
 
 function e(?string $value): string
 {
@@ -91,26 +92,32 @@ function uploadPath(string $filename = ''): string
 
 /**
  * Verify table access via nomor + token.
- * Returns table row or null.
+ * Returns table row + shop fields, or null.
  */
 function findTableByAccess(string $nomorMeja, string $token): ?array
 {
     $stmt = db()->prepare(
-        'SELECT * FROM tables WHERE nomor_meja = ? AND token_akses = ? AND status = ? LIMIT 1'
+        "SELECT t.*, s.nama_kedai, s.slug, s.status AS shop_status,
+                s.sst_enabled, s.sst_rate, s.package_id
+         FROM tables t
+         INNER JOIN shops s ON s.id = t.shop_id
+         WHERE t.nomor_meja = ? AND t.token_akses = ? AND t.status = 'aktif' AND s.status = 'aktif'
+         LIMIT 1"
     );
-    $stmt->execute([$nomorMeja, $token, 'aktif']);
+    $stmt->execute([$nomorMeja, $token]);
     $row = $stmt->fetch();
     return $row ?: null;
 }
 
-function getMenuGrouped(string $lang = 'my'): array
+function getMenuGrouped(int $shopId, string $lang = 'my'): array
 {
-    $stmt = db()->query(
+    $stmt = db()->prepare(
         "SELECT id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, foto_url, status_stok
          FROM menu_items
-         WHERE is_active = 1
+         WHERE shop_id = ? AND is_active = 1
          ORDER BY kategori ASC, urutan ASC, id ASC"
     );
+    $stmt->execute([$shopId]);
     $items = $stmt->fetchAll();
     $grouped = ['makanan' => [], 'minuman' => []];
 

@@ -31,15 +31,36 @@ function currentUser(): ?array
         'username' => (string) ($_SESSION['username'] ?? ''),
         'role'     => (string) ($_SESSION['role'] ?? ''),
         'nama'     => (string) ($_SESSION['nama_paparan'] ?? ''),
+        'shop_id'  => isset($_SESSION['shop_id']) && $_SESSION['shop_id'] !== null
+            ? (int) $_SESSION['shop_id']
+            : null,
+        'shop_name'=> (string) ($_SESSION['shop_name'] ?? ''),
     ];
+}
+
+function currentShopId(): ?int
+{
+    $user = currentUser();
+    return $user['shop_id'] ?? null;
+}
+
+function currentShop(): ?array
+{
+    $shopId = currentShopId();
+    if ($shopId === null) {
+        return null;
+    }
+    return findShopById($shopId);
 }
 
 function loginUser(string $username, string $password): bool
 {
     $stmt = db()->prepare(
-        'SELECT id, username, password_hash, role, nama_paparan
-         FROM users
-         WHERE username = ? AND is_active = 1
+        'SELECT u.id, u.username, u.password_hash, u.role, u.nama_paparan, u.shop_id,
+                s.nama_kedai, s.status AS shop_status
+         FROM users u
+         LEFT JOIN shops s ON s.id = u.shop_id
+         WHERE u.username = ? AND u.is_active = 1
          LIMIT 1'
     );
     $stmt->execute([$username]);
@@ -49,12 +70,30 @@ function loginUser(string $username, string $password): bool
         return false;
     }
 
+    // Block staff of inactive shops
+    if ($user['role'] !== 'master') {
+        if (empty($user['shop_id']) || ($user['shop_status'] ?? '') !== 'aktif') {
+            return false;
+        }
+    }
+
     startAppSession();
     session_regenerate_id(true);
     $_SESSION['user_id'] = (int) $user['id'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['role'] = $user['role'];
     $_SESSION['nama_paparan'] = $user['nama_paparan'] ?: $user['username'];
+    $_SESSION['shop_id'] = $user['shop_id'] !== null ? (int) $user['shop_id'] : null;
+    $_SESSION['shop_name'] = $user['nama_kedai'] ?? '';
+
+    // Opportunistic retention cleanup for this shop (lightweight)
+    if (!empty($user['shop_id'])) {
+        try {
+            purgeExpiredOrderHistory((int) $user['shop_id']);
+        } catch (Throwable $e) {
+            // ignore cleanup errors on login
+        }
+    }
 
     return true;
 }
@@ -72,13 +111,26 @@ function logoutUser(): void
 
 /**
  * Require login. Optionally restrict to one or more roles.
- * Owner can access all admin pages.
+ * - master: only pages that allow 'master' (or empty roles)
+ * - owner: can access all shop staff pages for their shop
  */
 function requireLogin(array $roles = []): void
 {
     $user = currentUser();
     if (!$user) {
         redirect(baseUrl('admin/login.php'));
+    }
+
+    if ($user['role'] === 'master') {
+        if ($roles !== [] && !in_array('master', $roles, true)) {
+            redirect(roleHome('master'));
+        }
+        return;
+    }
+
+    if (empty($user['shop_id'])) {
+        http_response_code(403);
+        exit('Akses ditolak / Access denied.');
     }
 
     if ($roles !== [] && $user['role'] !== 'owner' && !in_array($user['role'], $roles, true)) {
@@ -93,15 +145,48 @@ function requireLoginApi(array $roles = []): array
     if (!$user) {
         jsonError('Unauthorized', 401);
     }
+
+    if ($user['role'] === 'master') {
+        if ($roles !== [] && !in_array('master', $roles, true)) {
+            jsonError('Forbidden', 403);
+        }
+        return $user;
+    }
+
+    if (empty($user['shop_id'])) {
+        jsonError('Forbidden', 403);
+    }
+
     if ($roles !== [] && $user['role'] !== 'owner' && !in_array($user['role'], $roles, true)) {
         jsonError('Forbidden', 403);
     }
+
     return $user;
+}
+
+function requireShopId(): int
+{
+    $id = currentShopId();
+    if ($id === null) {
+        http_response_code(403);
+        exit('Shop context required.');
+    }
+    return $id;
+}
+
+function requireShopIdApi(): int
+{
+    $id = currentShopId();
+    if ($id === null) {
+        jsonError('Shop context required', 403);
+    }
+    return $id;
 }
 
 function roleHome(string $role): string
 {
     return match ($role) {
+        'master'  => baseUrl('admin/master/index.php'),
         'kasir'   => baseUrl('admin/kasir.php'),
         'dapur'   => baseUrl('admin/dapur.php'),
         'minuman' => baseUrl('admin/minuman.php'),

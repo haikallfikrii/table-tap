@@ -77,6 +77,10 @@
               esc(i18n.mark_paid || 'Mark paid') + '</button>'
           : '<span class="badge badge-lunas">' + esc(i18n.paid || 'Paid') + '</span>';
 
+        const sstLine = (o.sst_jumlah > 0)
+          ? '<div class="order-meta">SST: ' + money(o.sst_jumlah) + '</div>'
+          : '';
+
         return (
           '<article class="order-card' + (unpaid ? ' unpaid' : '') + (isNew ? ' new-flash' : '') + '" data-order-id="' + o.id + '">' +
             '<div class="order-card-header">' +
@@ -93,7 +97,7 @@
             '</div>' +
             '<ul class="order-items">' + itemsHtml + '</ul>' +
             '<div class="order-card-footer">' +
-              '<div class="order-total">' + money(o.total_harga) + '</div>' +
+              '<div><div class="order-total">' + money(o.total_harga) + '</div>' + sstLine + '</div>' +
               paidBtn +
             '</div>' +
           '</article>'

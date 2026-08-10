@@ -1,21 +1,21 @@
 <?php
 /**
  * TableTap — Configuration Example
- * Copy this file to config.php and fill in your credentials.
- * On Hostinger: use the MySQL details from hPanel → Databases.
+ * Copy to config.php and fill in Hostinger MySQL credentials.
+ * NEVER commit config.php (it is gitignored).
  */
 
 return [
-    // Database
+    // Database (Hostinger hPanel → Databases)
     'db_host' => 'localhost',
-    'db_name' => 'tabletap',
-    'db_user' => 'root',
-    'db_pass' => '',
+    'db_name' => 'YOUR_DB_NAME',
+    'db_user' => 'YOUR_DB_USER',
+    'db_pass' => 'YOUR_DB_PASSWORD',
     'db_charset' => 'utf8mb4',
 
     // App
     'app_name' => 'TableTap',
-    'app_url' => 'https://yourdomain.com', // no trailing slash
+    'app_url' => 'https://tabletap.jomsite.com', // no trailing slash
     'timezone' => 'Asia/Kuala_Lumpur',
     'currency' => 'RM',
     'currency_decimals' => 2,
@@ -26,6 +26,9 @@ return [
 
     // Polling interval for dashboards (milliseconds)
     'poll_interval_ms' => 3000,
+
+    // Cron secret for retention cleanup (Hostinger cron → hit cron/purge_history.php?key=...)
+    'cron_secret' => 'CHANGE_ME_TO_RANDOM_STRING',
 
     // Upload
     'upload_max_bytes' => 2 * 1024 * 1024, // 2MB
