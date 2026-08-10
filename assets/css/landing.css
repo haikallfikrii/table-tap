@@ -32,7 +32,7 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
-  overflow-x: hidden;
+  scroll-padding-top: 80px;
 }
 
 body.lp {
@@ -42,8 +42,9 @@ body.lp {
   color: var(--ink);
   background: var(--bg);
   line-height: 1.6;
-  overflow-x: hidden;
   overflow-wrap: break-word;
+  /* Offset for fixed navbar (position:sticky fails with overflow-x ancestors). */
+  padding-top: 68px;
 }
 
 img { max-width: 100%; display: block; }
@@ -59,18 +60,22 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
 
 /* ---------- Nav ---------- */
 .lp-nav {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
-  background: rgba(251, 248, 244, 0.72);
+  background: rgba(251, 248, 244, 0.86);
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid transparent;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
 .lp-nav.scrolled {
   border-bottom-color: var(--line);
   box-shadow: var(--shadow-sm);
+  background: rgba(251, 248, 244, 0.96);
 }
 
 .lp-nav-inner {

@@ -71,13 +71,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST' && ($_POST['action'] ?? '') ==
     redirect(baseUrl('admin/owner/reports.php?filter=' . urlencode($filter) . '&ok=1'));
 }
 
+[$rangeStart] = appDayBounds($dateFrom);
+[, $rangeEnd] = appDayBounds($dateTo);
+
 $inc = $pdo->prepare(
     "SELECT COALESCE(SUM(total_harga), 0)
      FROM orders
      WHERE shop_id = ? AND status_bayar = 'lunas'
-       AND DATE(waktu_lunas) BETWEEN ? AND ?"
+       AND waktu_lunas >= ? AND waktu_lunas < ?"
 );
-$inc->execute([$shopId, $dateFrom, $dateTo]);
+$inc->execute([$shopId, $rangeStart, $rangeEnd]);
 $income = (float) $inc->fetchColumn();
 
 $exp = $pdo->prepare(
@@ -91,11 +94,11 @@ $ordersList = $pdo->prepare(
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
      WHERE o.shop_id = ? AND o.status_bayar = 'lunas'
-       AND DATE(o.waktu_lunas) BETWEEN ? AND ?
+       AND o.waktu_lunas >= ? AND o.waktu_lunas < ?
      ORDER BY o.waktu_lunas DESC
      LIMIT 100"
 );
-$ordersList->execute([$shopId, $dateFrom, $dateTo]);
+$ordersList->execute([$shopId, $rangeStart, $rangeEnd]);
 $paidOrders = $ordersList->fetchAll();
 
 $expList = $pdo->prepare(

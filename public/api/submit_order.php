@@ -112,11 +112,12 @@ try {
     $insOrder = $pdo->prepare(
         'INSERT INTO orders
          (shop_id, table_id, waktu_order, status_order, status_bayar, subtotal, sst_rate, sst_jumlah, total_harga)
-         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?)'
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $insOrder->execute([
         $shopId,
         (int) $table['id'],
+        appNow(),
         'menunggu',
         'belum_bayar',
         $totals['subtotal'],

@@ -90,10 +90,10 @@
             '<div class="cart-line-name">' + escapeHtml(item.nama) + '</div>' +
             '<div class="cart-line-meta">' + money(item.harga) + '</div>' +
             '<div class="qty-control">' +
-              '<button type="button" data-action="dec" aria-label="-">−</button>' +
+              '<button type="button" class="qty-btn" data-action="dec" aria-label="-">−</button>' +
               '<span>' + item.qty + '</span>' +
-              '<button type="button" data-action="inc" aria-label="+">+</button>' +
-              '<button type="button" data-action="remove" class="btn btn-ghost btn-sm">' + escapeHtml(i18n.remove || 'Remove') + '</button>' +
+              '<button type="button" class="qty-btn" data-action="inc" aria-label="+">+</button>' +
+              '<button type="button" data-action="remove" class="cart-remove">' + escapeHtml(i18n.remove || 'Remove') + '</button>' +
             '</div>' +
             '<textarea class="cart-note" data-action="note" rows="1" placeholder="' + escapeHtml(i18n.item_note_ph || '') + '">' + escapeHtml(item.catatan || '') + '</textarea>' +
           '</div>' +

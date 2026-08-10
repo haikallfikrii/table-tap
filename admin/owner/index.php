@@ -24,14 +24,16 @@ if ($shop) {
     $pageTitle = shopBrand($shop);
 }
 
-// Today summary
+// Today summary (local MYT day bounds — avoids MySQL DATE() vs UTC mismatch)
 $today = date('Y-m-d');
+[$dayStart, $dayEnd] = appDayBounds($today);
 $incomeStmt = $pdo->prepare(
     "SELECT COALESCE(SUM(total_harga), 0) AS total
      FROM orders
-     WHERE shop_id = ? AND status_bayar = 'lunas' AND DATE(waktu_lunas) = ?"
+     WHERE shop_id = ? AND status_bayar = 'lunas'
+       AND waktu_lunas >= ? AND waktu_lunas < ?"
 );
-$incomeStmt->execute([$shopId, $today]);
+$incomeStmt->execute([$shopId, $dayStart, $dayEnd]);
 $incomeToday = (float) $incomeStmt->fetchColumn();
 
 $expStmt = $pdo->prepare(
