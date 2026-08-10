@@ -39,9 +39,9 @@ $upd = $pdo->prepare(
     "UPDATE orders
      SET status_bayar = 'lunas',
          status_order = CASE WHEN status_order = 'menunggu' THEN 'diproses' ELSE status_order END,
-         waktu_lunas = NOW()
+         waktu_lunas = ?
      WHERE id = ? AND shop_id = ?"
 );
-$upd->execute([$orderId, $shopId]);
+$upd->execute([appNow(), $orderId, $shopId]);
 
 jsonResponse(['ok' => true, 'order_id' => $orderId]);

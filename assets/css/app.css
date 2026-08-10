@@ -427,26 +427,45 @@ a {
 }
 
 .qty-control {
-  display: inline-flex;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-top: 8px;
 }
 
-.qty-control button {
+.qty-control .qty-btn {
   width: 36px;
   height: 36px;
+  flex: 0 0 36px;
   border-radius: 10px;
   background: var(--bg);
   border: 1px solid var(--border);
   font-weight: 700;
   font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .qty-control span {
   min-width: 24px;
   text-align: center;
   font-weight: 700;
+}
+
+.qty-control .cart-remove {
+  margin-left: auto;
+  width: auto;
+  min-height: 36px;
+  height: auto;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--danger, #c1121f);
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .cart-note {
