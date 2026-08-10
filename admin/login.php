@@ -29,6 +29,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $error = currentLang() === 'en'
                 ? 'Invalid username or password.'
                 : 'Nama pengguna atau kata laluan salah.';
+        } catch (PDOException $e) {
+            $error = currentLang() === 'en'
+                ? 'Cannot connect to database. On Hostinger set db_host to localhost in config/config.php.'
+                : 'Gagal sambung database. Di Hostinger, db_host dalam config/config.php biasanya mesti localhost.';
         } catch (Throwable $e) {
             $error = currentLang() === 'en'
                 ? 'Temporary system error. Please try again.'

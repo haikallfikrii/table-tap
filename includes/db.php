@@ -41,12 +41,8 @@ function db(): PDO
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
 
-    // Best-effort only — never break login/DB if the host rejects time_zone changes.
-    try {
-        $pdo->exec('SET time_zone = ' . $pdo->quote(mysqlTimezoneOffset($c['timezone'] ?? 'Asia/Kuala_Lumpur')));
-    } catch (Throwable $e) {
-        // Timestamps still come from appNow() in PHP (Asia/Kuala_Lumpur).
-    }
+    // Do not SET time_zone here — some shared hosts reject it and used to break login.
+    // All app timestamps use appNow() (PHP Asia/Kuala_Lumpur) instead.
 
     return $pdo;
 }

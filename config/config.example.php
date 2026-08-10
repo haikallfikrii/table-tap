@@ -7,6 +7,8 @@
 
 return [
     // Database (Hostinger hPanel → Databases)
+    // IMPORTANT: for PHP on the same Hostinger site, use "localhost"
+    // (NOT the remote host shown in phpMyAdmin / external MySQL URLs).
     'db_host' => 'localhost',
     'db_name' => 'u451240370_tabletap',
     'db_user' => 'YOUR_DB_USER',
