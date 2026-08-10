@@ -1,0 +1,226 @@
+/**
+ * TableTap — customer cart & order submit
+ */
+(function () {
+  const root = document.getElementById('order-app');
+  if (!root) return;
+
+  const meja = root.dataset.meja;
+  const token = root.dataset.token;
+  const submitUrl = root.dataset.submitUrl;
+  const i18n = JSON.parse(root.dataset.i18n || '{}');
+
+  const money = (n) => {
+    const v = Number(n) || 0;
+    return 'RM ' + v.toFixed(2);
+  };
+
+  /** @type {Array<{id:number,nama:string,harga:number,qty:number,catatan:string}>} */
+  let cart = [];
+
+  try {
+    const saved = sessionStorage.getItem('tt_cart_' + meja);
+    if (saved) cart = JSON.parse(saved) || [];
+  } catch (e) {
+    cart = [];
+  }
+
+  function persist() {
+    try {
+      sessionStorage.setItem('tt_cart_' + meja, JSON.stringify(cart));
+    } catch (e) { /* ignore */ }
+  }
+
+  function cartCount() {
+    return cart.reduce((s, i) => s + i.qty, 0);
+  }
+
+  function cartTotal() {
+    return cart.reduce((s, i) => s + i.harga * i.qty, 0);
+  }
+
+  function findLine(id) {
+    return cart.find((i) => i.id === id);
+  }
+
+  function renderBar() {
+    const bar = document.getElementById('cart-bar');
+    const countEl = document.getElementById('cart-bar-count');
+    const totalEl = document.getElementById('cart-bar-total');
+    if (!bar) return;
+    if (cart.length === 0) {
+      bar.classList.remove('visible');
+      return;
+    }
+    bar.classList.add('visible');
+    if (countEl) countEl.textContent = String(cartCount());
+    if (totalEl) totalEl.textContent = money(cartTotal());
+  }
+
+  function renderSheet() {
+    const body = document.getElementById('cart-sheet-body');
+    const totalEl = document.getElementById('cart-sheet-total');
+    const submitBtn = document.getElementById('btn-submit-order');
+    if (!body) return;
+
+    if (cart.length === 0) {
+      body.innerHTML = '<div class="empty-cart">' + escapeHtml(i18n.cart_empty || 'Empty') + '</div>';
+      if (totalEl) totalEl.textContent = money(0);
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
+    body.innerHTML = cart.map((item) => {
+      return (
+        '<div class="cart-line" data-id="' + item.id + '">' +
+          '<div>' +
+            '<div class="cart-line-name">' + escapeHtml(item.nama) + '</div>' +
+            '<div class="cart-line-meta">' + money(item.harga) + '</div>' +
+            '<div class="qty-control">' +
+              '<button type="button" data-action="dec" aria-label="-">−</button>' +
+              '<span>' + item.qty + '</span>' +
+              '<button type="button" data-action="inc" aria-label="+">+</button>' +
+              '<button type="button" data-action="remove" class="btn btn-ghost btn-sm">' + escapeHtml(i18n.remove || 'Remove') + '</button>' +
+            '</div>' +
+            '<textarea class="cart-note" data-action="note" rows="1" placeholder="' + escapeHtml(i18n.item_note_ph || '') + '">' + escapeHtml(item.catatan || '') + '</textarea>' +
+          '</div>' +
+          '<div style="font-weight:800">' + money(item.harga * item.qty) + '</div>' +
+        '</div>'
+      );
+    }).join('');
+
+    if (totalEl) totalEl.textContent = money(cartTotal());
+    if (submitBtn) submitBtn.disabled = false;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function refresh() {
+    persist();
+    renderBar();
+    renderSheet();
+  }
+
+  function openSheet() {
+    document.getElementById('sheet-overlay')?.classList.add('open');
+    document.getElementById('cart-sheet')?.classList.add('open');
+    renderSheet();
+  }
+
+  function closeSheet() {
+    document.getElementById('sheet-overlay')?.classList.remove('open');
+    document.getElementById('cart-sheet')?.classList.remove('open');
+  }
+
+  // Add buttons
+  document.querySelectorAll('[data-add-item]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.dataset.addItem);
+      const nama = btn.dataset.nama || '';
+      const harga = Number(btn.dataset.harga) || 0;
+      const existing = findLine(id);
+      if (existing) {
+        existing.qty += 1;
+      } else {
+        cart.push({ id, nama, harga, qty: 1, catatan: '' });
+      }
+      refresh();
+    });
+  });
+
+  document.getElementById('cart-bar-btn')?.addEventListener('click', openSheet);
+  document.getElementById('sheet-overlay')?.addEventListener('click', closeSheet);
+  document.getElementById('btn-close-cart')?.addEventListener('click', closeSheet);
+
+  document.getElementById('cart-sheet-body')?.addEventListener('click', (e) => {
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    const line = target.closest('.cart-line');
+    if (!line) return;
+    const id = Number(line.dataset.id);
+    const item = findLine(id);
+    if (!item) return;
+    const action = target.dataset.action;
+    if (action === 'inc') item.qty += 1;
+    else if (action === 'dec') {
+      item.qty -= 1;
+      if (item.qty <= 0) cart = cart.filter((i) => i.id !== id);
+    } else if (action === 'remove') {
+      cart = cart.filter((i) => i.id !== id);
+    } else {
+      return;
+    }
+    refresh();
+  });
+
+  document.getElementById('cart-sheet-body')?.addEventListener('input', (e) => {
+    const target = e.target;
+    if (!(target instanceof HTMLTextAreaElement)) return;
+    if (target.dataset.action !== 'note') return;
+    const line = target.closest('.cart-line');
+    if (!line) return;
+    const item = findLine(Number(line.dataset.id));
+    if (item) {
+      item.catatan = target.value.slice(0, 255);
+      persist();
+    }
+  });
+
+  document.getElementById('btn-submit-order')?.addEventListener('click', async () => {
+    if (cart.length === 0) {
+      alert(i18n.select_items || 'Select items');
+      return;
+    }
+    const btn = document.getElementById('btn-submit-order');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = i18n.submitting || 'Submitting...';
+    }
+
+    try {
+      const res = await fetch(submitUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          meja: meja,
+          token: token,
+          items: cart.map((i) => ({
+            menu_item_id: i.id,
+            qty: i.qty,
+            catatan: i.catatan || '',
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || i18n.order_failed);
+      }
+      try {
+        sessionStorage.removeItem('tt_cart_' + meja);
+      } catch (e) { /* ignore */ }
+      window.location.href = data.redirect;
+    } catch (err) {
+      alert(err.message || i18n.order_failed);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = i18n.submit_order || 'Submit';
+      }
+    }
+  });
+
+  // Category tab highlight on scroll / click
+  document.querySelectorAll('.category-tabs a').forEach((a) => {
+    a.addEventListener('click', () => {
+      document.querySelectorAll('.category-tabs a').forEach((x) => x.classList.remove('active'));
+      a.classList.add('active');
+    });
+  });
+
+  refresh();
+})();

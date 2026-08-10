@@ -1,0 +1,118 @@
+<?php
+/**
+ * Polling endpoint for kasir dashboard.
+ * GET ?since_id=N  — returns orders with id > since_id as "new",
+ * plus full snapshot of unpaid/active orders for UI refresh.
+ */
+
+declare(strict_types=1);
+
+require_once dirname(__DIR__, 2) . '/includes/auth.php';
+
+$user = requireLoginApi(['kasir', 'owner']);
+$sinceId = max(0, (int) ($_GET['since_id'] ?? 0));
+$lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
+
+$pdo = db();
+
+// Active = not cancelled AND (unpaid OR still in progress)
+$stmt = $pdo->query(
+    "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar, o.total_harga,
+            t.nomor_meja
+     FROM orders o
+     INNER JOIN tables t ON t.id = o.table_id
+     WHERE o.status_order != 'dibatalkan'
+       AND (o.status_bayar = 'belum_bayar' OR o.status_order IN ('menunggu', 'diproses'))
+     ORDER BY o.waktu_order ASC, o.id ASC"
+);
+$orders = $stmt->fetchAll();
+
+$orderIds = array_map(static fn($o) => (int) $o['id'], $orders);
+$itemsByOrder = [];
+
+if ($orderIds !== []) {
+    $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
+    $itemStmt = $pdo->prepare(
+        "SELECT id, order_id, qty, catatan, status_item,
+                harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order
+         FROM order_items
+         WHERE order_id IN ($placeholders)
+         ORDER BY id ASC"
+    );
+    $itemStmt->execute($orderIds);
+    foreach ($itemStmt->fetchAll() as $item) {
+        $oid = (int) $item['order_id'];
+        $item['nama'] = $lang === 'en' ? $item['nama_saat_order_en'] : $item['nama_saat_order_my'];
+        $itemsByOrder[$oid][] = $item;
+    }
+}
+
+$maxId = $sinceId;
+$newIds = [];
+$resultOrders = [];
+
+foreach ($orders as $o) {
+    $id = (int) $o['id'];
+    if ($id > $maxId) {
+        $maxId = $id;
+    }
+    if ($id > $sinceId) {
+        $newIds[] = $id;
+    }
+    $resultOrders[] = [
+        'id' => $id,
+        'table_id' => (int) $o['table_id'],
+        'nomor_meja' => $o['nomor_meja'],
+        'waktu_order' => $o['waktu_order'],
+        'status_order' => $o['status_order'],
+        'status_bayar' => $o['status_bayar'],
+        'total_harga' => (float) $o['total_harga'],
+        'items' => $itemsByOrder[$id] ?? [],
+    ];
+}
+
+// Group by table for convenience
+$byTable = [];
+foreach ($resultOrders as $o) {
+    $key = $o['nomor_meja'];
+    if (!isset($byTable[$key])) {
+        $byTable[$key] = [
+            'nomor_meja' => $key,
+            'orders' => [],
+            'table_total' => 0.0,
+            'has_unpaid' => false,
+        ];
+    }
+    $byTable[$key]['orders'][] = $o;
+    if ($o['status_bayar'] === 'belum_bayar') {
+        $byTable[$key]['table_total'] += $o['total_harga'];
+        $byTable[$key]['has_unpaid'] = true;
+    }
+}
+
+// Natural sort table numbers
+uksort($byTable, static function ($a, $b) {
+    return strnatcasecmp((string) $a, (string) $b);
+});
+
+$grandTotal = 0.0;
+$unpaidCount = 0;
+foreach ($resultOrders as $o) {
+    if ($o['status_bayar'] === 'belum_bayar') {
+        $grandTotal += $o['total_harga'];
+        $unpaidCount++;
+    }
+}
+
+jsonResponse([
+    'ok' => true,
+    'server_time' => date('c'),
+    'max_id' => $maxId,
+    'new_order_ids' => $newIds,
+    'stats' => [
+        'active_orders' => count($resultOrders),
+        'unpaid_orders' => $unpaidCount,
+        'grand_total' => round($grandTotal, 2),
+    ],
+    'tables' => array_values($byTable),
+]);
