@@ -20,13 +20,20 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $password = (string) ($_POST['password'] ?? '');
     if ($username === '' || $password === '') {
         $error = t('error_generic');
-    } elseif (loginUser($username, $password)) {
-        $u = currentUser();
-        redirect(roleHome($u['role']));
     } else {
-        $error = currentLang() === 'en'
-            ? 'Invalid username or password.'
-            : 'Nama pengguna atau kata laluan salah.';
+        try {
+            if (loginUser($username, $password)) {
+                $u = currentUser();
+                redirect(roleHome($u['role']));
+            }
+            $error = currentLang() === 'en'
+                ? 'Invalid username or password.'
+                : 'Nama pengguna atau kata laluan salah.';
+        } catch (Throwable $e) {
+            $error = currentLang() === 'en'
+                ? 'Temporary system error. Please try again.'
+                : 'Ralat sistem sementara. Sila cuba lagi.';
+        }
     }
 }
 
