@@ -109,6 +109,15 @@
       document.querySelectorAll('.demo-pane').forEach(function (pane) {
         pane.classList.toggle('on', pane.id === target);
       });
+
+      // Keep the chosen tab visible inside the horizontal scroller on phones.
+      if (tab.scrollIntoView) {
+        tab.scrollIntoView({
+          behavior: reduceMotion ? 'auto' : 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+      }
     });
   });
 

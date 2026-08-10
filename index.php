@@ -156,6 +156,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       <a href="<?= e($href) ?>"><?= e($label) ?></a>
     <?php endforeach; ?>
     <a href="<?= e($loginUrl) ?>"><?= e(t('lp_login')) ?></a>
+    <a class="lp-mobile-cta" href="#pricing"><?= e(t('lp_cta_start')) ?></a>
   </nav>
 </header>
 

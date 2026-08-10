@@ -32,15 +32,18 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
 }
 
 body.lp {
   margin: 0;
+  max-width: 100%;
   font-family: var(--font);
   color: var(--ink);
   background: var(--bg);
   line-height: 1.6;
   overflow-x: hidden;
+  overflow-wrap: break-word;
 }
 
 img { max-width: 100%; display: block; }
@@ -215,6 +218,20 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
 
 .lp-mobile-menu a:hover { background: var(--brand-soft); }
 
+.lp-mobile-menu .lp-mobile-cta {
+  margin-top: 8px;
+  justify-content: center;
+  background: var(--brand);
+  color: #fff;
+  border-radius: 999px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+}
+
+.lp-mobile-menu .lp-mobile-cta:hover { background: var(--brand-dark); }
+
 /* ---------- Sections ---------- */
 section { position: relative; }
 
@@ -296,23 +313,14 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   margin: 20px 0 18px;
 }
 
+/* Highlight is painted as a background so it survives line wrapping
+   on narrow phones instead of forcing the heading to overflow. */
 .hero h1 em {
   font-style: normal;
-  position: relative;
   color: var(--brand);
-  white-space: nowrap;
-}
-
-.hero h1 em::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 4px;
-  height: 10px;
-  background: rgba(232, 93, 4, 0.16);
-  border-radius: 6px;
-  z-index: -1;
+  background-image: linear-gradient(transparent 64%, rgba(232, 93, 4, 0.18) 64%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .hero-sub {
@@ -454,8 +462,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   font-size: 0.9rem;
 }
 
-.ps-name { font-size: 0.82rem; font-weight: 700; line-height: 1.2; }
-.ps-price { font-size: 0.74rem; color: var(--ink-soft); font-weight: 600; }
+.ps-item > span:not([class]) { min-width: 0; }
+.ps-name { display: block; font-size: 0.82rem; font-weight: 700; line-height: 1.2; }
+.ps-price { display: block; font-size: 0.74rem; color: var(--ink-soft); font-weight: 600; white-space: nowrap; }
 .ps-add { width: 30px; height: 30px; border-radius: 9px; background: var(--brand-soft); color: var(--brand); font-weight: 800; display: grid; place-items: center; }
 
 .ps-cart {
@@ -658,6 +667,7 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   box-shadow: var(--shadow);
 }
 
+/* Tabs scroll sideways on phones rather than stacking into a tall column. */
 .demo-tabs {
   display: flex;
   gap: 6px;
@@ -665,16 +675,31 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   padding: 6px;
   border-radius: 999px;
   margin-bottom: 18px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
 }
 
+.demo-tabs::-webkit-scrollbar { display: none; }
+
 .demo-tab {
-  flex: 1 1 120px;
+  flex: 0 0 auto;
   min-height: 42px;
+  padding: 0 20px;
   border-radius: 999px;
   font-weight: 700;
   font-size: 0.92rem;
   color: var(--ink-soft);
+  white-space: nowrap;
+  scroll-snap-align: center;
+}
+
+@media (min-width: 721px) {
+  .demo-tabs { overflow-x: visible; }
+  .demo-tab { flex: 1 1 auto; }
 }
 
 .demo-tab.on { background: var(--ink); color: #fff; }
@@ -719,6 +744,7 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 .o-lines { list-style: none; margin: 0 0 12px; padding: 0; }
 .o-lines li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed var(--line); font-size: 0.9rem; }
 .o-lines li:last-child { border-bottom: none; }
+.o-lines li > span:last-child { flex: 0 0 auto; white-space: nowrap; }
 .o-lines .q { font-weight: 900; color: var(--brand); }
 .o-note { display: block; font-size: 0.76rem; color: var(--ink-soft); font-style: italic; }
 .o-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding-top: 10px; }
@@ -941,8 +967,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 @media (max-width: 980px) {
   .hero-grid { grid-template-columns: 1fr; }
   .phone-stage { order: -1; }
-  .chip-1 { left: 2%; }
-  .chip-2 { right: 2%; }
+  .chip-1 { top: 6%; left: 0; }
+  .chip-2 { bottom: 14%; right: 0; }
   .bento { grid-template-columns: repeat(2, 1fr); }
   .steps { grid-template-columns: repeat(2, 1fr); }
   .plans { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
@@ -950,17 +976,31 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .foot-grid { grid-template-columns: 1fr 1fr; }
 }
 
-@media (max-width: 720px) {
+/* Collapse the inline links early: the full link row plus both buttons
+   stops fitting well before the tablet breakpoint. */
+@media (max-width: 900px) {
   .lp-links { display: none; }
   .lp-burger { display: flex; }
   .lp-nav-actions .btn-outline { display: none; }
   .stats { grid-template-columns: repeat(2, 1fr); }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 560px) {
   .bento { grid-template-columns: 1fr; }
   .steps { grid-template-columns: 1fr; }
   .hero-cta .btn { width: 100%; }
+  .foot-grid { grid-template-columns: 1fr; }
+  .wrap { padding: 0 16px; }
+  .demo-shell { padding: 14px; }
+  /* No room beside the phone at this size — the chips only collide with it. */
+  .chip { display: none; }
+}
+
+/* Very narrow phones: keep the header on a single row. */
+@media (max-width: 480px) {
+  .lp-nav-actions .btn-primary { display: none; }
+  .lp-logo { font-size: 1.05rem; }
+  .lp-logo img { width: 30px; height: 30px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
