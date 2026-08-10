@@ -1,8 +1,6 @@
 <?php
 /**
- * Polling endpoint for kasir dashboard.
- * GET ?since_id=N  — returns orders with id > since_id as "new",
- * plus full snapshot of unpaid/active orders for UI refresh.
+ * Polling endpoint for kasir dashboard (shop-scoped).
  */
 
 declare(strict_types=1);
@@ -10,21 +8,24 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 
 $user = requireLoginApi(['kasir', 'owner']);
+$shopId = requireShopIdApi();
 $sinceId = max(0, (int) ($_GET['since_id'] ?? 0));
 $lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
 
 $pdo = db();
 
-// Active = not cancelled AND (unpaid OR still in progress)
-$stmt = $pdo->query(
-    "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar, o.total_harga,
+$stmt = $pdo->prepare(
+    "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar,
+            o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga,
             t.nomor_meja
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
-     WHERE o.status_order != 'dibatalkan'
+     WHERE o.shop_id = ?
+       AND o.status_order != 'dibatalkan'
        AND (o.status_bayar = 'belum_bayar' OR o.status_order IN ('menunggu', 'diproses'))
      ORDER BY o.waktu_order ASC, o.id ASC"
 );
+$stmt->execute([$shopId]);
 $orders = $stmt->fetchAll();
 
 $orderIds = array_map(static fn($o) => (int) $o['id'], $orders);
@@ -66,12 +67,14 @@ foreach ($orders as $o) {
         'waktu_order' => $o['waktu_order'],
         'status_order' => $o['status_order'],
         'status_bayar' => $o['status_bayar'],
+        'subtotal' => (float) $o['subtotal'],
+        'sst_rate' => (float) $o['sst_rate'],
+        'sst_jumlah' => (float) $o['sst_jumlah'],
         'total_harga' => (float) $o['total_harga'],
         'items' => $itemsByOrder[$id] ?? [],
     ];
 }
 
-// Group by table for convenience
 $byTable = [];
 foreach ($resultOrders as $o) {
     $key = $o['nomor_meja'];
@@ -90,7 +93,6 @@ foreach ($resultOrders as $o) {
     }
 }
 
-// Natural sort table numbers
 uksort($byTable, static function ($a, $b) {
     return strnatcasecmp((string) $a, (string) $b);
 });

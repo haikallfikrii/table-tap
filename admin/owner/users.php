@@ -11,6 +11,7 @@ require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 requireLogin(['owner']);
 
 $user = currentUser();
+$shopId = requireShopId();
 $lang = currentLang();
 $config = getConfig();
 $pageTitle = t('manage_users');
@@ -35,9 +36,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             }
             $hash = password_hash($password, PASSWORD_DEFAULT);
             $stmt = $pdo->prepare(
-                'INSERT INTO users (username, password_hash, role, nama_paparan) VALUES (?, ?, ?, ?)'
+                'INSERT INTO users (shop_id, username, password_hash, role, nama_paparan) VALUES (?, ?, ?, ?, ?)'
             );
-            $stmt->execute([$username, $hash, $role, $nama ?: null]);
+            $stmt->execute([$shopId, $username, $hash, $role, $nama ?: null]);
             redirect(baseUrl('admin/owner/users.php?ok=1'));
         }
         if ($action === 'toggle') {
@@ -45,7 +46,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if ($id === (int) $user['id']) {
                 throw new RuntimeException('Tidak boleh nyahaktif akaun sendiri');
             }
-            $pdo->prepare('UPDATE users SET is_active = IF(is_active=1,0,1) WHERE id = ?')->execute([$id]);
+            $pdo->prepare(
+                'UPDATE users SET is_active = IF(is_active=1,0,1) WHERE id = ? AND shop_id = ?'
+            )->execute([$id, $shopId]);
             redirect(baseUrl('admin/owner/users.php?ok=1'));
         }
         if ($action === 'reset_password') {
@@ -55,7 +58,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 throw new RuntimeException('Password min 6 aksara');
             }
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $pdo->prepare('UPDATE users SET password_hash = ? WHERE id = ?')->execute([$hash, $id]);
+            $pdo->prepare(
+                'UPDATE users SET password_hash = ? WHERE id = ? AND shop_id = ?'
+            )->execute([$hash, $id, $shopId]);
             redirect(baseUrl('admin/owner/users.php?ok=1'));
         }
     } catch (Throwable $e) {
@@ -63,7 +68,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     }
 }
 
-$users = $pdo->query('SELECT id, username, role, nama_paparan, is_active, created_at FROM users ORDER BY role, username')->fetchAll();
+$usersStmt = $pdo->prepare(
+    'SELECT id, username, role, nama_paparan, is_active, created_at
+     FROM users WHERE shop_id = ? ORDER BY role, username'
+);
+$usersStmt->execute([$shopId]);
+$users = $usersStmt->fetchAll();
 ?>
 <?php require dirname(__DIR__, 2) . '/includes/admin_header.php'; ?>
 <?php require __DIR__ . '/_nav.php'; ?>

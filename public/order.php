@@ -19,7 +19,10 @@ if ($nomorMeja !== '' && $token !== '') {
     $table = findTableByAccess($nomorMeja, $token);
 }
 
-$menu = $table ? getMenuGrouped($lang) : [];
+$brand = $table ? shopBrand($table) : ($config['app_name'] ?? 'TableTap');
+$menu = $table ? getMenuGrouped((int) $table['shop_id'], $lang) : [];
+$sstEnabled = $table && (int) ($table['sst_enabled'] ?? 0) === 1;
+$sstRate = $table ? (float) ($table['sst_rate'] ?? 0) : 0;
 
 $i18nJs = [
     'cart_empty'    => t('cart_empty'),
@@ -29,6 +32,10 @@ $i18nJs = [
     'submitting'    => t('submitting'),
     'order_failed'  => t('order_failed'),
     'select_items'  => t('select_items'),
+    'sst_enabled'   => $sstEnabled,
+    'sst_rate'      => $sstRate,
+    'subtotal'      => t('subtotal'),
+    'sst'           => t('sst'),
 ];
 ?>
 <!DOCTYPE html>
@@ -37,7 +44,7 @@ $i18nJs = [
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#e85d04">
-  <title><?= e($config['app_name']) ?> — <?= e(t('table')) ?> <?= e($nomorMeja) ?></title>
+  <title><?= e($brand) ?> — <?= e(t('table')) ?> <?= e($nomorMeja) ?></title>
   <link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
 </head>
 <body>
@@ -65,7 +72,7 @@ $i18nJs = [
 >
   <header class="customer-header">
     <div class="brand">
-      <span class="brand-name"><?= e($config['app_name']) ?></span>
+      <span class="brand-name"><?= e($brand) ?></span>
       <span class="brand-table"><?= e(t('table')) ?> <?= e($table['nomor_meja']) ?></span>
     </div>
     <div class="lang-toggle">
@@ -141,6 +148,7 @@ $i18nJs = [
   </div>
   <div class="cart-sheet-body" id="cart-sheet-body"></div>
   <div class="cart-sheet-footer">
+    <div id="cart-sst-rows"></div>
     <div class="cart-total-row">
       <span><?= e(t('total')) ?></span>
       <span id="cart-sheet-total">RM 0.00</span>

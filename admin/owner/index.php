@@ -11,6 +11,7 @@ require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 requireLogin(['owner']);
 
 $user = currentUser();
+$shopId = requireShopId();
 $lang = currentLang();
 $config = getConfig();
 $pageTitle = t('owner_title');
@@ -18,25 +19,34 @@ $showSound = false;
 $adminScripts = [];
 
 $pdo = db();
+$shop = findShopById($shopId);
+if ($shop) {
+    $pageTitle = shopBrand($shop);
+}
 
 // Today summary
 $today = date('Y-m-d');
 $incomeStmt = $pdo->prepare(
     "SELECT COALESCE(SUM(total_harga), 0) AS total
      FROM orders
-     WHERE status_bayar = 'lunas' AND DATE(waktu_lunas) = ?"
+     WHERE shop_id = ? AND status_bayar = 'lunas' AND DATE(waktu_lunas) = ?"
 );
-$incomeStmt->execute([$today]);
+$incomeStmt->execute([$shopId, $today]);
 $incomeToday = (float) $incomeStmt->fetchColumn();
 
 $expStmt = $pdo->prepare(
-    "SELECT COALESCE(SUM(jumlah), 0) AS total FROM expenses WHERE tanggal = ?"
+    "SELECT COALESCE(SUM(jumlah), 0) AS total FROM expenses WHERE shop_id = ? AND tanggal = ?"
 );
-$expStmt->execute([$today]);
+$expStmt->execute([$shopId, $today]);
 $expenseToday = (float) $expStmt->fetchColumn();
 
-$menuCount = (int) $pdo->query('SELECT COUNT(*) FROM menu_items WHERE is_active = 1')->fetchColumn();
-$tableCount = (int) $pdo->query("SELECT COUNT(*) FROM tables WHERE status = 'aktif'")->fetchColumn();
+$menuCountStmt = $pdo->prepare('SELECT COUNT(*) FROM menu_items WHERE shop_id = ? AND is_active = 1');
+$menuCountStmt->execute([$shopId]);
+$menuCount = (int) $menuCountStmt->fetchColumn();
+
+$tableCountStmt = $pdo->prepare("SELECT COUNT(*) FROM tables WHERE shop_id = ? AND status = 'aktif'");
+$tableCountStmt->execute([$shopId]);
+$tableCount = (int) $tableCountStmt->fetchColumn();
 
 $nav = 'home';
 ?>

@@ -21,7 +21,7 @@ if ($itemId <= 0 || !in_array($status, $allowed, true)) {
 
 $pdo = db();
 $stmt = $pdo->prepare(
-    "SELECT oi.id, oi.kategori_saat_order, oi.order_id
+    "SELECT oi.id, oi.kategori_saat_order, oi.order_id, o.shop_id
      FROM order_items oi
      INNER JOIN orders o ON o.id = oi.order_id
      WHERE oi.id = ? AND o.status_order != 'dibatalkan'
@@ -39,6 +39,11 @@ if ($kat === 'makanan') {
     requireLoginApi(['dapur', 'owner']);
 } else {
     requireLoginApi(['minuman', 'owner']);
+}
+
+$shopId = requireShopIdApi();
+if ((int) $item['shop_id'] !== $shopId) {
+    jsonError('Forbidden', 403);
 }
 
 $upd = $pdo->prepare('UPDATE order_items SET status_item = ? WHERE id = ?');
