@@ -62,24 +62,27 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
   padding: 0 20px;
 }
 
-/* ---------- Nav ---------- */
+/* ---------- Nav (glassmorphism) ---------- */
 .lp-nav {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(251, 248, 244, 0.86);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid transparent;
+  background: rgba(251, 248, 244, 0.48);
+  backdrop-filter: saturate(1.6) blur(18px);
+  -webkit-backdrop-filter: saturate(1.6) blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
   transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
 }
 
 .lp-nav.scrolled {
-  border-bottom-color: var(--line);
-  box-shadow: var(--shadow-sm);
-  background: rgba(251, 248, 244, 0.96);
+  background: rgba(251, 248, 244, 0.72);
+  border-bottom-color: rgba(232, 225, 214, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 8px 24px -18px rgba(23, 21, 15, 0.28);
 }
 
 .lp-nav-inner {
@@ -218,8 +221,10 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
   flex-direction: column;
   gap: 4px;
   padding: 8px 20px 20px;
-  border-bottom: 1px solid var(--line);
-  background: var(--bg);
+  border-bottom: 1px solid rgba(232, 225, 214, 0.65);
+  background: rgba(251, 248, 244, 0.55);
+  backdrop-filter: saturate(1.6) blur(18px);
+  -webkit-backdrop-filter: saturate(1.6) blur(18px);
 }
 
 .lp-mobile-menu.open { display: flex; }
@@ -287,7 +292,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 .hero {
   position: relative;
   padding: clamp(48px, 7vw, 92px) 0 clamp(56px, 8vw, 104px);
-  overflow: hidden;
+  /* Keep Y visible so floating chips aren't clipped; X is clipped by html/body. */
+  overflow: visible;
 }
 
 .blob {
@@ -392,7 +398,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   place-items: center;
   width: 100%;
   max-width: 100%;
-  overflow: hidden;
+  /* Visible so "Pesanan baru" / "Selesai" chips can float beside the phone. */
+  overflow: visible;
+  padding: 12px 72px;
   perspective: 1200px;
 }
 
@@ -405,6 +413,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   box-shadow: var(--shadow-lg);
   transform: rotateY(-9deg) rotateX(3deg);
   animation: phoneIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  position: relative;
+  z-index: 1;
 }
 
 @keyframes phoneIn {
@@ -512,8 +522,11 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 /* Floating chips around phone */
 .chip {
   position: absolute;
-  background: #fff;
-  border: 1px solid var(--line);
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(232, 225, 214, 0.9);
   border-radius: 14px;
   padding: 10px 14px;
   box-shadow: var(--shadow);
@@ -522,14 +535,16 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
+  max-width: min(200px, 46%);
   animation: bob 4.5s ease-in-out infinite;
 }
 
 .chip small { display: block; font-weight: 600; color: var(--ink-soft); font-size: 0.72rem; }
-.chip .dot { width: 8px; height: 8px; border-radius: 50%; }
-.chip-1 { top: 12%; left: -6%; animation-delay: 0.2s; }
+.chip .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.chip-1 { top: 14%; left: 0; animation-delay: 0.2s; }
 .chip-1 .dot { background: var(--amber); }
-.chip-2 { bottom: 18%; right: -8%; animation-delay: 1.4s; }
+.chip-2 { bottom: 16%; right: 0; animation-delay: 1.4s; }
 .chip-2 .dot { background: var(--teal); }
 
 @keyframes bob {
@@ -991,9 +1006,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 /* ---------- Responsive ---------- */
 @media (max-width: 980px) {
   .hero-grid { grid-template-columns: 1fr; }
-  .phone-stage { order: -1; }
-  .chip-1 { top: 6%; left: 0; }
-  .chip-2 { bottom: 14%; right: 0; }
+  .phone-stage { order: -1; padding: 8px 40px; }
+  .chip-1 { top: 8%; left: 0; }
+  .chip-2 { bottom: 12%; right: 0; }
   .bento { grid-template-columns: repeat(2, 1fr); }
   .steps { grid-template-columns: repeat(2, 1fr); }
   .plans { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
@@ -1018,13 +1033,13 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .wrap { padding: 0 16px; }
   .demo-shell { padding: 14px; }
   .chip { display: none; }
+  .phone-stage { padding: 0; perspective: none; overflow: hidden; }
   /* 3D tilt widens the painted box past 320px — flatten on phones. */
   .phone {
     width: min(280px, 100%);
     transform: none;
     animation: none;
   }
-  .phone-stage { perspective: none; }
   .lp-logo { font-size: 1.05rem; }
   .lp-logo img { width: 30px; height: 30px; }
   .lang-toggle button { min-width: 40px; padding: 0 8px; }
