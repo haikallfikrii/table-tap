@@ -78,7 +78,13 @@ function readJsonBody(): array
 
 function assetUrl(string $path): string
 {
-    return baseUrl('assets/' . ltrim($path, '/'));
+    $rel = ltrim($path, '/');
+    $url = baseUrl('assets/' . $rel);
+    $file = dirname(__DIR__) . '/assets/' . $rel;
+    if (is_file($file)) {
+        $url .= '?v=' . filemtime($file);
+    }
+    return $url;
 }
 
 function uploadPath(string $filename = ''): string

@@ -85,8 +85,10 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
 .lp-nav-inner {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
   height: 68px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .lp-logo {
@@ -97,6 +99,15 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
   font-size: 1.15rem;
   letter-spacing: -0.02em;
   margin-right: auto;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.lp-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
 }
 
 .lp-logo img {
@@ -124,12 +135,6 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
 }
 
 .lp-links a:hover { background: var(--brand-soft); color: var(--brand-dark); }
-
-.lp-nav-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 
 .lang-toggle {
   display: inline-flex;
@@ -315,7 +320,11 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   grid-template-columns: 1.05fr 0.95fr;
   gap: clamp(32px, 5vw, 64px);
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
 }
+
+.hero-grid > * { min-width: 0; }
 
 .hero h1 {
   font-size: clamp(2.3rem, 5.4vw, 3.9rem);
@@ -381,11 +390,15 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: relative;
   display: grid;
   place-items: center;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
   perspective: 1200px;
 }
 
 .phone {
   width: min(300px, 78vw);
+  max-width: 100%;
   border-radius: 40px;
   background: #1b1a17;
   padding: 10px;
@@ -988,12 +1001,12 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .foot-grid { grid-template-columns: 1fr 1fr; }
 }
 
-/* Collapse the inline links early: the full link row plus both buttons
-   stops fitting well before the tablet breakpoint. */
+/* Collapse desktop links + move primary CTA into the hamburger menu. */
 @media (max-width: 900px) {
   .lp-links { display: none; }
   .lp-burger { display: flex; }
-  .lp-nav-actions .btn-outline { display: none; }
+  .lp-nav-actions .btn-outline,
+  .lp-nav-actions .btn-primary { display: none !important; }
   .stats { grid-template-columns: repeat(2, 1fr); }
 }
 
@@ -1004,15 +1017,17 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .foot-grid { grid-template-columns: 1fr; }
   .wrap { padding: 0 16px; }
   .demo-shell { padding: 14px; }
-  /* No room beside the phone at this size — the chips only collide with it. */
   .chip { display: none; }
-}
-
-/* Very narrow phones: keep the header on a single row. */
-@media (max-width: 480px) {
-  .lp-nav-actions .btn-primary { display: none; }
+  /* 3D tilt widens the painted box past 320px — flatten on phones. */
+  .phone {
+    width: min(280px, 100%);
+    transform: none;
+    animation: none;
+  }
+  .phone-stage { perspective: none; }
   .lp-logo { font-size: 1.05rem; }
   .lp-logo img { width: 30px; height: 30px; }
+  .lang-toggle button { min-width: 40px; padding: 0 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
