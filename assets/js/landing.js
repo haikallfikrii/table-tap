@@ -110,12 +110,13 @@
         pane.classList.toggle('on', pane.id === target);
       });
 
-      // Keep the chosen tab visible inside the horizontal scroller on phones.
-      if (tab.scrollIntoView) {
-        tab.scrollIntoView({
-          behavior: reduceMotion ? 'auto' : 'smooth',
-          block: 'nearest',
-          inline: 'center'
+      // Scroll only inside .demo-tabs — never scrollIntoView (that shifts the whole page).
+      var scroller = tab.parentElement;
+      if (scroller && scroller.scrollWidth > scroller.clientWidth + 1) {
+        var left = tab.offsetLeft - (scroller.clientWidth - tab.offsetWidth) / 2;
+        scroller.scrollTo({
+          left: Math.max(0, left),
+          behavior: reduceMotion ? 'auto' : 'smooth'
         });
       }
     });
