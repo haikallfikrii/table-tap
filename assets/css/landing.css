@@ -705,6 +705,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   border-radius: var(--radius);
   padding: 18px;
   box-shadow: var(--shadow);
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 /* Tabs scroll sideways on phones rather than stacking into a tall column. */
