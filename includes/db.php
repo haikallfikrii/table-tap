@@ -36,7 +36,7 @@ function db(): PDO
     );
 
     $pdo = new PDO($dsn, $c['db_user'], $c['db_pass'], [
-        PDO::ATTR_ERRMODE            => PDO::ATTR_ERRMODE_EXCEPTION,
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
