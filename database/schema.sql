@@ -1,15 +1,17 @@
 -- TableTap Database Schema (multi-tenant)
 -- MySQL 5.7+ / MariaDB 10.3+ (Hostinger shared hosting)
 -- Charset: utf8mb4
+--
+-- HOSTINGER IMPORT:
+-- 1. Buka phpMyAdmin → pilih database anda (cth: u451240370_tabletap)
+-- 2. Tab Import → pilih file ini → Go
+-- JANGAN jalankan CREATE DATABASE — DB sudah dibuat di hPanel.
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
-CREATE DATABASE IF NOT EXISTS `tabletap`
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-USE `tabletap`;
+-- Jika import via CLI dan perlu pilih DB secara eksplicit, buka komen baris berikut:
+-- USE `u451240370_tabletap`;
 
 DROP TABLE IF EXISTS `order_items`;
 DROP TABLE IF EXISTS `orders`;
