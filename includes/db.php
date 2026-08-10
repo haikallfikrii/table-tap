@@ -41,8 +41,12 @@ function db(): PDO
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
 
-    // Keep MySQL NOW()/DATE() aligned with PHP (Asia/Kuala_Lumpur on Hostinger is often UTC).
-    $pdo->exec('SET time_zone = ' . $pdo->quote(mysqlTimezoneOffset($c['timezone'] ?? 'Asia/Kuala_Lumpur')));
+    // Best-effort only — never break login/DB if the host rejects time_zone changes.
+    try {
+        $pdo->exec('SET time_zone = ' . $pdo->quote(mysqlTimezoneOffset($c['timezone'] ?? 'Asia/Kuala_Lumpur')));
+    } catch (Throwable $e) {
+        // Timestamps still come from appNow() in PHP (Asia/Kuala_Lumpur).
+    }
 
     return $pdo;
 }

@@ -33,17 +33,21 @@ html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   scroll-padding-top: 80px;
+  /* Fixed nav is OK with this; sticky would not be. Stops marquee/blobs widening the page. */
+  overflow-x: hidden;
 }
 
 body.lp {
   margin: 0;
+  width: 100%;
   max-width: 100%;
   font-family: var(--font);
   color: var(--ink);
   background: var(--bg);
   line-height: 1.6;
+  overflow-x: hidden;
   overflow-wrap: break-word;
-  /* Offset for fixed navbar (position:sticky fails with overflow-x ancestors). */
+  /* Offset for fixed navbar */
   padding-top: 68px;
 }
 
@@ -544,6 +548,7 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 /* ---------- Marquee ---------- */
 .marquee {
   overflow: hidden;
+  max-width: 100%;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
   background: var(--surface);
@@ -554,7 +559,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   display: flex;
   gap: 40px;
   width: max-content;
+  max-width: none;
   animation: slide 26s linear infinite;
+  will-change: transform;
 }
 
 .marquee span {
