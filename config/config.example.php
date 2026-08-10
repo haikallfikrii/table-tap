@@ -8,7 +8,7 @@
 return [
     // Database (Hostinger hPanel → Databases)
     'db_host' => 'localhost',
-    'db_name' => 'YOUR_DB_NAME',
+    'db_name' => 'u451240370_tabletap',
     'db_user' => 'YOUR_DB_USER',
     'db_pass' => 'YOUR_DB_PASSWORD',
     'db_charset' => 'utf8mb4',
