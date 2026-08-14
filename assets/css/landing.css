@@ -1127,10 +1127,17 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 .plan h3 { font-size: 1.25rem; }
 .plan .desc { margin: 6px 0 0; color: var(--ink-soft); font-size: 0.92rem; }
 
-.price { display: flex; align-items: baseline; gap: 6px; }
+.price { display: grid; gap: 4px; }
+.price-row { display: flex; align-items: baseline; gap: 6px; }
 .price .amt { font-size: clamp(2.1rem, 4vw, 2.7rem); font-weight: 900; letter-spacing: -0.04em; }
 .price .cur { font-size: 1.05rem; font-weight: 800; color: var(--ink-soft); }
 .price .per { font-size: 0.9rem; color: var(--ink-soft); font-weight: 600; }
+.price-year {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
 
 .plan ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .plan li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.93rem; }

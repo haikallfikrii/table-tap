@@ -399,14 +399,11 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       </div>
 
       <div class="demo-shell reveal" id="demo-proto">
-        <div class="demo-toolbar">
-          <div class="demo-tabs" role="tablist">
-            <button type="button" class="demo-tab on" data-pane="pane-kasir" role="tab" aria-selected="true"><?= e(t('kasir_title')) ?></button>
-            <button type="button" class="demo-tab" data-pane="pane-dapur" role="tab" aria-selected="false"><?= e(t('dapur_title')) ?></button>
-            <button type="button" class="demo-tab" data-pane="pane-minuman" role="tab" aria-selected="false"><?= e(t('minuman_title')) ?></button>
-            <button type="button" class="demo-tab" data-pane="pane-waiter" role="tab" aria-selected="false"><?= e(t('waiter_title')) ?></button>
-          </div>
-          <button type="button" class="btn btn-secondary btn-sm" id="demo-sound-btn" data-label-on="<?= e(t('lp_demo_sound_on')) ?>"><?= e(t('lp_demo_sound')) ?></button>
+        <div class="demo-tabs" role="tablist">
+          <button type="button" class="demo-tab on" data-pane="pane-kasir" role="tab" aria-selected="true"><?= e(t('kasir_title')) ?></button>
+          <button type="button" class="demo-tab" data-pane="pane-dapur" role="tab" aria-selected="false"><?= e(t('dapur_title')) ?></button>
+          <button type="button" class="demo-tab" data-pane="pane-minuman" role="tab" aria-selected="false"><?= e(t('minuman_title')) ?></button>
+          <button type="button" class="demo-tab" data-pane="pane-waiter" role="tab" aria-selected="false"><?= e(t('waiter_title')) ?></button>
         </div>
 
         <div class="demo-pane on" id="pane-kasir" role="tabpanel">
@@ -522,14 +519,16 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
             </div>
 
             <div class="price">
-              <span class="cur"><?= e($config['currency'] ?? 'RM') ?></span>
-              <span class="amt"
-                    data-monthly="<?= e((string) round($monthly)) ?>"
-                    data-yearly="<?= e((string) round($yearly)) ?>"><?= e(number_format(round($monthly), 0)) ?></span>
-              <span class="per"
-                    data-per
-                    data-per-monthly="<?= e(t('lp_per_month')) ?>"
-                    data-per-yearly="<?= e(t('lp_per_year')) ?>"><?= e(t('lp_per_month')) ?></span>
+              <div class="price-row">
+                <span class="cur"><?= e($config['currency'] ?? 'RM') ?></span>
+                <span class="amt"
+                      data-monthly="<?= e((string) round($monthly)) ?>"
+                      data-yearly="<?= e((string) round($yearly / 12)) ?>"><?= e(number_format(round($monthly), 0)) ?></span>
+                <span class="per"><?= e(t('lp_per_month')) ?></span>
+              </div>
+              <p class="price-year" hidden>
+                <?= e(t('lp_billed_year', ($config['currency'] ?? 'RM') . ' ' . number_format(round($yearly), 0))) ?>
+              </p>
             </div>
 
             <ul>
