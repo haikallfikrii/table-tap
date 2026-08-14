@@ -196,7 +196,7 @@ return [
     'lp_hero_p3'        => 'Automatic sales and profit reports',
     'lp_cta_start'      => 'Get started',
     'lp_cta_demo'       => 'See customer demo',
-    'lp_hero_note'      => 'No long contracts. Cancel anytime.',
+    'lp_hero_note'      => '1-week free trial. No long contracts. Cancel anytime.',
 
     'lp_stat_setup'     => 'One day',
     'lp_stat_setup_l'   => 'to go live',
@@ -254,12 +254,12 @@ return [
     'lp_pricing_sub'    => 'Every plan includes the cashier, kitchen and drinks screens. The main differences are table count and how long order history is kept.',
     'lp_billing_monthly' => 'Monthly',
     'lp_billing_yearly' => 'Yearly',
-    'lp_billing_save'   => '2 months free',
+    'lp_billing_save'   => '1-week free trial',
     'lp_per_month'      => '/month',
     'lp_billed_year'    => '%s billed yearly',
     'lp_popular'        => 'Most popular',
     'lp_choose'         => 'Choose this plan',
-    'lp_pricing_note'   => 'Prices in Malaysian Ringgit. Upgrade or downgrade at any time.',
+    'lp_pricing_note'   => 'Prices in Malaysian Ringgit. 1-week free trial. Upgrade or downgrade at any time.',
 
     'lp_plan_basic'     => 'Starter',
     'lp_plan_basic_d'   => 'For small stalls just getting started',

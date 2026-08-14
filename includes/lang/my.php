@@ -196,7 +196,7 @@ return [
     'lp_hero_p3'        => 'Laporan jualan & untung automatik',
     'lp_cta_start'      => 'Mula sekarang',
     'lp_cta_demo'       => 'Lihat demo pelanggan',
-    'lp_hero_note'      => 'Tiada kontrak jangka panjang. Batal bila-bila masa.',
+    'lp_hero_note'      => 'Percubaan percuma 1 minggu. Tiada kontrak. Batal bila-bila masa.',
 
     'lp_stat_setup'     => 'Sehari',
     'lp_stat_setup_l'   => 'sedia untuk beroperasi',
@@ -254,12 +254,12 @@ return [
     'lp_pricing_sub'    => 'Semua pakej termasuk skrin kasir, dapur dan minuman. Perbezaan utama ialah bilangan meja dan tempoh simpanan histori pesanan.',
     'lp_billing_monthly' => 'Bulanan',
     'lp_billing_yearly' => 'Tahunan',
-    'lp_billing_save'   => '2 bulan percuma',
+    'lp_billing_save'   => 'Percubaan percuma 1 minggu',
     'lp_per_month'      => '/bulan',
     'lp_billed_year'    => 'Jumlah setahun %s',
     'lp_popular'        => 'Paling popular',
     'lp_choose'         => 'Pilih pakej ini',
-    'lp_pricing_note'   => 'Harga dalam Ringgit Malaysia. Naik atau turun taraf pakej bila-bila masa.',
+    'lp_pricing_note'   => 'Harga dalam Ringgit Malaysia. Percubaan percuma 1 minggu. Naik atau turun taraf pakej bila-bila masa.',
 
     'lp_plan_basic'     => 'Mula',
     'lp_plan_basic_d'   => 'Untuk gerai kecil yang baru bermula',
