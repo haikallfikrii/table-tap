@@ -370,6 +370,20 @@ body.admin {
   color: var(--ink-muted);
 }
 
+.staff-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btn-danger:hover { filter: brightness(0.95); }
+
 @media (max-width: 640px) {
   .table-list-wrap {
     overflow-x: auto;
