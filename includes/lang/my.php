@@ -57,6 +57,9 @@ return [
     'submitting'        => 'Menghantar...',
     'order_failed'      => 'Gagal hantar pesanan. Cuba lagi.',
     'select_items'      => 'Pilih menu dahulu',
+    'dine_in'           => 'Makan di sini',
+    'takeaway'          => 'Bungkus',
+    'serving_type'      => 'Cara hidang',
 
     // Order statuses
     'status_menunggu'        => 'Menunggu',

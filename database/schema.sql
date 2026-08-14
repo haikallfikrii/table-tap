@@ -138,6 +138,7 @@ CREATE TABLE `orders` (
   `waktu_order` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `status_order` ENUM('menunggu', 'diproses', 'selesai', 'dibatalkan') NOT NULL DEFAULT 'menunggu',
   `status_bayar` ENUM('belum_bayar', 'lunas') NOT NULL DEFAULT 'belum_bayar',
+  `jenis_hidang` ENUM('dine_in', 'takeaway') NOT NULL DEFAULT 'dine_in',
   `subtotal` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `sst_rate` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   `sst_jumlah` DECIMAL(10,2) NOT NULL DEFAULT 0.00,

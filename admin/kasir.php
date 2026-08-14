@@ -39,6 +39,8 @@ $i18n = [
     'status_item_siap' => t('status_item_siap'),
     'status_item_diambil' => t('status_item_diambil'),
     'status_item_dihantar' => t('status_item_dihantar'),
+    'dine_in'       => t('dine_in'),
+    'takeaway'      => t('takeaway'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>

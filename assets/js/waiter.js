@@ -83,9 +83,15 @@
           '</button>';
       }
 
+      const hidang = it.jenis_hidang === 'takeaway'
+        ? (i18n.takeaway || 'Takeaway')
+        : (i18n.dine_in || 'Dine in');
+      const hidangClass = it.jenis_hidang === 'takeaway' ? ' takeaway' : ' dine-in';
+
       return (
-        '<article class="kitchen-card ' + esc(it.status_item) + (newSet.has(it.id) ? ' new-flash' : '') + '">' +
+        '<article class="kitchen-card ' + esc(it.status_item) + hidangClass + (newSet.has(it.id) ? ' new-flash' : '') + '">' +
           '<div class="kitchen-table">' + esc(tableTitle(it.nomor_meja)) + '</div>' +
+          '<div class="serve-badge ' + (it.jenis_hidang === 'takeaway' ? 'bungkus' : 'sini') + '">' + esc(hidang) + '</div>' +
           '<div class="kitchen-qty">×' + it.qty + '</div>' +
           '<h2 class="kitchen-item-name">' + esc(it.nama) + '</h2>' +
           '<div class="order-meta">' + esc(kat) + '</div>' +

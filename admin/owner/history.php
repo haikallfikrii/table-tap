@@ -36,7 +36,7 @@ $totalPages = max(1, (int) ceil($totalRows / $perPage));
 
 $stmt = $pdo->prepare(
     "SELECT o.id, o.waktu_order, o.waktu_lunas, o.subtotal, o.sst_jumlah, o.total_harga,
-            o.status_order, t.nomor_meja
+            o.status_order, o.jenis_hidang, t.nomor_meja
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
      WHERE o.shop_id = ? AND o.status_bayar = 'lunas'
@@ -63,6 +63,7 @@ $retentionLabel = ($shop['retention_days'] ?? null) === null
       <tr>
         <th>#</th>
         <th><?= e(t('table')) ?></th>
+        <th><?= e(t('serving_type')) ?></th>
         <th><?= e(t('subtotal')) ?></th>
         <th><?= e(t('sst')) ?></th>
         <th><?= e(t('total')) ?></th>
@@ -71,12 +72,13 @@ $retentionLabel = ($shop['retention_days'] ?? null) === null
     </thead>
     <tbody>
       <?php if (!$rows): ?>
-        <tr><td colspan="6"><?= e(t('no_data')) ?></td></tr>
+        <tr><td colspan="7"><?= e(t('no_data')) ?></td></tr>
       <?php endif; ?>
       <?php foreach ($rows as $r): ?>
         <tr>
           <td><?= (int) $r['id'] ?></td>
           <td><?= e($r['nomor_meja']) ?></td>
+          <td><?= e(($r['jenis_hidang'] ?? '') === 'takeaway' ? t('takeaway') : t('dine_in')) ?></td>
           <td><?= e(formatMoney($r['subtotal'])) ?></td>
           <td><?= e(formatMoney($r['sst_jumlah'])) ?></td>
           <td><strong><?= e(formatMoney($r['total_harga'])) ?></strong></td>

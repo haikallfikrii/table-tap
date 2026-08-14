@@ -57,6 +57,9 @@ return [
     'submitting'        => 'Submitting...',
     'order_failed'      => 'Failed to place order. Try again.',
     'select_items'      => 'Please select items first',
+    'dine_in'           => 'Dine in',
+    'takeaway'          => 'Takeaway',
+    'serving_type'      => 'Serving',
 
     // Order statuses
     'status_menunggu'        => 'Waiting',

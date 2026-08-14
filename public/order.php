@@ -36,6 +36,9 @@ $i18nJs = [
     'sst_rate'      => $sstRate,
     'subtotal'      => t('subtotal'),
     'sst'           => t('sst'),
+    'dine_in'       => t('dine_in'),
+    'takeaway'      => t('takeaway'),
+    'serving_type'  => t('serving_type'),
 ];
 ?>
 <!DOCTYPE html>
@@ -152,6 +155,10 @@ $i18nJs = [
     <div class="cart-total-row">
       <span><?= e(t('total')) ?></span>
       <span id="cart-sheet-total">RM 0.00</span>
+    </div>
+    <div class="serve-toggle" role="group" aria-label="<?= e(t('serving_type')) ?>">
+      <button type="button" class="serve-opt on" data-serve="dine_in"><?= e(t('dine_in')) ?></button>
+      <button type="button" class="serve-opt" data-serve="takeaway"><?= e(t('takeaway')) ?></button>
     </div>
     <button type="button" class="btn btn-primary" id="btn-submit-order" style="width:100%" disabled>
       <?= e(t('submit_order')) ?>
