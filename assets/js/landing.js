@@ -54,20 +54,21 @@
   /* ---------- Pricing billing toggle ---------- */
   var billingBtns = document.querySelectorAll('[data-billing]');
   var priceEls = document.querySelectorAll('[data-monthly]');
-  var perLabels = document.querySelectorAll('[data-per]');
+  var yearNotes = document.querySelectorAll('.price-year');
 
   function formatPrice(value) {
     return Number(value).toLocaleString('en-MY');
   }
 
   function setBilling(mode) {
+    var yearly = mode === 'yearly';
     billingBtns.forEach(function (b) {
       b.classList.toggle('on', b.getAttribute('data-billing') === mode);
       b.setAttribute('aria-pressed', b.getAttribute('data-billing') === mode ? 'true' : 'false');
     });
 
     priceEls.forEach(function (el) {
-      var next = mode === 'yearly'
+      var next = yearly
         ? el.getAttribute('data-yearly')
         : el.getAttribute('data-monthly');
       if (!next) return;
@@ -83,10 +84,8 @@
       }
     });
 
-    perLabels.forEach(function (el) {
-      el.textContent = mode === 'yearly'
-        ? el.getAttribute('data-per-yearly')
-        : el.getAttribute('data-per-monthly');
+    yearNotes.forEach(function (el) {
+      el.hidden = !yearly;
     });
   }
 
@@ -255,7 +254,6 @@
 
   /* ---------- Interactive demo + real dashboard sound ---------- */
   var proto = document.getElementById('demo-proto');
-  var soundBtn = document.getElementById('demo-sound-btn');
   var Sound = window.TableTapSound;
   var originals = {};
 
@@ -265,12 +263,10 @@
     });
   }
 
-  if (Sound && soundBtn) {
-    Sound.bindButton(soundBtn, { on: soundBtn.getAttribute('data-label-on') || 'Sound on' });
-  }
-
   function ping() {
-    if (Sound && Sound.isEnabled()) Sound.beep();
+    if (!Sound) return;
+    Sound.unlock();
+    Sound.beep();
   }
 
   function restoreCard(id, delay) {
@@ -318,11 +314,4 @@
     });
   }
 
-  var kitchenPanes = { 'pane-dapur': 1, 'pane-minuman': 1, 'pane-waiter': 1 };
-  tabs.forEach(function (tab) {
-    tab.addEventListener('click', function () {
-      var target = tab.getAttribute('data-pane');
-      if (kitchenPanes[target]) ping();
-    });
-  });
 })();
