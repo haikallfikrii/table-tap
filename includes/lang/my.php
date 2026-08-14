@@ -254,7 +254,7 @@ return [
     'lp_pricing_sub'    => 'Semua pakej termasuk skrin kasir, dapur dan minuman. Perbezaan utama ialah bilangan meja dan tempoh simpanan histori pesanan.',
     'lp_billing_monthly' => 'Bulanan',
     'lp_billing_yearly' => 'Tahunan',
-    'lp_billing_save'   => 'Percubaan percuma 1 minggu',
+    'lp_billing_save'   => 'Jimat 15% setahun',
     'lp_per_month'      => '/bulan',
     'lp_billed_year'    => 'Jumlah setahun %s',
     'lp_popular'        => 'Paling popular',
