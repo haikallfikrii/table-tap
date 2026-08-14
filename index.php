@@ -197,64 +197,85 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
             <span><?= e(t('lp_demo_new')) ?><small><?= e(t('table_n', '5')) ?></small></span>
           </div>
 
-          <div class="phone" aria-hidden="true">
+          <div class="phone" id="hero-phone" data-scene="scan" aria-hidden="true"
+               data-cap-scan="<?= e(t('lp_hero_cap_scan')) ?>"
+               data-cap-menu="<?= e(t('lp_hero_cap_menu')) ?>"
+               data-cap-cart="<?= e(t('lp_hero_cap_cart')) ?>"
+               data-cap-done="<?= e(t('lp_hero_cap_done')) ?>">
             <div class="phone-screen">
               <span class="phone-notch"></span>
-              <div class="ps-head">
-                <div>
-                  <div class="ps-brand">Kedai Demo</div>
-                  <div class="ps-table"><?= e(t('table_n', '5')) ?></div>
-                </div>
-                <span class="ps-lang"><?= e($lang === 'en' ? 'EN' : 'BM') ?></span>
-              </div>
-              <div class="ps-tabs">
-                <span class="ps-tab on"><?= e(t('makanan')) ?></span>
-                <span class="ps-tab"><?= e(t('minuman')) ?></span>
-              </div>
-              <div class="ps-list">
-                <div class="ps-item">
-                  <span class="ps-thumb">N</span>
-                  <span>
-                    <span class="ps-name">Nasi Lemak</span>
-                    <span class="ps-price">RM 8.00</span>
-                  </span>
-                  <span class="ps-add">+</span>
-                </div>
-                <div class="ps-item">
-                  <span class="ps-thumb">A</span>
-                  <span>
-                    <span class="ps-name"><?= e($lang === 'en' ? 'Fried Chicken' : 'Ayam Goreng') ?></span>
-                    <span class="ps-price">RM 7.00</span>
-                  </span>
-                  <span class="ps-add">+</span>
-                </div>
-                <div class="ps-item">
-                  <span class="ps-thumb">M</span>
-                  <span>
-                    <span class="ps-name"><?= e($lang === 'en' ? 'Fried Noodles' : 'Mee Goreng') ?></span>
-                    <span class="ps-price">RM 8.50</span>
-                  </span>
-                  <span class="ps-add">+</span>
-                </div>
-                <div class="ps-item">
-                  <span class="ps-thumb">T</span>
-                  <span>
-                    <span class="ps-name">Teh Tarik</span>
-                    <span class="ps-price">RM 2.50</span>
-                  </span>
-                  <span class="ps-add">+</span>
+
+              <div class="ps-scene" data-scene="scan">
+                <div class="ps-scan">
+                  <div class="ps-scan-frame">
+                    <div class="ps-scan-qr"></div>
+                  </div>
+                  <p><?= e(t('table_n', '5')) ?></p>
                 </div>
               </div>
-              <div class="ps-cart">
-                <span><b>3</b><?= e(t('view_cart')) ?></span>
-                <span>RM 18.50</span>
+
+              <div class="ps-scene" data-scene="menu">
+                <div class="ps-head">
+                  <div>
+                    <div class="ps-brand">Kedai Demo</div>
+                    <div class="ps-table"><?= e(t('table_n', '5')) ?></div>
+                  </div>
+                  <span class="ps-lang"><?= e($lang === 'en' ? 'EN' : 'BM') ?></span>
+                </div>
+                <div class="ps-tabs">
+                  <span class="ps-tab on"><?= e(t('makanan')) ?></span>
+                  <span class="ps-tab"><?= e(t('minuman')) ?></span>
+                </div>
+                <div class="ps-list">
+                  <div class="ps-item" data-tap="0">
+                    <span class="ps-thumb">N</span>
+                    <span><span class="ps-name">Nasi Lemak</span><span class="ps-price">RM 8.00</span></span>
+                    <span class="ps-add">+</span>
+                  </div>
+                  <div class="ps-item" data-tap="1">
+                    <span class="ps-thumb">A</span>
+                    <span><span class="ps-name"><?= e($lang === 'en' ? 'Fried Chicken' : 'Ayam Goreng') ?></span><span class="ps-price">RM 7.00</span></span>
+                    <span class="ps-add">+</span>
+                  </div>
+                  <div class="ps-item" data-tap="2">
+                    <span class="ps-thumb">T</span>
+                    <span><span class="ps-name">Teh Tarik</span><span class="ps-price">RM 2.50</span></span>
+                    <span class="ps-add">+</span>
+                  </div>
+                </div>
+                <div class="ps-cart" id="hero-cart-bar">
+                  <span><b id="hero-cart-n">0</b><?= e(t('view_cart')) ?></span>
+                  <span id="hero-cart-rm">RM 0.00</span>
+                </div>
+              </div>
+
+              <div class="ps-scene" data-scene="cart">
+                <div class="ps-cart-ui">
+                  <div class="ps-cart-h"><?= e(t('cart')) ?></div>
+                  <div class="ps-cart-line"><span>2× Nasi Lemak</span><span>RM 16.00</span></div>
+                  <div class="ps-cart-line"><span>1× Teh Tarik</span><span>RM 2.50</span></div>
+                  <div class="ps-serve">
+                    <span><?= e(t('dine_in')) ?></span>
+                    <span class="on"><?= e(t('takeaway')) ?></span>
+                  </div>
+                  <div class="ps-send"><?= e(t('submit_order')) ?></div>
+                </div>
+              </div>
+
+              <div class="ps-scene" data-scene="done">
+                <div class="ps-done">
+                  <div class="ps-done-ico">✓</div>
+                  <strong><?= e(t('order_sent')) ?></strong>
+                  <span>#1042 · <?= e(t('takeaway')) ?></span>
+                </div>
               </div>
             </div>
           </div>
+          <p class="phone-caption" id="hero-phone-caption"><?= e(t('lp_hero_cap_scan')) ?></p>
 
           <div class="chip chip-2">
             <span class="dot"></span>
-            <span><?= e(t('status_item_selesai')) ?><small><?= e(t('dapur_title')) ?></small></span>
+            <span><?= e(t('takeaway')) ?><small><?= e(t('dapur_title')) ?></small></span>
           </div>
         </div>
       </div>
@@ -319,6 +340,55 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
     </div>
   </section>
 
+  <!-- ================= DESKTOP CINEMA ================= -->
+  <section class="desk-cinema" id="cinema" aria-hidden="true">
+    <div class="wrap">
+      <div class="sec-head center">
+        <span class="kicker"><?= e(t('lp_cinema_kicker')) ?></span>
+        <h2><?= e(t('lp_cinema_title')) ?></h2>
+      </div>
+      <div class="tablet-frame" id="desk-cinema">
+        <div class="tb-chrome">
+          <span class="tb-dots"></span>
+          <span class="tb-title" id="cinema-title"><?= e(t('owner_title')) ?></span>
+        </div>
+        <div class="tb-body">
+          <div class="tb-scene on" data-role="owner" data-title="<?= e(t('owner_title')) ?>">
+            <div class="tb-stats">
+              <div><b>RM 186</b><span><?= e(t('income')) ?></span></div>
+              <div><b>12</b><span><?= e(t('orders_active')) ?></span></div>
+              <div><b>4</b><span><?= e(t('manage_tables')) ?></span></div>
+            </div>
+            <div class="tb-row"><span><?= e(t('manage_menu')) ?></span><span><?= e(t('manage_users')) ?></span></div>
+          </div>
+          <div class="tb-scene" data-role="kasir" data-title="<?= e(t('kasir_title')) ?>">
+            <article class="o-card unpaid tb-mini">
+              <div class="o-table"><?= e(t('table_n', '5')) ?></div>
+              <div class="o-meta">#1042 · <?= e(t('takeaway')) ?></div>
+              <div class="o-foot"><span class="o-total">RM 18.50</span><span class="btn btn-primary btn-sm"><?= e(t('mark_paid')) ?></span></div>
+            </article>
+          </div>
+          <div class="tb-scene" data-role="dapur" data-title="<?= e(t('dapur_title')) ?>">
+            <article class="o-card warn tb-mini">
+              <div class="serve-pill"><?= e(t('takeaway')) ?></div>
+              <div class="o-table"><?= e(t('table_n', '5')) ?></div>
+              <h3>Nasi Lemak ×2</h3>
+              <span class="btn btn-primary btn-sm"><?= e(t('mark_ready')) ?></span>
+            </article>
+          </div>
+          <div class="tb-scene" data-role="waiter" data-title="<?= e(t('waiter_title')) ?>">
+            <article class="o-card info tb-mini">
+              <div class="serve-pill"><?= e(t('takeaway')) ?></div>
+              <div class="o-table"><?= e(t('table_n', '5')) ?></div>
+              <h3>Nasi Lemak ×2</h3>
+              <span class="btn btn-primary btn-sm"><?= e(t('mark_pickup')) ?></span>
+            </article>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ================= DEMO ================= -->
   <section class="sec" id="demo">
     <div class="wrap">
@@ -328,99 +398,89 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
         <p><?= e(t('lp_demo_sub')) ?></p>
       </div>
 
-      <div class="demo-shell reveal">
-        <div class="demo-tabs" role="tablist">
-          <button type="button" class="demo-tab on" data-pane="pane-kasir" role="tab" aria-selected="true"><?= e(t('kasir_title')) ?></button>
-          <button type="button" class="demo-tab" data-pane="pane-dapur" role="tab" aria-selected="false"><?= e(t('dapur_title')) ?></button>
-          <button type="button" class="demo-tab" data-pane="pane-minuman" role="tab" aria-selected="false"><?= e(t('minuman_title')) ?></button>
+      <div class="demo-shell reveal" id="demo-proto">
+        <div class="demo-toolbar">
+          <div class="demo-tabs" role="tablist">
+            <button type="button" class="demo-tab on" data-pane="pane-kasir" role="tab" aria-selected="true"><?= e(t('kasir_title')) ?></button>
+            <button type="button" class="demo-tab" data-pane="pane-dapur" role="tab" aria-selected="false"><?= e(t('dapur_title')) ?></button>
+            <button type="button" class="demo-tab" data-pane="pane-minuman" role="tab" aria-selected="false"><?= e(t('minuman_title')) ?></button>
+            <button type="button" class="demo-tab" data-pane="pane-waiter" role="tab" aria-selected="false"><?= e(t('waiter_title')) ?></button>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" id="demo-sound-btn" data-label-on="<?= e(t('lp_demo_sound_on')) ?>"><?= e(t('lp_demo_sound')) ?></button>
         </div>
 
-        <!-- Kasir -->
         <div class="demo-pane on" id="pane-kasir" role="tabpanel">
-          <article class="o-card unpaid">
+          <article class="o-card unpaid" data-demo-card="kasir-new">
             <div class="o-top">
               <div>
                 <div class="o-table"><?= e(t('table_n', '5')) ?></div>
-                <div class="o-meta">#1042 · 20:14</div>
+                <div class="o-meta">#1042 · <?= e(t('takeaway')) ?></div>
               </div>
-              <div style="display:grid;gap:6px;justify-items:end">
+              <div class="o-flags">
                 <span class="badge amber"><?= e(t('status_menunggu')) ?></span>
-                <span class="badge red"><?= e(t('lp_demo_unpaid')) ?></span>
+                <span class="badge red" data-unpaid><?= e(t('lp_demo_unpaid')) ?></span>
               </div>
             </div>
             <ul class="o-lines">
-              <li><span><span class="q">2×</span> Nasi Lemak<span class="o-note"><?= e(t('lp_demo_note')) ?></span></span><span>RM 16.00</span></li>
+              <li><span><span class="q">2×</span> Nasi Lemak</span><span>RM 16.00</span></li>
               <li><span><span class="q">1×</span> Teh Tarik</span><span>RM 2.50</span></li>
             </ul>
             <div class="o-foot">
               <span class="o-total">RM 18.50</span>
-              <span class="btn btn-primary btn-sm"><?= e(t('mark_paid')) ?></span>
+              <button type="button" class="btn btn-primary btn-sm" data-demo-act="pay"><?= e(t('mark_paid')) ?></button>
             </div>
           </article>
-
           <article class="o-card">
             <div class="o-top">
               <div>
                 <div class="o-table"><?= e(t('table_n', '2')) ?></div>
-                <div class="o-meta">#1041 · 20:06</div>
+                <div class="o-meta">#1041 · <?= e(t('dine_in')) ?></div>
               </div>
-              <div style="display:grid;gap:6px;justify-items:end">
-                <span class="badge blue"><?= e(t('status_diproses')) ?></span>
-                <span class="badge green"><?= e(t('status_lunas')) ?></span>
-              </div>
+              <span class="badge green">✓ <?= e(t('paid')) ?></span>
             </div>
             <ul class="o-lines">
               <li><span><span class="q">1×</span> <?= e($lang === 'en' ? 'Kampung Fried Rice' : 'Nasi Goreng Kampung') ?></span><span>RM 9.50</span></li>
-              <li><span><span class="q">2×</span> Kopi O</span><span>RM 4.00</span></li>
             </ul>
-            <div class="o-foot">
-              <span class="o-total">RM 13.50</span>
-              <span class="badge green">✓ <?= e(t('paid')) ?></span>
-            </div>
           </article>
         </div>
 
-        <!-- Dapur -->
         <div class="demo-pane" id="pane-dapur" role="tabpanel">
-          <article class="o-card warn">
+          <article class="o-card warn" data-demo-card="dapur-new">
+            <div class="serve-pill"><?= e(t('takeaway')) ?></div>
             <div class="o-table"><?= e(t('table_n', '5')) ?></div>
-            <div class="o-meta" style="margin-bottom:8px">#1042 · <?= e(t('lp_demo_new')) ?></div>
-            <h3 style="font-size:1.3rem;margin-bottom:4px">Nasi Lemak <span class="q" style="color:var(--brand)">×2</span></h3>
-            <p class="o-note" style="margin:0 0 12px"><?= e(t('lp_demo_note')) ?></p>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <span class="btn btn-outline btn-sm"><?= e(t('mark_cooking')) ?></span>
-              <span class="btn btn-primary btn-sm"><?= e(t('mark_done')) ?></span>
+            <div class="o-meta">#1042 · <?= e(t('lp_demo_new')) ?></div>
+            <h3>Nasi Lemak <span class="q">×2</span></h3>
+            <div class="demo-acts">
+              <button type="button" class="btn btn-outline btn-sm" data-demo-act="cook"><?= e(t('mark_cooking')) ?></button>
+              <button type="button" class="btn btn-primary btn-sm" data-demo-act="ready"><?= e(t('mark_ready')) ?></button>
             </div>
           </article>
-
-          <article class="o-card info">
+          <article class="o-card info" data-demo-card="dapur-old">
+            <div class="serve-pill sini"><?= e(t('dine_in')) ?></div>
             <div class="o-table"><?= e(t('table_n', '2')) ?></div>
-            <div class="o-meta" style="margin-bottom:8px">#1041 · <?= e(t('lp_demo_cook')) ?></div>
-            <h3 style="font-size:1.3rem;margin-bottom:12px">
-              <?= e($lang === 'en' ? 'Kampung Fried Rice' : 'Nasi Goreng Kampung') ?>
-              <span class="q" style="color:var(--brand)">×1</span>
-            </h3>
-            <span class="btn btn-primary btn-sm" style="width:100%"><?= e(t('mark_done')) ?></span>
+            <h3><?= e($lang === 'en' ? 'Kampung Fried Rice' : 'Nasi Goreng Kampung') ?> ×1</h3>
+            <button type="button" class="btn btn-primary btn-sm" data-demo-act="ready"><?= e(t('mark_ready')) ?></button>
           </article>
         </div>
 
-        <!-- Minuman -->
         <div class="demo-pane" id="pane-minuman" role="tabpanel">
-          <article class="o-card warn">
+          <article class="o-card warn" data-demo-card="minum-new">
+            <div class="serve-pill"><?= e(t('takeaway')) ?></div>
             <div class="o-table"><?= e(t('table_n', '5')) ?></div>
-            <div class="o-meta" style="margin-bottom:8px">#1042 · <?= e(t('lp_demo_new')) ?></div>
-            <h3 style="font-size:1.3rem;margin-bottom:12px">Teh Tarik <span class="q" style="color:var(--brand)">×1</span></h3>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <span class="btn btn-outline btn-sm"><?= e(t('mark_cooking')) ?></span>
-              <span class="btn btn-primary btn-sm"><?= e(t('mark_done')) ?></span>
+            <h3>Teh Tarik ×1</h3>
+            <div class="demo-acts">
+              <button type="button" class="btn btn-outline btn-sm" data-demo-act="cook"><?= e(t('mark_cooking')) ?></button>
+              <button type="button" class="btn btn-primary btn-sm" data-demo-act="ready"><?= e(t('mark_ready')) ?></button>
             </div>
           </article>
+        </div>
 
-          <article class="o-card info">
-            <div class="o-table"><?= e(t('table_n', '2')) ?></div>
-            <div class="o-meta" style="margin-bottom:8px">#1041 · <?= e(t('lp_demo_cook')) ?></div>
-            <h3 style="font-size:1.3rem;margin-bottom:12px">Kopi O <span class="q" style="color:var(--brand)">×2</span></h3>
-            <span class="btn btn-primary btn-sm" style="width:100%"><?= e(t('mark_done')) ?></span>
+        <div class="demo-pane" id="pane-waiter" role="tabpanel">
+          <article class="o-card warn" data-demo-card="wait-new">
+            <div class="serve-pill"><?= e(t('takeaway')) ?></div>
+            <div class="o-table"><?= e(t('table_n', '5')) ?></div>
+            <h3>Nasi Lemak ×2</h3>
+            <button type="button" class="btn btn-primary btn-sm" data-demo-act="pickup"><?= e(t('mark_pickup')) ?></button>
           </article>
         </div>
 
@@ -576,6 +636,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
 </footer>
 
 <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
+<script src="<?= e(assetUrl('js/sound.js')) ?>"></script>
 <script src="<?= e(assetUrl('js/landing.js')) ?>"></script>
 </body>
 </html>
