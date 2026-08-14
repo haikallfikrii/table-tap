@@ -1,13 +1,12 @@
 /**
- * Kitchen / drinks dashboard polling + looping alert until items are processed
+ * Waiter dashboard — pickup ready items, mark delivered
  */
 (function () {
-  const root = document.getElementById('kitchen-root');
+  const root = document.getElementById('waiter-root');
   if (!root) return;
 
   const pollUrl = root.dataset.pollUrl;
   const updateUrl = root.dataset.updateUrl;
-  const kategori = root.dataset.kategori || 'makanan';
   const interval = Number(root.dataset.interval) || 3000;
   const lang = root.dataset.lang || 'my';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
@@ -59,7 +58,7 @@
   function render(items, newIds) {
     const newSet = new Set(newIds || []);
     if (!items.length) {
-      root.innerHTML = '<div class="empty-state">' + esc(i18n.no_kitchen_items || 'Empty') + '</div>';
+      root.innerHTML = '<div class="empty-state">' + esc(i18n.no_waiter_items || 'Empty') + '</div>';
       return;
     }
 
@@ -67,20 +66,20 @@
       const note = it.catatan
         ? '<div class="item-note">' + esc(i18n.notes || 'Notes') + ': ' + esc(it.catatan) + '</div>'
         : '';
+      const kat = it.kategori === 'minuman'
+        ? (i18n.minuman_title || 'Drinks')
+        : (i18n.dapur_title || 'Kitchen');
 
       let actions = '';
-      if (it.status_item === 'menunggu') {
+      if (it.status_item === 'siap') {
         actions =
-          '<button type="button" class="btn btn-secondary btn-sm" data-status="sedang_dimasak" data-id="' + it.id + '">' +
-            esc(i18n.mark_cooking || 'Start') +
-          '</button> ' +
-          '<button type="button" class="btn btn-success" data-status="siap" data-id="' + it.id + '">' +
-            esc(i18n.mark_ready || i18n.mark_done || 'Ready') +
+          '<button type="button" class="btn btn-primary" style="width:100%" data-status="diambil" data-id="' + it.id + '">' +
+            esc(i18n.mark_pickup || 'Pick up') +
           '</button>';
       } else {
         actions =
-          '<button type="button" class="btn btn-success" style="width:100%" data-status="siap" data-id="' + it.id + '">' +
-            esc(i18n.mark_ready || i18n.mark_done || 'Ready') +
+          '<button type="button" class="btn btn-success" style="width:100%" data-status="dihantar" data-id="' + it.id + '">' +
+            esc(i18n.mark_delivered || 'Delivered') +
           '</button>';
       }
 
@@ -89,9 +88,10 @@
           '<div class="kitchen-table">' + esc(tableTitle(it.nomor_meja)) + '</div>' +
           '<div class="kitchen-qty">×' + it.qty + '</div>' +
           '<h2 class="kitchen-item-name">' + esc(it.nama) + '</h2>' +
+          '<div class="order-meta">' + esc(kat) + '</div>' +
           note +
           '<div class="order-meta" style="margin:8px 0 14px">#' + it.order_id + ' · ' + esc(it.waktu_order) + '</div>' +
-          '<div style="display:flex;flex-wrap:wrap;gap:8px">' + actions + '</div>' +
+          actions +
         '</article>'
       );
     }).join('');
@@ -102,8 +102,7 @@
     busy = true;
     try {
       const url = pollUrl +
-        '?kategori=' + encodeURIComponent(kategori) +
-        '&since_id=' + encodeURIComponent(String(sinceId)) +
+        '?since_id=' + encodeURIComponent(String(sinceId)) +
         '&lang=' + encodeURIComponent(lang);
       const res = await fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
       if (res.status === 401) {
@@ -112,7 +111,6 @@
       }
       const data = await res.json();
       if (!data.ok) return;
-
       if (typeof data.max_id === 'number') {
         sinceId = Math.max(sinceId, data.max_id);
       }

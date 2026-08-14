@@ -190,6 +190,7 @@ function roleHome(string $role): string
         'kasir'   => baseUrl('admin/kasir.php'),
         'dapur'   => baseUrl('admin/dapur.php'),
         'minuman' => baseUrl('admin/minuman.php'),
+        'waiter'  => baseUrl('admin/waiter.php'),
         default   => baseUrl('admin/owner/index.php'),
     };
 }

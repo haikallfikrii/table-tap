@@ -1,9 +1,20 @@
 /**
- * TableTap — sound notification helper (requires user gesture)
+ * TableTap — louder looping alerts (requires user gesture to unlock)
  */
 window.TableTapSound = (function () {
   let enabled = false;
   let audioCtx = null;
+  let settings = {
+    mode: 'until_cleared',
+    count: 8,
+    duration_sec: 45,
+    interval_ms: 900,
+    volume: 100,
+  };
+  let alarmTimer = null;
+  let alarmStartedAt = 0;
+  let alarmBeeps = 0;
+  let onAlarmDone = null;
 
   function unlock() {
     try {
@@ -13,7 +24,6 @@ window.TableTapSound = (function () {
       if (audioCtx.state === 'suspended') {
         audioCtx.resume();
       }
-      // silent blip to unlock
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       gain.gain.value = 0.0001;
@@ -28,24 +38,91 @@ window.TableTapSound = (function () {
     }
   }
 
+  function configure(next) {
+    if (!next || typeof next !== 'object') return;
+    if (next.mode) settings.mode = next.mode;
+    if (next.count) settings.count = Number(next.count) || settings.count;
+    if (next.duration_sec) settings.duration_sec = Number(next.duration_sec) || settings.duration_sec;
+    if (next.interval_ms) settings.interval_ms = Number(next.interval_ms) || settings.interval_ms;
+    if (next.volume) settings.volume = Number(next.volume) || settings.volume;
+  }
+
+  function peakGain() {
+    const v = Math.max(20, Math.min(100, Number(settings.volume) || 100)) / 100;
+    return 0.28 + v * 0.62;
+  }
+
   function beep() {
     if (!enabled || !audioCtx) return;
     try {
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.setValueAtTime(660, now + 0.15);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.25, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.4);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.42);
+      const master = audioCtx.createGain();
+      const peak = peakGain();
+      master.gain.setValueAtTime(0.0001, now);
+      master.gain.exponentialRampToValueAtTime(peak, now + 0.02);
+      master.gain.exponentialRampToValueAtTime(peak * 0.85, now + 0.12);
+      master.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+      master.connect(audioCtx.destination);
+
+      const hi = audioCtx.createOscillator();
+      hi.type = 'square';
+      hi.frequency.setValueAtTime(980, now);
+      hi.frequency.setValueAtTime(1318, now + 0.16);
+      hi.frequency.setValueAtTime(880, now + 0.32);
+      const hiGain = audioCtx.createGain();
+      hiGain.gain.value = 0.55;
+      hi.connect(hiGain);
+      hiGain.connect(master);
+
+      const lo = audioCtx.createOscillator();
+      lo.type = 'sawtooth';
+      lo.frequency.setValueAtTime(490, now);
+      lo.frequency.setValueAtTime(659, now + 0.16);
+      const loGain = audioCtx.createGain();
+      loGain.gain.value = 0.35;
+      lo.connect(loGain);
+      loGain.connect(master);
+
+      hi.start(now);
+      lo.start(now);
+      hi.stop(now + 0.56);
+      lo.stop(now + 0.56);
     } catch (e) { /* ignore */ }
+  }
+
+  function stopAlarm() {
+    if (alarmTimer) {
+      clearTimeout(alarmTimer);
+      alarmTimer = null;
+    }
+    alarmBeeps = 0;
+    onAlarmDone = null;
+  }
+
+  function alarmTick() {
+    alarmTimer = null;
+    if (!enabled) return;
+    if (settings.mode === 'count' && alarmBeeps >= settings.count) {
+      if (typeof onAlarmDone === 'function') onAlarmDone();
+      return;
+    }
+    if (settings.mode === 'duration' && Date.now() - alarmStartedAt >= settings.duration_sec * 1000) {
+      if (typeof onAlarmDone === 'function') onAlarmDone();
+      return;
+    }
+    beep();
+    alarmBeeps += 1;
+    alarmTimer = setTimeout(alarmTick, settings.interval_ms);
+  }
+
+  function startAlarm(done) {
+    if (!enabled) return;
+    if (alarmTimer) return;
+    onAlarmDone = typeof done === 'function' ? done : null;
+    alarmStartedAt = Date.now();
+    alarmBeeps = 0;
+    alarmTick();
   }
 
   function bindButton(btn, labels) {
@@ -60,5 +137,5 @@ window.TableTapSound = (function () {
     });
   }
 
-  return { unlock, beep, bindButton, isEnabled: () => enabled };
+  return { unlock, beep, configure, startAlarm, stopAlarm, bindButton, isEnabled: () => enabled };
 })();

@@ -68,6 +68,9 @@ return [
     'status_item_menunggu'   => 'Menunggu',
     'status_item_sedang'     => 'Sedang dimasak',
     'status_item_selesai'    => 'Selesai',
+    'status_item_siap'       => 'Siap diambil',
+    'status_item_diambil'    => 'Sedang dihantar',
+    'status_item_dihantar'   => 'Telah dihantar',
 
     // Kasir
     'kasir_title'       => 'Dashboard Kasir',
@@ -83,9 +86,14 @@ return [
     // Kitchen / drinks
     'dapur_title'       => 'Dashboard Dapur',
     'minuman_title'     => 'Dashboard Minuman',
+    'waiter_title'      => 'Dashboard Waiter',
     'mark_done'         => 'Selesai',
+    'mark_ready'        => 'Siap untuk waiter',
     'mark_cooking'      => 'Mula masak',
+    'mark_pickup'       => 'Ambil / pickup',
+    'mark_delivered'    => 'Selesai hantar',
     'no_kitchen_items'  => 'Tiada item menunggu',
+    'no_waiter_items'   => 'Tiada item siap untuk dihantar',
 
     // Owner
     'owner_title'       => 'Panel Owner',
@@ -132,6 +140,16 @@ return [
     'sst'               => 'SST',
     'sst_enable'        => 'Aktifkan SST',
     'sst_rate'          => 'Kadar SST',
+    'sound_settings'    => 'Tetapan bunyi notifikasi',
+    'sound_settings_hint' => 'Dapur, minuman dan waiter mesti tekan “Aktifkan suara” dulu. Bunyi berulang sehingga item diproses, atau mengikut bilangan/tempoh yang anda tetapkan.',
+    'sound_mode'        => 'Cara bunyi berhenti',
+    'sound_mode_until'  => 'Ulang sehingga staf proses item',
+    'sound_mode_count'  => 'Bunyi beberapa kali, kemudian berhenti',
+    'sound_mode_duration' => 'Bunyi selama beberapa saat, kemudian berhenti',
+    'sound_repeat_count' => 'Bilangan bunyi (jika pilih kali)',
+    'sound_duration_sec' => 'Tempoh bunyi (saat)',
+    'sound_interval_ms' => 'Jeda antara bunyi (milisaat)',
+    'sound_volume'      => 'Kelantangan',
     'subtotal'          => 'Subtotal',
     'order_history'     => 'Sejarah order',
     'retention_forever' => 'Selamanya',

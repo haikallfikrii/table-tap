@@ -223,6 +223,16 @@ body.admin {
   background: #f3f8fb;
 }
 
+.kitchen-card.siap {
+  border-color: var(--accent);
+  background: #fff6ee;
+}
+
+.kitchen-card.diambil {
+  border-color: var(--success);
+  background: #f3fbf6;
+}
+
 .kitchen-table {
   font-size: clamp(2rem, 5vw, 2.8rem);
   font-weight: 800;
