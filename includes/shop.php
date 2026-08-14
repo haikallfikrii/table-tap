@@ -71,6 +71,22 @@ function calculateTotals(float $subtotal, array $shop): array
     ];
 }
 
+/** @return array{mode:string,count:int,duration_sec:int,interval_ms:int,volume:int} */
+function shopSoundSettings(?array $shop): array
+{
+    $mode = (string) ($shop['sound_mode'] ?? 'until_cleared');
+    if (!in_array($mode, ['until_cleared', 'count', 'duration'], true)) {
+        $mode = 'until_cleared';
+    }
+    return [
+        'mode' => $mode,
+        'count' => max(1, min(50, (int) ($shop['sound_repeat_count'] ?? 8))),
+        'duration_sec' => max(3, min(300, (int) ($shop['sound_duration_sec'] ?? 45))),
+        'interval_ms' => max(400, min(5000, (int) ($shop['sound_interval_ms'] ?? 900))),
+        'volume' => max(20, min(100, (int) ($shop['sound_volume'] ?? 100))),
+    ];
+}
+
 /**
  * Delete paid/cancelled orders older than package retention.
  * Skips shops with retention_days = NULL (forever).

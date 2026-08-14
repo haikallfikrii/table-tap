@@ -44,6 +44,9 @@ function db(): PDO
     // Do not SET time_zone here — some shared hosts reject it and used to break login.
     // All app timestamps use appNow() (PHP Asia/Kuala_Lumpur) instead.
 
+    require_once __DIR__ . '/schema_patch.php';
+    ensureAppSchema($pdo);
+
     return $pdo;
 }
 

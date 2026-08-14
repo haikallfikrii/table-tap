@@ -1,6 +1,6 @@
 <?php
 /**
- * Kitchen/drinks polling — shop-scoped, filter by kategori
+ * Waiter polling — items ready (siap) or picked up (diambil)
  */
 
 declare(strict_types=1);
@@ -8,14 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/shop.php';
 
-$kategori = ($_GET['kategori'] ?? '') === 'minuman' ? 'minuman' : 'makanan';
-
-if ($kategori === 'makanan') {
-    requireLoginApi(['dapur', 'owner']);
-} else {
-    requireLoginApi(['minuman', 'owner']);
-}
-
+requireLoginApi(['waiter', 'owner']);
 $shopId = requireShopIdApi();
 $sinceId = max(0, (int) ($_GET['since_id'] ?? 0));
 $lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
@@ -31,15 +24,14 @@ $stmt = $pdo->prepare(
      INNER JOIN orders o ON o.id = oi.order_id
      INNER JOIN tables t ON t.id = o.table_id
      WHERE o.shop_id = ?
-       AND oi.kategori_saat_order = ?
-       AND oi.status_item IN ('menunggu', 'sedang_dimasak')
+       AND oi.status_item IN ('siap', 'diambil')
        AND o.status_order != 'dibatalkan'
      ORDER BY
-       FIELD(oi.status_item, 'menunggu', 'sedang_dimasak'),
+       FIELD(oi.status_item, 'siap', 'diambil'),
        o.waktu_order ASC,
        oi.id ASC"
 );
-$stmt->execute([$shopId, $kategori]);
+$stmt->execute([$shopId]);
 $items = $stmt->fetchAll();
 
 $maxId = $sinceId;
@@ -52,7 +44,7 @@ foreach ($items as $it) {
     if ($id > $maxId) {
         $maxId = $id;
     }
-    if ($it['status_item'] === 'menunggu') {
+    if ($it['status_item'] === 'siap') {
         $pendingAlerts++;
         if ($id > $sinceId) {
             $newIds[] = $id;
@@ -64,6 +56,7 @@ foreach ($items as $it) {
         'qty' => (int) $it['qty'],
         'catatan' => $it['catatan'],
         'status_item' => $it['status_item'],
+        'kategori' => $it['kategori_saat_order'],
         'nama' => $lang === 'en' ? $it['nama_saat_order_en'] : $it['nama_saat_order_my'],
         'nomor_meja' => $it['nomor_meja'],
         'waktu_order' => $it['waktu_order'],

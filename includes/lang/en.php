@@ -68,6 +68,9 @@ return [
     'status_item_menunggu'   => 'Waiting',
     'status_item_sedang'     => 'Cooking',
     'status_item_selesai'    => 'Done',
+    'status_item_siap'       => 'Ready for pickup',
+    'status_item_diambil'    => 'On the way',
+    'status_item_dihantar'   => 'Delivered',
 
     // Kasir
     'kasir_title'       => 'Cashier Dashboard',
@@ -83,9 +86,14 @@ return [
     // Kitchen / drinks
     'dapur_title'       => 'Kitchen Dashboard',
     'minuman_title'     => 'Drinks Dashboard',
+    'waiter_title'      => 'Waiter Dashboard',
     'mark_done'         => 'Done',
+    'mark_ready'        => 'Ready for waiter',
     'mark_cooking'      => 'Start cooking',
+    'mark_pickup'       => 'Pick up',
+    'mark_delivered'    => 'Delivered',
     'no_kitchen_items'  => 'No items waiting',
+    'no_waiter_items'   => 'Nothing ready to deliver',
 
     // Owner
     'owner_title'       => 'Owner Panel',
@@ -132,6 +140,16 @@ return [
     'sst'               => 'SST',
     'sst_enable'        => 'Enable SST',
     'sst_rate'          => 'SST rate',
+    'sound_settings'    => 'Notification sound',
+    'sound_settings_hint' => 'Kitchen, drinks and waiter must tap “Enable sound” first. Alerts repeat until staff process the item, or stop after the count/duration you set.',
+    'sound_mode'        => 'When the sound stops',
+    'sound_mode_until'  => 'Keep repeating until staff process the item',
+    'sound_mode_count'  => 'Play a set number of times, then stop',
+    'sound_mode_duration' => 'Play for a set number of seconds, then stop',
+    'sound_repeat_count' => 'Number of beeps (count mode)',
+    'sound_duration_sec' => 'Duration in seconds',
+    'sound_interval_ms' => 'Gap between beeps (milliseconds)',
+    'sound_volume'      => 'Volume',
     'subtotal'          => 'Subtotal',
     'order_history'     => 'Order history',
     'retention_forever' => 'Forever',

@@ -21,7 +21,7 @@ $nav = 'users';
 $error = '';
 $pdo = db();
 
-$roles = ['owner', 'kasir', 'dapur', 'minuman'];
+$roles = ['owner', 'kasir', 'dapur', 'minuman', 'waiter'];
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $action = $_POST['action'] ?? '';

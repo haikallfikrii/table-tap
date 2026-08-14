@@ -64,9 +64,12 @@
           const note = it.catatan
             ? '<span class="item-note">' + esc(i18n.notes || 'Notes') + ': ' + esc(it.catatan) + '</span>'
             : '';
+          const st = it.status_item
+            ? '<span class="item-note">' + esc(i18n['status_item_' + it.status_item] || it.status_item) + '</span>'
+            : '';
           return (
             '<li>' +
-              '<div><span class="qty">' + it.qty + '×</span> ' + esc(it.nama) + note + '</div>' +
+              '<div><span class="qty">' + it.qty + '×</span> ' + esc(it.nama) + note + st + '</div>' +
               '<div>' + money(it.harga_saat_order * it.qty) + '</div>' +
             '</li>'
           );
@@ -120,7 +123,14 @@
       if (!data.ok) return;
 
       if ((data.new_order_ids || []).length > 0 && sinceId > 0) {
-        TableTapSound.beep();
+        TableTapSound.configure(data.sound || {});
+        const mode = (data.sound && data.sound.mode) || 'until_cleared';
+        if (mode === 'until_cleared') {
+          TableTapSound.beep();
+          setTimeout(function () { TableTapSound.beep(); }, 280);
+        } else {
+          TableTapSound.startAlarm();
+        }
       }
       if (typeof data.max_id === 'number') {
         sinceId = Math.max(sinceId, data.max_id);

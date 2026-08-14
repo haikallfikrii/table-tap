@@ -89,13 +89,19 @@ $nav = 'home';
   </a>
   <a class="order-card" href="<?= e(baseUrl('admin/owner/users.php')) ?>" style="text-decoration:none">
     <div class="table-num" style="font-size:1.4rem"><?= e(t('manage_users')) ?></div>
-    <p class="order-meta">kasir · dapur · minuman</p>
+    <p class="order-meta">kasir · dapur · minuman · waiter</p>
   </a>
   <a class="order-card" href="<?= e(baseUrl('admin/kasir.php')) ?>" style="text-decoration:none">
     <div class="table-num" style="font-size:1.4rem"><?= e(t('kasir_title')) ?></div>
   </a>
   <a class="order-card" href="<?= e(baseUrl('admin/dapur.php')) ?>" style="text-decoration:none">
     <div class="table-num" style="font-size:1.4rem"><?= e(t('dapur_title')) ?></div>
+  </a>
+  <a class="order-card" href="<?= e(baseUrl('admin/minuman.php')) ?>" style="text-decoration:none">
+    <div class="table-num" style="font-size:1.4rem"><?= e(t('minuman_title')) ?></div>
+  </a>
+  <a class="order-card" href="<?= e(baseUrl('admin/waiter.php')) ?>" style="text-decoration:none">
+    <div class="table-num" style="font-size:1.4rem"><?= e(t('waiter_title')) ?></div>
   </a>
 </div>
 

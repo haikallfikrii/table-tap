@@ -24,6 +24,7 @@ $adminScripts = [
 
 $i18n = [
     'mark_done'        => t('mark_done'),
+    'mark_ready'       => t('mark_ready'),
     'mark_cooking'     => t('mark_cooking'),
     'no_kitchen_items' => t('no_kitchen_items'),
     'table_n'          => t('table_n'),

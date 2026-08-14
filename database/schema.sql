@@ -48,6 +48,11 @@ CREATE TABLE `shops` (
   `package_id` INT UNSIGNED NOT NULL,
   `sst_enabled` TINYINT(1) NOT NULL DEFAULT 0,
   `sst_rate` DECIMAL(5,2) NOT NULL DEFAULT 6.00 COMMENT 'Percent, e.g. 6.00 = 6%',
+  `sound_mode` ENUM('until_cleared', 'count', 'duration') NOT NULL DEFAULT 'until_cleared',
+  `sound_repeat_count` TINYINT UNSIGNED NOT NULL DEFAULT 8,
+  `sound_duration_sec` SMALLINT UNSIGNED NOT NULL DEFAULT 45,
+  `sound_interval_ms` SMALLINT UNSIGNED NOT NULL DEFAULT 900,
+  `sound_volume` TINYINT UNSIGNED NOT NULL DEFAULT 100,
   `status` ENUM('aktif', 'tidak_aktif', 'suspended') NOT NULL DEFAULT 'aktif',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -60,7 +65,7 @@ CREATE TABLE `shops` (
 
 -- --------------------------------------------------------
 -- Users
--- role: master (platform) | owner | kasir | dapur | minuman
+-- role: master (platform) | owner | kasir | dapur | minuman | waiter
 -- shop_id NULL only for master
 -- --------------------------------------------------------
 CREATE TABLE `users` (
@@ -68,7 +73,7 @@ CREATE TABLE `users` (
   `shop_id` INT UNSIGNED DEFAULT NULL,
   `username` VARCHAR(50) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
-  `role` ENUM('master', 'owner', 'kasir', 'dapur', 'minuman') NOT NULL,
+  `role` ENUM('master', 'owner', 'kasir', 'dapur', 'minuman', 'waiter') NOT NULL,
   `nama_paparan` VARCHAR(100) DEFAULT NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -160,7 +165,7 @@ CREATE TABLE `order_items` (
   `menu_item_id` INT UNSIGNED NOT NULL,
   `qty` SMALLINT UNSIGNED NOT NULL DEFAULT 1,
   `catatan` VARCHAR(255) DEFAULT NULL,
-  `status_item` ENUM('menunggu', 'sedang_dimasak', 'selesai') NOT NULL DEFAULT 'menunggu',
+  `status_item` ENUM('menunggu', 'sedang_dimasak', 'siap', 'diambil', 'dihantar') NOT NULL DEFAULT 'menunggu',
   `harga_saat_order` DECIMAL(10,2) NOT NULL,
   `nama_saat_order_my` VARCHAR(150) NOT NULL,
   `nama_saat_order_en` VARCHAR(150) NOT NULL,
@@ -226,7 +231,8 @@ INSERT INTO `users` (`shop_id`, `username`, `password_hash`, `role`, `nama_papar
 (@shop_id, 'owner',   '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'owner',   'Pemilik Demo'),
 (@shop_id, 'kasir',   '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'kasir',   'Kasir'),
 (@shop_id, 'dapur',   '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'dapur',   'Dapur'),
-(@shop_id, 'minuman', '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'minuman', 'Minuman');
+(@shop_id, 'minuman', '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'minuman', 'Minuman'),
+(@shop_id, 'waiter',  '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'waiter',  'Waiter');
 
 INSERT INTO `tables` (`shop_id`, `nomor_meja`, `token_akses`, `status`) VALUES
 (@shop_id, '1', SHA2(CONCAT('meja1-', UUID()), 256), 'aktif'),

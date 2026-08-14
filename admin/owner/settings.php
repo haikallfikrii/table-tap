@@ -28,6 +28,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $namaKedai = trim((string) ($_POST['nama_kedai'] ?? ''));
         $sstEnabled = isset($_POST['sst_enabled']) ? 1 : 0;
         $sstRate = (float) ($_POST['sst_rate'] ?? 6);
+        $soundMode = (string) ($_POST['sound_mode'] ?? 'until_cleared');
+        if (!in_array($soundMode, ['until_cleared', 'count', 'duration'], true)) {
+            $soundMode = 'until_cleared';
+        }
+        $soundCount = max(1, min(50, (int) ($_POST['sound_repeat_count'] ?? 8)));
+        $soundDuration = max(3, min(300, (int) ($_POST['sound_duration_sec'] ?? 45)));
+        $soundInterval = max(400, min(5000, (int) ($_POST['sound_interval_ms'] ?? 900)));
+        $soundVolume = max(20, min(100, (int) ($_POST['sound_volume'] ?? 100)));
         if ($namaKedai === '') {
             throw new RuntimeException(t('shop_name') . ' required');
         }
@@ -35,8 +43,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             throw new RuntimeException('SST rate invalid');
         }
         $pdo->prepare(
-            'UPDATE shops SET nama_kedai = ?, sst_enabled = ?, sst_rate = ? WHERE id = ?'
-        )->execute([$namaKedai, $sstEnabled, $sstRate, $shopId]);
+            'UPDATE shops SET nama_kedai = ?, sst_enabled = ?, sst_rate = ?,
+                    sound_mode = ?, sound_repeat_count = ?, sound_duration_sec = ?,
+                    sound_interval_ms = ?, sound_volume = ?
+             WHERE id = ?'
+        )->execute([
+            $namaKedai, $sstEnabled, $sstRate,
+            $soundMode, $soundCount, $soundDuration, $soundInterval, $soundVolume,
+            $shopId,
+        ]);
 
         // refresh session brand
         startAppSession();
@@ -91,6 +106,32 @@ $retentionLabel = $shop['retention_days'] === null
     <div class="form-group">
       <label><?= e(t('sst_rate')) ?> (%)</label>
       <input type="number" step="0.01" min="0" max="100" name="sst_rate" value="<?= e(number_format((float) $shop['sst_rate'], 2, '.', '')) ?>">
+    </div>
+    <h3 style="margin:22px 0 8px"><?= e(t('sound_settings')) ?></h3>
+    <p class="order-meta" style="margin:0 0 12px"><?= e(t('sound_settings_hint')) ?></p>
+    <div class="form-group">
+      <label><?= e(t('sound_mode')) ?></label>
+      <select name="sound_mode">
+        <option value="until_cleared" <?= ($shop['sound_mode'] ?? '') === 'until_cleared' ? 'selected' : '' ?>><?= e(t('sound_mode_until')) ?></option>
+        <option value="count" <?= ($shop['sound_mode'] ?? '') === 'count' ? 'selected' : '' ?>><?= e(t('sound_mode_count')) ?></option>
+        <option value="duration" <?= ($shop['sound_mode'] ?? '') === 'duration' ? 'selected' : '' ?>><?= e(t('sound_mode_duration')) ?></option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label><?= e(t('sound_repeat_count')) ?></label>
+      <input type="number" min="1" max="50" name="sound_repeat_count" value="<?= (int) ($shop['sound_repeat_count'] ?? 8) ?>">
+    </div>
+    <div class="form-group">
+      <label><?= e(t('sound_duration_sec')) ?></label>
+      <input type="number" min="3" max="300" name="sound_duration_sec" value="<?= (int) ($shop['sound_duration_sec'] ?? 45) ?>">
+    </div>
+    <div class="form-group">
+      <label><?= e(t('sound_interval_ms')) ?></label>
+      <input type="number" min="400" max="5000" step="100" name="sound_interval_ms" value="<?= (int) ($shop['sound_interval_ms'] ?? 900) ?>">
+    </div>
+    <div class="form-group">
+      <label><?= e(t('sound_volume')) ?> (%)</label>
+      <input type="number" min="20" max="100" name="sound_volume" value="<?= (int) ($shop['sound_volume'] ?? 100) ?>">
     </div>
     <button type="submit" class="btn btn-primary"><?= e(t('save')) ?></button>
   </form>

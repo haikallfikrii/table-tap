@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
+require_once dirname(__DIR__, 2) . '/includes/shop.php';
 
 $user = requireLoginApi(['kasir', 'owner']);
 $shopId = requireShopIdApi();
@@ -13,6 +14,7 @@ $sinceId = max(0, (int) ($_GET['since_id'] ?? 0));
 $lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
 
 $pdo = db();
+$shop = findShopById($shopId);
 
 $stmt = $pdo->prepare(
     "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar,
@@ -111,6 +113,7 @@ jsonResponse([
     'server_time' => date('c'),
     'max_id' => $maxId,
     'new_order_ids' => $newIds,
+    'sound' => shopSoundSettings($shop),
     'stats' => [
         'active_orders' => count($resultOrders),
         'unpaid_orders' => $unpaidCount,
