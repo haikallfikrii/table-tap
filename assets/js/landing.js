@@ -281,7 +281,7 @@
     proto.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-demo-act]');
       if (!btn) return;
-      var card = btn.closest('.o-card');
+      var card = btn.closest('[data-demo-card]');
       var act = btn.getAttribute('data-demo-act');
       ping();
 
@@ -292,24 +292,29 @@
         if (unpaid) unpaid.remove();
         btn.disabled = true;
         btn.textContent = '✓';
-        var id = card.getAttribute('data-demo-card');
-        if (id) restoreCard(id);
+        restoreCard(card.getAttribute('data-demo-card'));
       }
 
       if (act === 'cook' && card) {
-        card.classList.remove('warn');
-        card.classList.add('info');
+        card.classList.remove('menunggu');
+        card.classList.add('sedang_dimasak');
         btn.disabled = true;
       }
 
-      if ((act === 'ready' || act === 'pickup') && card) {
-        card.classList.remove('warn', 'info');
-        card.classList.add('done');
-        var acts = card.querySelector('.demo-acts');
+      if (act === 'ready' && card) {
+        card.classList.remove('menunggu', 'sedang_dimasak');
+        card.classList.add('siap', 'done');
+        var acts = card.querySelector('.kitchen-actions');
         if (acts) acts.remove();
-        else btn.remove();
-        var id2 = card.getAttribute('data-demo-card');
-        if (id2) restoreCard(id2);
+        restoreCard(card.getAttribute('data-demo-card'));
+      }
+
+      if (act === 'pickup' && card) {
+        card.classList.remove('siap');
+        card.classList.add('diambil', 'done');
+        var waitActs = card.querySelector('.kitchen-actions');
+        if (waitActs) waitActs.remove();
+        restoreCard(card.getAttribute('data-demo-card'));
       }
     });
   }
