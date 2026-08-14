@@ -146,4 +146,183 @@
   /* ---------- Footer year ---------- */
   var yearEl = document.getElementById('lp-year');
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+
+  /* ---------- Hero phone story loop ---------- */
+  var hero = document.getElementById('hero-phone');
+  var heroCap = document.getElementById('hero-phone-caption');
+  var cartBar = document.getElementById('hero-cart-bar');
+  var cartN = document.getElementById('hero-cart-n');
+  var cartRm = document.getElementById('hero-cart-rm');
+  var prices = [8, 7, 2.5];
+  var qty = [0, 0, 0];
+  var heroTimer = 0;
+
+  function heroCaption(scene) {
+    if (!hero || !heroCap) return;
+    heroCap.textContent = hero.getAttribute('data-cap-' + scene) || '';
+  }
+
+  function setHeroScene(scene) {
+    if (!hero) return;
+    hero.setAttribute('data-scene', scene);
+    heroCaption(scene);
+  }
+
+  function bumpCart() {
+    var n = qty[0] + qty[1] + qty[2];
+    var rm = qty[0] * prices[0] + qty[1] * prices[1] + qty[2] * prices[2];
+    if (cartN) cartN.textContent = String(n);
+    if (cartRm) cartRm.textContent = 'RM ' + rm.toFixed(2);
+    if (cartBar) cartBar.classList.toggle('show', n > 0);
+  }
+
+  function tapItem(i) {
+    var el = hero && hero.querySelector('.ps-item[data-tap="' + i + '"]');
+    if (!el) return;
+    el.classList.add('hit');
+    qty[i] += 1;
+    bumpCart();
+    setTimeout(function () { el.classList.remove('hit'); }, 420);
+  }
+
+  function resetHeroCart() {
+    qty = [0, 0, 0];
+    bumpCart();
+    if (hero) {
+      hero.querySelectorAll('.ps-item.hit').forEach(function (el) {
+        el.classList.remove('hit');
+      });
+    }
+  }
+
+  function later(ms) {
+    return new Promise(function (resolve) {
+      heroTimer = window.setTimeout(resolve, ms);
+    });
+  }
+
+  async function heroLoop() {
+    if (!hero) return;
+    while (true) {
+      resetHeroCart();
+      setHeroScene('scan');
+      await later(reduceMotion ? 1600 : 2200);
+
+      setHeroScene('menu');
+      if (!reduceMotion) {
+        await later(500);
+        tapItem(0);
+        await later(520);
+        tapItem(0);
+        await later(520);
+        tapItem(2);
+        await later(900);
+      } else {
+        qty = [2, 0, 1];
+        bumpCart();
+        await later(1600);
+      }
+
+      setHeroScene('cart');
+      await later(reduceMotion ? 1600 : 2400);
+
+      setHeroScene('done');
+      await later(reduceMotion ? 1600 : 2200);
+    }
+  }
+
+  if (hero) {
+    heroLoop();
+  }
+
+  /* ---------- Desktop cinema loop ---------- */
+  var cinema = document.getElementById('desk-cinema');
+  var cinemaTitle = document.getElementById('cinema-title');
+  if (cinema) {
+    var scenes = cinema.querySelectorAll('.tb-scene');
+    var ci = 0;
+    function cinemaTick() {
+      if (window.matchMedia('(max-width: 899px)').matches) return;
+      ci = (ci + 1) % scenes.length;
+      scenes.forEach(function (s, i) { s.classList.toggle('on', i === ci); });
+      var next = scenes[ci];
+      if (cinemaTitle && next) {
+        cinemaTitle.textContent = next.getAttribute('data-title') || '';
+      }
+    }
+    setInterval(cinemaTick, reduceMotion ? 4000 : 2800);
+  }
+
+  /* ---------- Interactive demo + real dashboard sound ---------- */
+  var proto = document.getElementById('demo-proto');
+  var soundBtn = document.getElementById('demo-sound-btn');
+  var Sound = window.TableTapSound;
+  var originals = {};
+
+  if (proto) {
+    proto.querySelectorAll('[data-demo-card]').forEach(function (card) {
+      originals[card.getAttribute('data-demo-card')] = card.outerHTML;
+    });
+  }
+
+  if (Sound && soundBtn) {
+    Sound.bindButton(soundBtn, { on: soundBtn.getAttribute('data-label-on') || 'Sound on' });
+  }
+
+  function ping() {
+    if (Sound && Sound.isEnabled()) Sound.beep();
+  }
+
+  function restoreCard(id, delay) {
+    window.setTimeout(function () {
+      var live = proto && proto.querySelector('[data-demo-card="' + id + '"]');
+      if (!live || !originals[id]) return;
+      live.outerHTML = originals[id];
+    }, delay || 4200);
+  }
+
+  if (proto) {
+    proto.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-demo-act]');
+      if (!btn) return;
+      var card = btn.closest('.o-card');
+      var act = btn.getAttribute('data-demo-act');
+      ping();
+
+      if (act === 'pay' && card) {
+        card.classList.remove('unpaid');
+        card.classList.add('done');
+        var unpaid = card.querySelector('[data-unpaid]');
+        if (unpaid) unpaid.remove();
+        btn.disabled = true;
+        btn.textContent = '✓';
+        var id = card.getAttribute('data-demo-card');
+        if (id) restoreCard(id);
+      }
+
+      if (act === 'cook' && card) {
+        card.classList.remove('warn');
+        card.classList.add('info');
+        btn.disabled = true;
+      }
+
+      if ((act === 'ready' || act === 'pickup') && card) {
+        card.classList.remove('warn', 'info');
+        card.classList.add('done');
+        var acts = card.querySelector('.demo-acts');
+        if (acts) acts.remove();
+        else btn.remove();
+        var id2 = card.getAttribute('data-demo-card');
+        if (id2) restoreCard(id2);
+      }
+    });
+  }
+
+  var kitchenPanes = { 'pane-dapur': 1, 'pane-minuman': 1, 'pane-waiter': 1 };
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var target = tab.getAttribute('data-pane');
+      if (kitchenPanes[target]) ping();
+    });
+  });
 })();
