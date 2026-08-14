@@ -24,7 +24,7 @@ try {
     // Landing page must render even before the database is imported.
 }
 
-$yearlyMultiplier = 12; // billed annually; no free months
+$yearlyDiscount = 0.15; // 15% off annual vs paying month-to-month
 
 $plans = [
     [
@@ -526,7 +526,8 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       <div class="plans">
         <?php foreach ($plans as $plan):
           $monthly = (float) $plan['monthly'];
-          $yearly = $monthly * $yearlyMultiplier;
+          $yearly = $monthly * 12 * (1 - $yearlyDiscount);
+          $yearlyMonthly = $yearly / 12;
         ?>
           <article class="plan reveal<?= $plan['featured'] ? ' featured' : '' ?>">
             <?php if ($plan['featured']): ?>
@@ -543,7 +544,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
                 <span class="cur"><?= e($config['currency'] ?? 'RM') ?></span>
                 <span class="amt"
                       data-monthly="<?= e((string) round($monthly)) ?>"
-                      data-yearly="<?= e((string) round($yearly / 12)) ?>"><?= e(number_format(round($monthly), 0)) ?></span>
+                      data-yearly="<?= e((string) round($yearlyMonthly)) ?>"><?= e(number_format(round($monthly), 0)) ?></span>
                 <span class="per"><?= e(t('lp_per_month')) ?></span>
               </div>
               <p class="price-year" hidden>

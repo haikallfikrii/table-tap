@@ -254,7 +254,7 @@ return [
     'lp_pricing_sub'    => 'Every plan includes the cashier, kitchen and drinks screens. The main differences are table count and how long order history is kept.',
     'lp_billing_monthly' => 'Monthly',
     'lp_billing_yearly' => 'Yearly',
-    'lp_billing_save'   => '1-week free trial',
+    'lp_billing_save'   => 'Save 15% yearly',
     'lp_per_month'      => '/month',
     'lp_billed_year'    => '%s billed yearly',
     'lp_popular'        => 'Most popular',
