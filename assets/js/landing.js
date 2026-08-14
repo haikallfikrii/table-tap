@@ -241,7 +241,6 @@
     var scenes = cinema.querySelectorAll('.tb-scene');
     var ci = 0;
     function cinemaTick() {
-      if (window.matchMedia('(max-width: 899px)').matches) return;
       ci = (ci + 1) % scenes.length;
       scenes.forEach(function (s, i) { s.classList.toggle('on', i === ci); });
       var next = scenes[ci];

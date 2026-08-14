@@ -340,8 +340,8 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
     </div>
   </section>
 
-  <!-- ================= DESKTOP CINEMA ================= -->
-  <section class="desk-cinema" id="cinema" aria-hidden="true">
+  <!-- ================= STAFF FLOW ================= -->
+  <section class="staff-cinema" id="cinema">
     <div class="wrap">
       <div class="sec-head center">
         <span class="kicker"><?= e(t('lp_cinema_kicker')) ?></span>
@@ -349,39 +349,90 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       </div>
       <div class="tablet-frame" id="desk-cinema">
         <div class="tb-chrome">
-          <span class="tb-dots"></span>
+          <span class="tb-dots" aria-hidden="true"></span>
           <span class="tb-title" id="cinema-title"><?= e(t('owner_title')) ?></span>
         </div>
         <div class="tb-body">
           <div class="tb-scene on" data-role="owner" data-title="<?= e(t('owner_title')) ?>">
-            <div class="tb-stats">
-              <div><b>RM 186</b><span><?= e(t('income')) ?></span></div>
-              <div><b>12</b><span><?= e(t('orders_active')) ?></span></div>
-              <div><b>4</b><span><?= e(t('manage_tables')) ?></span></div>
+            <div class="stat-row">
+              <div class="stat-card">
+                <div class="label"><?= e(t('income')) ?> (<?= e(t('filter_day')) ?>)</div>
+                <div class="value">RM 186.00</div>
+              </div>
+              <div class="stat-card">
+                <div class="label"><?= e(t('expenses')) ?> (<?= e(t('filter_day')) ?>)</div>
+                <div class="value">RM 42.00</div>
+              </div>
+              <div class="stat-card">
+                <div class="label"><?= e(t('profit')) ?></div>
+                <div class="value">RM 144.00</div>
+              </div>
+              <div class="stat-card">
+                <div class="label"><?= e(t('manage_menu')) ?> / <?= e(t('manage_tables')) ?></div>
+                <div class="value" style="font-size:1.2rem">18 · 8</div>
+              </div>
             </div>
-            <div class="tb-row"><span><?= e(t('manage_menu')) ?></span><span><?= e(t('manage_users')) ?></span></div>
+            <div class="table-grid cinema-hub">
+              <div class="order-card">
+                <div class="table-num" style="font-size:1.25rem"><?= e(t('manage_menu')) ?></div>
+                <p class="order-meta">CRUD · stok</p>
+              </div>
+              <div class="order-card">
+                <div class="table-num" style="font-size:1.25rem"><?= e(t('manage_users')) ?></div>
+                <p class="order-meta">kasir · dapur · waiter</p>
+              </div>
+            </div>
           </div>
+
           <div class="tb-scene" data-role="kasir" data-title="<?= e(t('kasir_title')) ?>">
-            <article class="o-card unpaid tb-mini">
-              <div class="o-table"><?= e(t('table_n', '5')) ?></div>
-              <div class="o-meta">#1042 · <?= e(t('takeaway')) ?></div>
-              <div class="o-foot"><span class="o-total">RM 18.50</span><span class="btn btn-primary btn-sm"><?= e(t('mark_paid')) ?></span></div>
+            <article class="order-card unpaid">
+              <div class="order-card-header">
+                <div>
+                  <div class="table-num"><?= e(t('table_n', '5')) ?></div>
+                  <div class="order-meta">#1042 · 20:14</div>
+                </div>
+                <div class="order-flags">
+                  <span class="serve-badge bungkus"><?= e(t('takeaway')) ?></span>
+                  <span class="badge amber"><?= e(t('status_menunggu')) ?></span>
+                  <span class="badge red"><?= e(t('lp_demo_unpaid')) ?></span>
+                </div>
+              </div>
+              <ul class="order-items">
+                <li><div><span class="qty">2×</span> Nasi Lemak</div><div>RM 16.00</div></li>
+                <li><div><span class="qty">1×</span> Teh Tarik</div><div>RM 2.50</div></li>
+              </ul>
+              <div class="order-card-footer">
+                <div class="order-total">RM 18.50</div>
+                <span class="btn btn-success btn-sm"><?= e(t('mark_paid')) ?></span>
+              </div>
             </article>
           </div>
+
           <div class="tb-scene" data-role="dapur" data-title="<?= e(t('dapur_title')) ?>">
-            <article class="o-card warn tb-mini">
-              <div class="serve-pill"><?= e(t('takeaway')) ?></div>
-              <div class="o-table"><?= e(t('table_n', '5')) ?></div>
-              <h3>Nasi Lemak ×2</h3>
-              <span class="btn btn-primary btn-sm"><?= e(t('mark_ready')) ?></span>
+            <article class="kitchen-card menunggu takeaway">
+              <div class="kitchen-table"><?= e(t('table_n', '5')) ?></div>
+              <div class="serve-badge bungkus"><?= e(t('takeaway')) ?></div>
+              <div class="kitchen-qty">×2</div>
+              <h2 class="kitchen-item-name">Nasi Lemak</h2>
+              <div class="order-meta">#1042 · 20:14</div>
+              <div class="kitchen-actions">
+                <span class="btn btn-secondary btn-sm"><?= e(t('mark_cooking')) ?></span>
+                <span class="btn btn-success"><?= e(t('mark_ready')) ?></span>
+              </div>
             </article>
           </div>
+
           <div class="tb-scene" data-role="waiter" data-title="<?= e(t('waiter_title')) ?>">
-            <article class="o-card info tb-mini">
-              <div class="serve-pill"><?= e(t('takeaway')) ?></div>
-              <div class="o-table"><?= e(t('table_n', '5')) ?></div>
-              <h3>Nasi Lemak ×2</h3>
-              <span class="btn btn-primary btn-sm"><?= e(t('mark_pickup')) ?></span>
+            <article class="kitchen-card siap takeaway">
+              <div class="kitchen-table"><?= e(t('table_n', '5')) ?></div>
+              <div class="serve-badge bungkus"><?= e(t('takeaway')) ?></div>
+              <div class="kitchen-qty">×2</div>
+              <h2 class="kitchen-item-name">Nasi Lemak</h2>
+              <div class="order-meta"><?= e(t('dapur_title')) ?></div>
+              <div class="order-meta">#1042 · 20:14</div>
+              <div class="kitchen-actions">
+                <span class="btn btn-primary"><?= e(t('mark_pickup')) ?></span>
+              </div>
             </article>
           </div>
         </div>

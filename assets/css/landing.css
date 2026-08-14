@@ -910,24 +910,20 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   max-width: 320px;
 }
 
-/* ---------- Desktop cinema (tablet loop) ---------- */
-.desk-cinema {
-  display: none;
+/* ---------- Staff flow (dashboard cinema) ---------- */
+.staff-cinema {
   padding: clamp(48px, 8vw, 88px) 0;
   background: var(--surface);
   border-top: 1px solid var(--line);
 }
 
-@media (min-width: 900px) {
-  .desk-cinema { display: block; }
-}
-
 .tablet-frame {
   max-width: 760px;
+  width: 100%;
   margin: 28px auto 0;
   background: #1b1a17;
-  border-radius: 28px;
-  padding: 14px;
+  border-radius: 24px;
+  padding: 12px;
   box-shadow: var(--shadow-lg);
 }
 
@@ -935,13 +931,21 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 10px 12px;
+  padding: 4px 8px 12px;
   color: #f4efe6;
   font-weight: 800;
   font-size: 0.88rem;
+  min-width: 0;
+}
+
+.tb-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tb-dots {
+  flex: none;
   width: 42px;
   height: 10px;
   border-radius: 999px;
@@ -951,60 +955,72 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 }
 
 .tb-body {
-  position: relative;
-  min-height: 280px;
-  background: var(--bg);
-  border-radius: 18px;
+  background: #f0ebe3;
+  border-radius: 16px;
   overflow: hidden;
 }
 
 .tb-scene {
-  position: absolute;
-  inset: 0;
-  padding: 22px;
-  opacity: 0;
-  transform: translateX(16px);
-  transition: opacity 0.45s ease, transform 0.45s ease;
-  pointer-events: none;
-}
-
-.tb-scene.on {
-  opacity: 1;
-  transform: none;
-}
-
-.tb-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.tb-stats div {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 14px;
-}
-
-.tb-stats b { display: block; font-size: 1.25rem; }
-.tb-stats span { font-size: 0.75rem; color: var(--ink-soft); font-weight: 600; }
-
-.tb-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  font-weight: 700;
-}
-
-.tb-row span {
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 14px;
+  display: none;
   padding: 16px;
 }
 
-.tb-scene .btn { animation: sendPulse 1.4s ease-in-out infinite; }
+.tb-scene.on {
+  display: block;
+  animation: paneIn 0.4s ease;
+}
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+
+.stat-card .label {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stat-card .value {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.cinema-hub {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
+  gap: 10px;
+}
+
+.cinema-hub .order-card { padding: 14px; }
+.cinema-hub .order-meta { margin: 6px 0 0; }
+
+#desk-cinema .kitchen-card { min-height: 0; max-width: none; }
+#desk-cinema .btn {
+  border-radius: 10px;
+  min-height: 44px;
+  white-space: normal;
+  line-height: 1.25;
+  padding: 8px 14px;
+  pointer-events: none;
+}
+#desk-cinema .btn-secondary {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+#desk-cinema .kitchen-actions .btn,
+#desk-cinema .order-card-footer .btn { animation: sendPulse 1.4s ease-in-out infinite; }
 
 .demo-pane { display: none; }
 .demo-pane.on {
@@ -1438,7 +1454,6 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 
 /* Collapse desktop links + move primary CTA into the hamburger menu. */
 @media (max-width: 899px) {
-  .desk-cinema { display: none !important; }
   .lp-links { display: none; }
   .lp-burger { display: flex; }
   .lp-nav-actions .btn-outline,
@@ -1452,7 +1467,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .hero-cta .btn { width: 100%; }
   .foot-grid { grid-template-columns: 1fr; }
   .wrap { padding: 0 16px; }
-  .demo-shell { padding: 12px; }
+  .tablet-frame { padding: 8px; border-radius: 18px; }
+  .tb-scene { padding: 12px; }
+  .tb-chrome { padding: 2px 6px 10px; font-size: 0.8rem; }
   .kitchen-card { padding: 18px; min-height: 0; }
   .kitchen-actions .btn { flex: 1 1 100%; }
   .order-card-footer { flex-direction: column; align-items: stretch; }
