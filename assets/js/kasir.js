@@ -92,6 +92,9 @@
                 '<div class="order-meta">#' + o.id + ' · ' + esc(o.waktu_order) + '</div>' +
               '</div>' +
               '<div style="text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
+                (o.jenis_hidang === 'takeaway'
+                  ? '<span class="badge serve-badge bungkus">' + esc(i18n.takeaway || 'Takeaway') + '</span>'
+                  : '<span class="badge serve-badge sini">' + esc(i18n.dine_in || 'Dine in') + '</span>') +
                 '<span class="badge badge-' + esc(o.status_order) + '">' + esc(statusLabel(o.status_order)) + '</span>' +
                 (unpaid
                   ? '<span class="badge badge-belum_bayar">' + esc(i18n.unpaid || 'Unpaid') + '</span>'

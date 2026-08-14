@@ -31,6 +31,8 @@ $i18n = [
     'sound_on'         => t('sound_on'),
     'dapur_title'      => t('dapur_title'),
     'minuman_title'    => t('minuman_title'),
+    'dine_in'          => t('dine_in'),
+    'takeaway'         => t('takeaway'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>

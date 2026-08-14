@@ -1,7 +1,7 @@
 <?php
 /**
  * AJAX: submit customer order
- * POST JSON: { meja, token, items: [{ menu_item_id, qty, catatan }] }
+ * POST JSON: { meja, token, jenis_hidang, items: [{ menu_item_id, qty, catatan }] }
  */
 
 declare(strict_types=1);
@@ -14,6 +14,7 @@ $body = readJsonBody();
 $nomorMeja = trim((string) ($body['meja'] ?? ''));
 $token = trim((string) ($body['token'] ?? ''));
 $items = $body['items'] ?? [];
+$jenisHidang = (($body['jenis_hidang'] ?? '') === 'takeaway') ? 'takeaway' : 'dine_in';
 
 if ($nomorMeja === '' || $token === '') {
     jsonError('Invalid table access', 403);
@@ -111,8 +112,8 @@ try {
 
     $insOrder = $pdo->prepare(
         'INSERT INTO orders
-         (shop_id, table_id, waktu_order, status_order, status_bayar, subtotal, sst_rate, sst_jumlah, total_harga)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, subtotal, sst_rate, sst_jumlah, total_harga)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $insOrder->execute([
         $shopId,
@@ -120,6 +121,7 @@ try {
         appNow(),
         'menunggu',
         'belum_bayar',
+        $jenisHidang,
         $totals['subtotal'],
         $totals['sst_rate'],
         $totals['sst_jumlah'],

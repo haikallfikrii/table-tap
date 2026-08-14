@@ -17,10 +17,13 @@
 
   /** @type {Array<{id:number,nama:string,harga:number,qty:number,catatan:string}>} */
   let cart = [];
+  let serveType = 'dine_in';
 
   try {
     const saved = sessionStorage.getItem('tt_cart_' + meja);
     if (saved) cart = JSON.parse(saved) || [];
+    const savedServe = sessionStorage.getItem('tt_serve_' + meja);
+    if (savedServe === 'takeaway' || savedServe === 'dine_in') serveType = savedServe;
   } catch (e) {
     cart = [];
   }
@@ -28,7 +31,14 @@
   function persist() {
     try {
       sessionStorage.setItem('tt_cart_' + meja, JSON.stringify(cart));
+      sessionStorage.setItem('tt_serve_' + meja, serveType);
     } catch (e) { /* ignore */ }
+  }
+
+  function syncServeButtons() {
+    document.querySelectorAll('.serve-opt').forEach(function (btn) {
+      btn.classList.toggle('on', btn.getAttribute('data-serve') === serveType);
+    });
   }
 
   function cartCount() {
@@ -135,6 +145,7 @@
     persist();
     renderBar();
     renderSheet();
+    syncServeButtons();
   }
 
   function openSheet() {
@@ -167,6 +178,17 @@
   document.getElementById('cart-bar-btn')?.addEventListener('click', openSheet);
   document.getElementById('sheet-overlay')?.addEventListener('click', closeSheet);
   document.getElementById('btn-close-cart')?.addEventListener('click', closeSheet);
+
+  document.querySelectorAll('.serve-opt').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const next = btn.getAttribute('data-serve');
+      if (next === 'takeaway' || next === 'dine_in') {
+        serveType = next;
+        persist();
+        syncServeButtons();
+      }
+    });
+  });
 
   document.getElementById('cart-sheet-body')?.addEventListener('click', (e) => {
     const target = e.target;
@@ -220,6 +242,7 @@
         body: JSON.stringify({
           meja: meja,
           token: token,
+          jenis_hidang: serveType,
           items: cart.map((i) => ({
             menu_item_id: i.id,
             qty: i.qty,
@@ -233,6 +256,7 @@
       }
       try {
         sessionStorage.removeItem('tt_cart_' + meja);
+        sessionStorage.removeItem('tt_serve_' + meja);
       } catch (e) { /* ignore */ }
       window.location.href = data.redirect;
     } catch (err) {

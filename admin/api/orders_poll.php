@@ -17,7 +17,7 @@ $pdo = db();
 $shop = findShopById($shopId);
 
 $stmt = $pdo->prepare(
-    "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar,
+    "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar, o.jenis_hidang,
             o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga,
             t.nomor_meja
      FROM orders o
@@ -69,6 +69,7 @@ foreach ($orders as $o) {
         'waktu_order' => $o['waktu_order'],
         'status_order' => $o['status_order'],
         'status_bayar' => $o['status_bayar'],
+        'jenis_hidang' => ($o['jenis_hidang'] ?? 'dine_in') === 'takeaway' ? 'takeaway' : 'dine_in',
         'subtotal' => (float) $o['subtotal'],
         'sst_rate' => (float) $o['sst_rate'],
         'sst_jumlah' => (float) $o['sst_jumlah'],

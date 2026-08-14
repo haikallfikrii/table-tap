@@ -494,6 +494,27 @@ a {
   font-weight: 800;
 }
 
+.serve-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.serve-opt {
+  min-height: 48px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.serve-opt.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
 .empty-cart {
   text-align: center;
   padding: 40px 16px;

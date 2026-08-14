@@ -34,6 +34,8 @@ $i18n = [
     'status_item_menunggu' => t('status_item_menunggu'),
     'status_item_sedang'   => t('status_item_sedang'),
     'status_item_selesai'  => t('status_item_selesai'),
+    'dine_in'          => t('dine_in'),
+    'takeaway'         => t('takeaway'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>

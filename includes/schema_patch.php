@@ -49,6 +49,14 @@ function ensureAppSchema(PDO $pdo): void
                  MODIFY COLUMN status_item ENUM('menunggu','sedang_dimasak','siap','diambil','dihantar') NOT NULL DEFAULT 'menunggu'"
             );
         }
+
+        $hidangCol = $pdo->query("SHOW COLUMNS FROM orders LIKE 'jenis_hidang'")->fetch();
+        if (!$hidangCol) {
+            $pdo->exec(
+                "ALTER TABLE orders
+                 ADD COLUMN jenis_hidang ENUM('dine_in','takeaway') NOT NULL DEFAULT 'dine_in' AFTER status_bayar"
+            );
+        }
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }

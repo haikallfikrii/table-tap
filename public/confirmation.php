@@ -24,7 +24,7 @@ if ($orderId > 0 && $nomorMeja !== '' && $token !== '') {
     if ($table) {
         $brand = shopBrand($table);
         $stmt = db()->prepare(
-            'SELECT id, subtotal, sst_rate, sst_jumlah, total_harga, status_order, waktu_order
+            'SELECT id, subtotal, sst_rate, sst_jumlah, total_harga, status_order, waktu_order, jenis_hidang
              FROM orders
              WHERE id = ? AND table_id = ? AND shop_id = ?
              LIMIT 1'
@@ -59,6 +59,9 @@ if ($orderId > 0 && $nomorMeja !== '' && $token !== '') {
     <h1><?= e(t('order_sent')) ?></h1>
     <p style="color:var(--ink-muted);margin:0"><?= e($brand) ?> · <?= e(t('table')) ?> <?= e($table['nomor_meja']) ?></p>
     <div class="order-no">#<?= (int) $order['id'] ?></div>
+    <p style="margin:0;font-weight:800;font-size:1.05rem">
+      <?= e(($order['jenis_hidang'] ?? '') === 'takeaway' ? t('takeaway') : t('dine_in')) ?>
+    </p>
     <?php if ((float) $order['sst_jumlah'] > 0): ?>
       <p style="margin:0;color:var(--ink-muted);font-size:0.9rem">
         <?= e(t('subtotal')) ?>: <?= e(formatMoney($order['subtotal'])) ?><br>

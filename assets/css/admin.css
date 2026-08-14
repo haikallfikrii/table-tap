@@ -233,6 +233,31 @@ body.admin {
   background: #f3fbf6;
 }
 
+.kitchen-card.takeaway {
+  box-shadow: inset 6px 0 0 var(--accent);
+}
+
+.serve-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin: 4px 0 8px;
+}
+
+.serve-badge.bungkus {
+  background: #fff1e6;
+  color: var(--accent);
+}
+
+.serve-badge.sini {
+  background: #e6f6f4;
+  color: #1d7a70;
+}
+
 .kitchen-table {
   font-size: clamp(2rem, 5vw, 2.8rem);
   font-weight: 800;
