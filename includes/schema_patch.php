@@ -103,6 +103,14 @@ function ensureAppSchema(PDO $pdo): void
                  ADD COLUMN pickup_alert TINYINT(1) NOT NULL DEFAULT 1 AFTER nama_pelanggan'
             );
         }
+
+        $sumberCol = $pdo->query("SHOW COLUMNS FROM orders LIKE 'sumber_order'")->fetch();
+        if (!$sumberCol) {
+            $pdo->exec(
+                "ALTER TABLE orders
+                 ADD COLUMN sumber_order ENUM('qr','staf') NOT NULL DEFAULT 'qr' AFTER pickup_alert"
+            );
+        }
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }

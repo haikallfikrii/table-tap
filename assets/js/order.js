@@ -7,8 +7,14 @@
 
   const meja = root.dataset.meja;
   const token = root.dataset.token;
+  const tableId = Number(root.dataset.tableId || 0);
   const submitUrl = root.dataset.submitUrl;
   const fulfillment = root.dataset.fulfillment || 'waiter';
+  const staffMode = root.dataset.staff === '1';
+  const staffFrom = root.dataset.from || 'waiter';
+  const cartStore = (staffMode ? 'tt_staff_cart_' : 'tt_cart_') + meja;
+  const serveStore = (staffMode ? 'tt_staff_serve_' : 'tt_serve_') + meja;
+  const nameStore = (staffMode ? 'tt_staff_name_' : 'tt_name_') + meja;
   const i18n = JSON.parse(root.dataset.i18n || '{}');
 
   const money = (n) => {
@@ -21,11 +27,11 @@
   let serveType = 'dine_in';
 
   try {
-    const saved = sessionStorage.getItem('tt_cart_' + meja);
+    const saved = sessionStorage.getItem(cartStore);
     if (saved) cart = JSON.parse(saved) || [];
-    const savedServe = sessionStorage.getItem('tt_serve_' + meja);
+    const savedServe = sessionStorage.getItem(serveStore);
     if (savedServe === 'takeaway' || savedServe === 'dine_in') serveType = savedServe;
-    const savedName = sessionStorage.getItem('tt_name_' + meja);
+    const savedName = sessionStorage.getItem(nameStore);
     const nameInput = document.getElementById('guest-name');
     if (nameInput && savedName) nameInput.value = savedName;
   } catch (e) {
@@ -34,10 +40,10 @@
 
   function persist() {
     try {
-      sessionStorage.setItem('tt_cart_' + meja, JSON.stringify(cart));
-      sessionStorage.setItem('tt_serve_' + meja, serveType);
+      sessionStorage.setItem(cartStore, JSON.stringify(cart));
+      sessionStorage.setItem(serveStore, serveType);
       const nameInput = document.getElementById('guest-name');
-      if (nameInput) sessionStorage.setItem('tt_name_' + meja, nameInput.value.trim());
+      if (nameInput) sessionStorage.setItem(nameStore, nameInput.value.trim());
     } catch (e) { /* ignore */ }
   }
 
@@ -315,16 +321,14 @@
       return;
     }
     let guestName = '';
-    if (fulfillment === 'self_pickup') {
-      const nameInput = document.getElementById('guest-name');
-      guestName = (nameInput && nameInput.value ? nameInput.value : '').trim();
-      if (guestName.length < 2) {
-        alert(i18n.guest_name_required || 'Enter your name');
-        if (nameInput) nameInput.focus();
-        return;
-      }
+    const nameInput = document.getElementById('guest-name');
+    if (nameInput) guestName = (nameInput.value || '').trim();
+    if (fulfillment === 'self_pickup' && guestName.length < 2) {
+      alert(i18n.guest_name_required || 'Enter your name');
+      if (nameInput) nameInput.focus();
+      return;
     }
-    if (window.TableTapSound) TableTapSound.unlock();
+    if (!staffMode && window.TableTapSound) TableTapSound.unlock();
     const btn = document.getElementById('btn-submit-order');
     if (btn) {
       btn.disabled = true;
@@ -338,6 +342,8 @@
         body: JSON.stringify({
           meja: meja,
           token: token,
+          table_id: tableId,
+          from: staffFrom,
           jenis_hidang: serveType,
           nama_pelanggan: guestName,
           items: cart.map((i) => ({
@@ -352,9 +358,9 @@
         throw new Error(data.error || i18n.order_failed);
       }
       try {
-        sessionStorage.removeItem('tt_cart_' + meja);
-        sessionStorage.removeItem('tt_serve_' + meja);
-        sessionStorage.removeItem('tt_name_' + meja);
+        sessionStorage.removeItem(cartStore);
+        sessionStorage.removeItem(serveStore);
+        sessionStorage.removeItem(nameStore);
       } catch (e) { /* ignore */ }
       window.location.href = data.redirect;
     } catch (err) {

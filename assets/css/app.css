@@ -94,6 +94,28 @@ a {
 }
 
 /* —— Customer shell —— */
+.staff-order-bar {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.staff-order-bar a {
+  color: #fff;
+  text-decoration: none;
+  opacity: 0.85;
+}
+
+.staff-order-bar a:hover { opacity: 1; }
+
 .customer-app {
   max-width: 480px;
   margin: 0 auto;

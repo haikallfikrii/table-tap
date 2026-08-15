@@ -36,6 +36,11 @@ $i18n = [
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
+<?php require dirname(__DIR__) . '/includes/staff_order_flash.php'; ?>
+
+<p style="margin:0 0 16px">
+  <a class="btn btn-primary" href="<?= e(baseUrl('admin/staff_order.php?from=waiter')) ?>"><?= e(t('staff_order')) ?></a>
+</p>
 
 <div id="waiter-root" class="kitchen-grid"
      data-poll-url="<?= e(baseUrl('admin/api/waiter_poll.php')) ?>"

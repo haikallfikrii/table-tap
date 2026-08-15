@@ -105,6 +105,7 @@
                 '<div class="table-num">' + esc(tableTitle(t.nomor_meja)) + '</div>' +
                 '<div class="order-meta">#' + o.id + ' · ' + esc(o.waktu_order) +
                   (o.nama_pelanggan ? ' · ' + esc(o.nama_pelanggan) : '') +
+                  (o.sumber_order === 'staf' ? ' · ' + esc(i18n.sourced_staff || 'Staff') : '') +
                 '</div>' +
               '</div>' +
               '<div style="text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +

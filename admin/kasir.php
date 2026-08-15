@@ -43,9 +43,15 @@ $i18n = [
     'takeaway'      => t('takeaway'),
     'mark_collected'=> t('mark_collected'),
     'silence_alert' => t('silence_alert'),
+    'sourced_staff' => t('sourced_staff'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
+<?php require dirname(__DIR__) . '/includes/staff_order_flash.php'; ?>
+
+<p style="margin:0 0 16px">
+  <a class="btn btn-primary" href="<?= e(baseUrl('admin/staff_order.php?from=kasir')) ?>"><?= e(t('staff_order')) ?></a>
+</p>
 
 <div class="stat-row">
   <div class="stat-card">
