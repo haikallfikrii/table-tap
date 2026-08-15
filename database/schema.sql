@@ -15,6 +15,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS `order_items`;
 DROP TABLE IF EXISTS `orders`;
+DROP TABLE IF EXISTS `menu_photos`;
 DROP TABLE IF EXISTS `menu_items`;
 DROP TABLE IF EXISTS `tables`;
 DROP TABLE IF EXISTS `expenses`;
@@ -112,8 +113,8 @@ CREATE TABLE `menu_items` (
   `shop_id` INT UNSIGNED NOT NULL,
   `nama_my` VARCHAR(150) NOT NULL,
   `nama_en` VARCHAR(150) NOT NULL,
-  `deskripsi_my` VARCHAR(500) DEFAULT NULL,
-  `deskripsi_en` VARCHAR(500) DEFAULT NULL,
+  `deskripsi_my` TEXT DEFAULT NULL,
+  `deskripsi_en` TEXT DEFAULT NULL,
   `harga` DECIMAL(10,2) NOT NULL,
   `kategori` ENUM('makanan', 'minuman') NOT NULL,
   `foto_url` VARCHAR(255) DEFAULT NULL,
@@ -126,6 +127,24 @@ CREATE TABLE `menu_items` (
   KEY `idx_shop_kategori_stok` (`shop_id`, `kategori`, `status_stok`, `is_active`),
   CONSTRAINT `fk_menu_shop`
     FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Extra gallery photos (Pro package)
+CREATE TABLE `menu_photos` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `shop_id` INT UNSIGNED NOT NULL,
+  `menu_item_id` INT UNSIGNED NOT NULL,
+  `foto_url` VARCHAR(255) NOT NULL,
+  `urutan` INT NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_menu_photos_item` (`shop_id`, `menu_item_id`),
+  CONSTRAINT `fk_menu_photos_shop`
+    FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `fk_menu_photos_item`
+    FOREIGN KEY (`menu_item_id`) REFERENCES `menu_items` (`id`)
     ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -73,6 +73,28 @@ function ensureAppSchema(PDO $pdo): void
                  ADD COLUMN nama_pelanggan VARCHAR(40) DEFAULT NULL AFTER jenis_hidang"
             );
         }
+
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS menu_photos (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                shop_id INT UNSIGNED NOT NULL,
+                menu_item_id INT UNSIGNED NOT NULL,
+                foto_url VARCHAR(255) NOT NULL,
+                urutan INT NOT NULL DEFAULT 0,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                KEY idx_menu_photos_item (shop_id, menu_item_id)
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        $descCol = $pdo->query("SHOW COLUMNS FROM menu_items LIKE 'deskripsi_my'")->fetch();
+        if ($descCol && stripos((string) $descCol['Type'], 'varchar') !== false) {
+            $pdo->exec(
+                'ALTER TABLE menu_items
+                 MODIFY COLUMN deskripsi_my TEXT NULL,
+                 MODIFY COLUMN deskripsi_en TEXT NULL'
+            );
+        }
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }

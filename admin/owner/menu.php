@@ -21,6 +21,9 @@ $nav = 'menu';
 $flash = '';
 $error = '';
 $pdo = db();
+$shop = getShopOrFail($shopId);
+$canGallery = shopHasFeature($shop, 'menu_gallery');
+$maxGallery = 6;
 
 function handleMenuUpload(array $file, array $config): ?string
 {
@@ -53,6 +56,36 @@ function handleMenuUpload(array $file, array $config): ?string
     return 'assets/uploads/menu/' . $name;
 }
 
+function saveGalleryUploads(PDO $pdo, int $shopId, int $menuId, array $files, array $config, int $max): void
+{
+    $countStmt = $pdo->prepare('SELECT COUNT(*) FROM menu_photos WHERE shop_id = ? AND menu_item_id = ?');
+    $countStmt->execute([$shopId, $menuId]);
+    $have = (int) $countStmt->fetchColumn();
+    if (!isset($files['name']) || !is_array($files['name'])) {
+        return;
+    }
+    $n = count($files['name']);
+    for ($i = 0; $i < $n; $i++) {
+        if ($have >= $max) {
+            break;
+        }
+        $one = [
+            'name' => $files['name'][$i] ?? '',
+            'type' => $files['type'][$i] ?? '',
+            'tmp_name' => $files['tmp_name'][$i] ?? '',
+            'error' => $files['error'][$i] ?? UPLOAD_ERR_NO_FILE,
+            'size' => $files['size'][$i] ?? 0,
+        ];
+        $url = handleMenuUpload($one, $config);
+        if ($url) {
+            $pdo->prepare(
+                'INSERT INTO menu_photos (shop_id, menu_item_id, foto_url, urutan) VALUES (?, ?, ?, ?)'
+            )->execute([$shopId, $menuId, $url, $have]);
+            $have++;
+        }
+    }
+}
+
 // Actions
 $action = $_POST['action'] ?? '';
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -71,6 +104,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             if ($namaMy === '' || $namaEn === '' || $harga < 0) {
                 throw new RuntimeException('Nama dan harga wajib diisi');
             }
+            if (function_exists('mb_strlen')) {
+                if (mb_strlen($descMy) > 2000) {
+                    $descMy = mb_substr($descMy, 0, 2000);
+                }
+                if (mb_strlen($descEn) > 2000) {
+                    $descEn = mb_substr($descEn, 0, 2000);
+                }
+            }
 
             $fotoUrl = null;
             if (!empty($_FILES['foto'])) {
@@ -84,6 +125,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                 );
                 $stmt->execute([$shopId, $namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $fotoUrl, $stok, $urutan]);
+                $newId = (int) $pdo->lastInsertId();
+                if ($canGallery && $newId > 0 && !empty($_FILES['gallery'])) {
+                    saveGalleryUploads($pdo, $shopId, $newId, $_FILES['gallery'], $config, $maxGallery);
+                }
                 $flash = 'OK';
             } else {
                 if ($id <= 0) {
@@ -104,6 +149,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     );
                     $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $stok, $urutan, $id, $shopId]);
                 }
+                if ($canGallery && !empty($_FILES['gallery'])) {
+                    saveGalleryUploads($pdo, $shopId, $id, $_FILES['gallery'], $config, $maxGallery);
+                }
                 $flash = 'OK';
             }
             redirect(baseUrl('admin/owner/menu.php?ok=1'));
@@ -117,6 +165,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                  WHERE id = ? AND shop_id = ?"
             )->execute([$id, $shopId]);
             redirect(baseUrl('admin/owner/menu.php?ok=1'));
+        }
+
+        if ($action === 'delete_photo') {
+            if (!$canGallery) {
+                throw new RuntimeException(t('gallery_upgrade'));
+            }
+            $photoId = (int) ($_POST['photo_id'] ?? 0);
+            $pdo->prepare('DELETE FROM menu_photos WHERE id = ? AND shop_id = ?')->execute([$photoId, $shopId]);
+            $back = (int) ($_POST['id'] ?? 0);
+            redirect(baseUrl('admin/owner/menu.php' . ($back > 0 ? ('?edit=' . $back) : '?ok=1')));
         }
 
         if ($action === 'delete') {
@@ -135,6 +193,13 @@ if ($editId > 0) {
     $s = $pdo->prepare('SELECT * FROM menu_items WHERE id = ? AND shop_id = ? AND is_active = 1 LIMIT 1');
     $s->execute([$editId, $shopId]);
     $editItem = $s->fetch() ?: null;
+}
+
+$editPhotos = [];
+if ($editItem && $canGallery) {
+    $ps = $pdo->prepare('SELECT id, foto_url FROM menu_photos WHERE shop_id = ? AND menu_item_id = ? ORDER BY urutan, id');
+    $ps->execute([$shopId, (int) $editItem['id']]);
+    $editPhotos = $ps->fetchAll();
 }
 
 $itemsStmt = $pdo->prepare(
@@ -195,18 +260,45 @@ if (isset($_GET['ok'])) {
         <label>Urutan</label>
         <input type="number" name="urutan" value="<?= e((string) ($editItem['urutan'] ?? '0')) ?>">
       </div>
-      <div class="form-group">
+      <div class="form-group" style="grid-column:1/-1">
         <label><?= e(t('desc_my')) ?></label>
-        <input name="deskripsi_my" value="<?= e($editItem['deskripsi_my'] ?? '') ?>">
+        <?php if ($canGallery): ?>
+          <textarea name="deskripsi_my" rows="4"><?= e($editItem['deskripsi_my'] ?? '') ?></textarea>
+        <?php else: ?>
+          <input name="deskripsi_my" value="<?= e($editItem['deskripsi_my'] ?? '') ?>">
+        <?php endif; ?>
       </div>
-      <div class="form-group">
+      <div class="form-group" style="grid-column:1/-1">
         <label><?= e(t('desc_en')) ?></label>
-        <input name="deskripsi_en" value="<?= e($editItem['deskripsi_en'] ?? '') ?>">
+        <?php if ($canGallery): ?>
+          <textarea name="deskripsi_en" rows="4"><?= e($editItem['deskripsi_en'] ?? '') ?></textarea>
+        <?php else: ?>
+          <input name="deskripsi_en" value="<?= e($editItem['deskripsi_en'] ?? '') ?>">
+        <?php endif; ?>
       </div>
       <div class="form-group">
         <label><?= e(t('photo')) ?></label>
         <input type="file" name="foto" accept="image/jpeg,image/png,image/webp">
       </div>
+      <?php if ($canGallery): ?>
+        <div class="form-group" style="grid-column:1/-1">
+          <label><?= e(t('gallery_photos')) ?></label>
+          <p class="order-meta" style="margin:0 0 8px"><?= e(t('gallery_photos_hint')) ?></p>
+          <input type="file" name="gallery[]" accept="image/jpeg,image/png,image/webp" multiple>
+          <?php if ($editPhotos): ?>
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">
+              <?php foreach ($editPhotos as $ph): ?>
+                <div style="text-align:center">
+                  <img src="<?= e(baseUrl($ph['foto_url'])) ?>" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:8px;display:block">
+                  <button type="submit" form="delete-photo-<?= (int) $ph['id'] ?>" class="btn btn-ghost btn-sm" style="color:var(--danger);margin-top:4px"><?= e(t('delete')) ?></button>
+                </div>
+              <?php endforeach; ?>
+            </div>
+          <?php endif; ?>
+        </div>
+      <?php else: ?>
+        <p class="order-meta" style="grid-column:1/-1"><?= e(t('gallery_upgrade')) ?></p>
+      <?php endif; ?>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button type="submit" class="btn btn-primary"><?= e(t('save')) ?></button>
@@ -215,6 +307,13 @@ if (isset($_GET['ok'])) {
       <?php endif; ?>
     </div>
   </form>
+  <?php foreach ($editPhotos as $ph): ?>
+    <form id="delete-photo-<?= (int) $ph['id'] ?>" method="post" style="display:none">
+      <input type="hidden" name="action" value="delete_photo">
+      <input type="hidden" name="photo_id" value="<?= (int) $ph['id'] ?>">
+      <input type="hidden" name="id" value="<?= (int) ($editItem['id'] ?? 0) ?>">
+    </form>
+  <?php endforeach; ?>
 </div>
 
 <div class="table-list-wrap">

@@ -129,9 +129,33 @@ function purgeExpiredOrderHistory(?int $shopId = null): int
     return $deleted;
 }
 
+function shopPackageKod(?array $shop): string
+{
+    $kod = strtolower((string) ($shop['package_kod'] ?? ''));
+    return in_array($kod, ['basic', 'standard', 'pro'], true) ? $kod : 'basic';
+}
+
+function shopPackageRank(?array $shop): int
+{
+    return ['basic' => 1, 'standard' => 2, 'pro' => 3][shopPackageKod($shop)] ?? 1;
+}
+
+function shopHasFeature(?array $shop, string $feature): bool
+{
+    $need = [
+        'self_pickup'  => 2, // Standard+
+        'menu_gallery' => 3, // Pro
+    ];
+    $required = $need[$feature] ?? 99;
+    return shopPackageRank($shop) >= $required;
+}
+
 function shopFulfillment(?array $shop): string
 {
-    return (($shop['fulfillment_mode'] ?? '') === 'self_pickup') ? 'self_pickup' : 'waiter';
+    if (($shop['fulfillment_mode'] ?? '') !== 'self_pickup') {
+        return 'waiter';
+    }
+    return shopHasFeature($shop, 'self_pickup') ? 'self_pickup' : 'waiter';
 }
 
 function normalizeCustomerName(string $name): string
