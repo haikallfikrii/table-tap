@@ -74,12 +74,12 @@ $plans = [
 ];
 
 $features = [
-    ['🍽️', t('lp_f1_t'), t('lp_f1_d')],
-    ['🔔', t('lp_f2_t'), t('lp_f2_d')],
-    ['🍳', t('lp_f3_t'), t('lp_f3_d')],
-    ['📸', t('lp_f4_t'), t('lp_f4_d')],
-    ['📊', t('lp_f5_t'), t('lp_f5_d')],
-    ['🧾', t('lp_f6_t'), t('lp_f6_d')],
+    ['qr', t('lp_f1_t'), t('lp_f1_d')],
+    ['bell', t('lp_f2_t'), t('lp_f2_d')],
+    ['cook', t('lp_f3_t'), t('lp_f3_d')],
+    ['cam', t('lp_f4_t'), t('lp_f4_d')],
+    ['chart', t('lp_f5_t'), t('lp_f5_d')],
+    ['bill', t('lp_f6_t'), t('lp_f6_d')],
 ];
 
 $steps = [
@@ -313,9 +313,23 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       </div>
 
       <div class="bento">
-        <?php foreach ($features as [$icon, $title, $desc]): ?>
-          <article class="card reveal">
-            <div class="ico"><?= $icon ?></div>
+        <?php foreach ($features as [$kind, $title, $desc]): ?>
+          <article class="card reveal" data-feat="<?= e($kind) ?>">
+            <div class="feat-ico" aria-hidden="true">
+              <?php if ($kind === 'qr'): ?>
+                <span class="fi-qr"></span><span class="fi-laser"></span>
+              <?php elseif ($kind === 'bell'): ?>
+                <span class="fi-bell"></span><span class="fi-wave"></span>
+              <?php elseif ($kind === 'cook'): ?>
+                <span class="fi-lid"></span><span class="fi-pan"></span><span class="fi-flame"></span>
+              <?php elseif ($kind === 'cam'): ?>
+                <span class="fi-cam"></span><span class="fi-flash"></span>
+              <?php elseif ($kind === 'chart'): ?>
+                <span class="fi-bar b1"></span><span class="fi-bar b2"></span><span class="fi-bar b3"></span>
+              <?php else: ?>
+                <span class="fi-bill"></span><span class="fi-tick">✓</span>
+              <?php endif; ?>
+            </div>
             <h3><?= e($title) ?></h3>
             <p><?= e($desc) ?></p>
           </article>
@@ -333,14 +347,28 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
         <p><?= e(t('lp_case_sub')) ?></p>
       </div>
 
-      <div class="case-pain reveal">
-        <div>
+      <div class="case-hook reveal">
+        <div class="hook-side chaos">
+          <div class="hook-stage" aria-hidden="true">
+            <span class="shout s1"><?= e(t('lp_case_shout1')) ?></span>
+            <span class="shout s2"><?= e(t('lp_case_shout2')) ?></span>
+            <span class="shout s3"><?= e(t('lp_case_shout3')) ?></span>
+            <span class="hook-clock">?</span>
+          </div>
           <span class="case-tag bad"><?= e(t('lp_case_pain')) ?></span>
+          <h3><?= e(t('lp_case_pain_h')) ?></h3>
           <p><?= e(t('lp_case_pain_d')) ?></p>
         </div>
-        <div class="case-pain-arrow" aria-hidden="true">→</div>
-        <div>
+        <div class="hook-vs" aria-hidden="true"><span><?= e(t('lp_case_vs')) ?></span></div>
+        <div class="hook-side calm">
+          <div class="hook-stage" aria-hidden="true">
+            <span class="hook-phone">
+              <span class="hook-ping"></span>
+              <span class="hook-ok">✓</span>
+            </span>
+          </div>
           <span class="case-tag good"><?= e(t('lp_case_fix')) ?></span>
+          <h3><?= e(t('lp_case_fix_h')) ?></h3>
           <p><?= e(t('lp_case_fix_d')) ?></p>
         </div>
       </div>
