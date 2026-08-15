@@ -198,7 +198,7 @@ return [
     'sst_enable'        => 'Aktifkan SST',
     'sst_rate'          => 'Kadar SST',
     'fulfillment'       => 'Cara pesanan diberikan',
-    'fulfillment_hint'  => 'Pilih waiter atau pelanggan ambil sendiri. Kedua-dua nampak progress langsung di telefon pelanggan. Self-pickup minta nama dan loceng berulang bila makanan siap. Kedai waiter hanya bunyi pendek setiap kali status berubah.'
+    'fulfillment_hint'  => 'Pilih waiter atau pelanggan ambil sendiri. Kedua-dua nampak progress langsung di telefon pelanggan. Self-pickup minta nama dan loceng berulang bila makanan siap. Kedai waiter hanya bunyi pendek setiap kali status berubah.',
     'fulfillment_waiter' => 'Waiter hantar pesanan',
     'fulfillment_waiter_d' => 'Dapur tanda siap, waiter ambil dan hantar. Pelanggan nampak progress langsung dengan bunyi pendek setiap kali status berubah (tiada loceng berulang).',
     'fulfillment_self'  => 'Ambil sendiri (tiada waiter)',
