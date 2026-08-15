@@ -58,7 +58,8 @@ $trackI18n = [
     'title_cooking'   => t('track_title_cooking'),
     'title_ready'     => t('track_title_ready'),
     'title_done'      => t('track_title_done'),
-    'sound_on'        => t('sound_on'),
+    'sound_popup_ok'  => t('sound_popup_ok'),
+    'i_collected'     => t('i_collected'),
 ];
 $stage = $selfPickup ? trackStageFromItems($items) : 'queue';
 $trackTitle = $selfPickup
@@ -83,15 +84,12 @@ $trackTitle = $selfPickup
     <p><?= e(t('invalid_table')) ?></p>
   </div>
 <?php else: ?>
-  <div class="confirm-page<?= $selfPickup ? ' tracking' : '' ?>"<?= $selfPickup ? ' id="track-app" data-stage="' . e($stage) . '" data-poll-url="' . e(baseUrl('public/api/order_status.php?order=' . $orderId . '&meja=' . urlencode($nomorMeja) . '&token=' . urlencode($token))) . '" data-interval="' . (int) ($config['poll_interval_ms'] ?? 4000) . '" data-lang="' . e($lang) . '" data-i18n="' . e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) . '"' : '' ?>>
+  <div class="confirm-page<?= $selfPickup ? ' tracking' : '' ?>"<?= $selfPickup ? ' id="track-app" data-stage="' . e($stage) . '" data-order="' . (int) $order['id'] . '" data-meja="' . e($table['nomor_meja']) . '" data-token="' . e($table['token_akses']) . '" data-collect-url="' . e(baseUrl('public/api/collect_order.php')) . '" data-poll-url="' . e(baseUrl('public/api/order_status.php?order=' . $orderId . '&meja=' . urlencode($nomorMeja) . '&token=' . urlencode($token))) . '" data-interval="' . (int) ($config['poll_interval_ms'] ?? 4000) . '" data-lang="' . e($lang) . '" data-i18n="' . e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) . '"' : '' ?>>
     <div class="lang-toggle" style="position:absolute;top:16px;right:16px">
       <button type="button" data-set-lang="my" class="<?= $lang === 'my' ? 'active' : '' ?>"><?= e(t('lang_my')) ?></button>
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
     </div>
     <?php if ($selfPickup): ?>
-      <div class="track-sound-bar" id="track-sound-bar">
-        <button type="button" class="btn btn-primary" id="btn-track-sound"><?= e(t('tap_alerts')) ?></button>
-      </div>
       <div class="track-hero" id="track-hero" data-stage="<?= e($stage) ?>" aria-hidden="true">
         <div class="track-stage track-stage-queue">
           <span class="orb-ring"></span>
@@ -170,11 +168,23 @@ $trackTitle = $selfPickup
           </li>
         <?php endforeach; ?>
       </ul>
+      <button type="button" class="btn btn-success" id="btn-i-collected" style="width:100%;margin-bottom:16px;<?= $stage === 'ready' ? '' : 'display:none' ?>">
+        <?= e(t('i_collected')) ?>
+      </button>
     <?php endif; ?>
     <a class="btn btn-primary" href="<?= e(orderUrl($table['nomor_meja'], $table['token_akses'])) ?>">
       <?= e(t('order_again')) ?>
     </a>
   </div>
+<?php endif; ?>
+<?php if ($order && $table && $selfPickup && $stage !== 'done'): ?>
+<div class="sound-modal" id="sound-modal" role="dialog" aria-modal="true" aria-labelledby="sound-modal-title">
+  <div class="sound-modal-card">
+    <h2 id="sound-modal-title"><?= e(t('sound_popup_title')) ?></h2>
+    <p><?= e(t('sound_popup_body')) ?></p>
+    <button type="button" class="btn btn-primary" id="btn-sound-ok" style="width:100%"><?= e(t('sound_popup_ok')) ?></button>
+  </div>
+</div>
 <?php endif; ?>
 <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
 <?php if ($order && $table && $selfPickup): ?>

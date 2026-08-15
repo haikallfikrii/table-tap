@@ -41,6 +41,8 @@ $i18n = [
     'status_item_dihantar' => t('status_item_dihantar'),
     'dine_in'       => t('dine_in'),
     'takeaway'      => t('takeaway'),
+    'mark_collected'=> t('mark_collected'),
+    'silence_alert' => t('silence_alert'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
@@ -63,6 +65,7 @@ $i18n = [
 <div id="orders-root" class="table-grid"
      data-poll-url="<?= e(baseUrl('admin/api/orders_poll.php')) ?>"
      data-paid-url="<?= e(baseUrl('admin/api/mark_paid.php')) ?>"
+     data-pickup-url="<?= e(baseUrl('admin/api/pickup_action.php')) ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 3000) ?>"
      data-lang="<?= e($lang) ?>"
      data-i18n="<?= e(json_encode($i18n, JSON_UNESCAPED_UNICODE)) ?>">

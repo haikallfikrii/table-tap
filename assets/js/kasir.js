@@ -7,6 +7,7 @@
 
   const pollUrl = root.dataset.pollUrl;
   const paidUrl = root.dataset.paidUrl;
+  const pickupUrl = root.dataset.pickupUrl;
   const interval = Number(root.dataset.interval) || 3000;
   const lang = root.dataset.lang || 'my';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
@@ -80,6 +81,19 @@
               esc(i18n.mark_paid || 'Mark paid') + '</button>'
           : '<span class="badge badge-lunas">' + esc(i18n.paid || 'Paid') + '</span>';
 
+        let pickupBtns = '';
+        if (o.has_ready) {
+          pickupBtns =
+            '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">' +
+              (o.pickup_alert
+                ? '<button type="button" class="btn btn-secondary btn-sm" data-pickup="mute" data-order="' + o.id + '">' +
+                    esc(i18n.silence_alert || 'Mute alert') + '</button>'
+                : '') +
+              '<button type="button" class="btn btn-primary btn-sm" data-pickup="collect" data-order="' + o.id + '">' +
+                esc(i18n.mark_collected || 'Collected') + '</button>' +
+            '</div>';
+        }
+
         const sstLine = (o.sst_jumlah > 0)
           ? '<div class="order-meta">SST: ' + money(o.sst_jumlah) + '</div>'
           : '';
@@ -106,7 +120,9 @@
             '<ul class="order-items">' + itemsHtml + '</ul>' +
             '<div class="order-card-footer">' +
               '<div><div class="order-total">' + money(o.total_harga) + '</div>' + sstLine + '</div>' +
-              paidBtn +
+              '<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">' +
+                paidBtn + pickupBtns +
+              '</div>' +
             '</div>' +
           '</article>'
         );
@@ -149,6 +165,28 @@
   }
 
   root.addEventListener('click', async (e) => {
+    const pickupBtn = e.target.closest('[data-pickup][data-order]');
+    if (pickupBtn && pickupUrl) {
+      const orderId = Number(pickupBtn.getAttribute('data-order'));
+      const action = pickupBtn.getAttribute('data-pickup');
+      if (!orderId) return;
+      pickupBtn.disabled = true;
+      try {
+        const res = await fetch(pickupUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ order_id: orderId, action: action }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Failed');
+        await poll();
+      } catch (err) {
+        alert(err.message || 'Error');
+        pickupBtn.disabled = false;
+      }
+      return;
+    }
     const btn = e.target.closest('[data-mark-paid]');
     if (!btn) return;
     const orderId = Number(btn.getAttribute('data-mark-paid'));

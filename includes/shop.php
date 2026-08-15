@@ -175,3 +175,32 @@ function isValidCustomerName(string $name): bool
     }
     return (bool) preg_match('/^[\p{L}\p{M}\d .\'-]+$/u', $name);
 }
+
+function mutePickupAlert(PDO $pdo, int $orderId, int $shopId): void
+{
+    try {
+        $pdo->prepare('UPDATE orders SET pickup_alert = 0 WHERE id = ? AND shop_id = ?')->execute([$orderId, $shopId]);
+    } catch (Throwable $e) {
+        // Column may be missing until schema patch runs.
+    }
+}
+
+function collectSelfPickupReadyItems(PDO $pdo, int $orderId, int $shopId): void
+{
+    $pdo->prepare(
+        "UPDATE order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         SET oi.status_item = 'dihantar'
+         WHERE o.id = ? AND o.shop_id = ? AND oi.status_item IN ('siap','diambil')"
+    )->execute([$orderId, $shopId]);
+    mutePickupAlert($pdo, $orderId, $shopId);
+    $check = $pdo->prepare(
+        "SELECT COUNT(*) FROM order_items WHERE order_id = ? AND status_item != 'dihantar'"
+    );
+    $check->execute([$orderId]);
+    if ((int) $check->fetchColumn() === 0) {
+        $pdo->prepare(
+            "UPDATE orders SET status_order = 'selesai' WHERE id = ? AND shop_id = ?"
+        )->execute([$orderId, $shopId]);
+    }
+}

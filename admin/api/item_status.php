@@ -51,12 +51,7 @@ if (in_array($status, $kitchenStatuses, true)) {
         requireLoginApi(['minuman', 'owner']);
     }
 } elseif ($status === 'dihantar' && $selfPickup) {
-    $kat = $item['kategori_saat_order'];
-    if ($kat === 'makanan') {
-        requireLoginApi(['dapur', 'owner']);
-    } else {
-        requireLoginApi(['minuman', 'owner']);
-    }
+    requireLoginApi(['dapur', 'minuman', 'kasir', 'owner']);
 } else {
     requireLoginApi(['waiter', 'owner']);
 }
@@ -68,6 +63,10 @@ if ((int) $item['shop_id'] !== $shopId) {
 
 $upd = $pdo->prepare('UPDATE order_items SET status_item = ? WHERE id = ?');
 $upd->execute([$status, $itemId]);
+
+if ($status === 'dihantar' && $selfPickup) {
+    mutePickupAlert($pdo, (int) $item['order_id'], (int) $item['shop_id']);
+}
 
 if (in_array($status, ['sedang_dimasak', 'siap', 'diambil'], true)) {
     $pdo->prepare(
