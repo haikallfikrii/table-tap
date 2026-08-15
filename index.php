@@ -29,6 +29,7 @@ $yearlyDiscount = 0.15; // 15% off annual vs paying month-to-month
 $plans = [
     [
         'name'     => t('lp_plan_basic'),
+        'kod'      => 'basic',
         'desc'     => t('lp_plan_basic_d'),
         'monthly'  => $prices['basic'],
         'featured' => false,
@@ -43,6 +44,7 @@ $plans = [
     ],
     [
         'name'     => t('lp_plan_std'),
+        'kod'      => 'standard',
         'desc'     => t('lp_plan_std_d'),
         'monthly'  => $prices['standard'],
         'featured' => true,
@@ -59,6 +61,7 @@ $plans = [
     ],
     [
         'name'     => t('lp_plan_pro'),
+        'kod'      => 'pro',
         'desc'     => t('lp_plan_pro_d'),
         'monthly'  => $prices['pro'],
         'featured' => false,
@@ -108,6 +111,8 @@ $navLinks = [
 ];
 
 $loginUrl = baseUrl('admin/login.php');
+$waBiz = 'https://wa.me/601125352270';
+$waStartUrl = $waBiz . '?text=' . rawurlencode(t('lp_wa_start'));
 $logo = assetUrl('img/brand/tabletap-icon-192.png');
 $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
 ?>
@@ -148,7 +153,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
         <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
       </div>
       <a class="btn btn-outline btn-sm" href="<?= e($loginUrl) ?>"><?= e(t('lp_login')) ?></a>
-      <a class="btn btn-primary btn-sm" href="#pricing"><?= e(t('lp_cta_start')) ?></a>
+      <a class="btn btn-primary btn-sm" href="<?= e($waStartUrl) ?>" target="_blank" rel="noopener noreferrer"><?= e(t('lp_cta_start')) ?></a>
       <button type="button" class="lp-burger" id="lp-burger" aria-expanded="false" aria-label="<?= e(t('lp_menu')) ?>">
         <span></span>
       </button>
@@ -159,7 +164,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       <a href="<?= e($href) ?>"><?= e($label) ?></a>
     <?php endforeach; ?>
     <a href="<?= e($loginUrl) ?>"><?= e(t('lp_login')) ?></a>
-    <a class="lp-mobile-cta" href="#pricing"><?= e(t('lp_cta_start')) ?></a>
+    <a class="lp-mobile-cta" href="<?= e($waStartUrl) ?>" target="_blank" rel="noopener noreferrer"><?= e(t('lp_cta_start')) ?></a>
   </nav>
 </header>
 
@@ -188,7 +193,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
           </ul>
 
           <div class="hero-cta">
-            <a class="btn btn-primary btn-lg" href="#pricing"><?= e(t('lp_cta_start')) ?> →</a>
+            <a class="btn btn-primary btn-lg" href="<?= e($waStartUrl) ?>" target="_blank" rel="noopener noreferrer"><?= e(t('lp_cta_start')) ?> →</a>
             <a class="btn btn-outline btn-lg" href="#demo"><?= e(t('lp_cta_demo')) ?></a>
           </div>
           <p class="hero-note"><?= e(t('lp_hero_note')) ?></p>
@@ -763,7 +768,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
               <?php endforeach; ?>
             </ul>
 
-            <a class="btn <?= $plan['featured'] ? 'btn-primary' : 'btn-outline' ?>" href="#contact">
+            <a class="btn <?= $plan['featured'] ? 'btn-primary' : 'btn-outline' ?>" href="<?= e($waBiz . '?text=' . rawurlencode(t('lp_wa_plan', $plan['name'], (string) round($monthly)))) ?>" target="_blank" rel="noopener noreferrer">
               <?= e(t('lp_choose')) ?>
             </a>
           </article>
@@ -804,7 +809,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
         <h2><?= e(t('lp_cta_title')) ?></h2>
         <p><?= e(t('lp_cta_sub')) ?></p>
         <div class="cta-actions">
-          <a class="btn btn-primary btn-lg" href="<?= e($loginUrl) ?>"><?= e(t('lp_cta_start')) ?> →</a>
+          <a class="btn btn-primary btn-lg" href="<?= e($waStartUrl) ?>" target="_blank" rel="noopener noreferrer"><?= e(t('lp_cta_start')) ?> →</a>
           <a class="btn btn-white btn-lg" href="#demo"><?= e(t('lp_cta_demo')) ?></a>
         </div>
       </div>
@@ -839,7 +844,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
         <ul>
           <li><a href="#faq"><?= e(t('lp_nav_faq')) ?></a></li>
           <li><a href="#pricing"><?= e(t('lp_pricing_kicker')) ?></a></li>
-          <li><a href="#contact"><?= e(t('lp_cta_start')) ?></a></li>
+          <li><a href="<?= e($waStartUrl) ?>" target="_blank" rel="noopener noreferrer"><?= e(t('lp_cta_start')) ?></a></li>
         </ul>
       </div>
 

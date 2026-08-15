@@ -232,6 +232,8 @@ return [
     'lp_hero_p2'        => 'Bilingual Malay & English',
     'lp_hero_p3'        => 'Automatic sales and profit reports',
     'lp_cta_start'      => 'Get started',
+    'lp_wa_start'       => 'Hi TableTap, I want to start a 1-week trial for my shop. Please help me get set up.',
+    'lp_wa_plan'        => 'Hi TableTap, I want the %s plan (RM %s/month). Please help me get started.',
     'lp_cta_demo'       => 'See customer demo',
     'lp_hero_note'      => '1-week free trial. No long contracts. Cancel anytime.',
 
