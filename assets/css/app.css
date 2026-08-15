@@ -962,15 +962,22 @@ a {
 }
 
 .track-items li {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  column-gap: 10px;
+  row-gap: 8px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
   font-weight: 700;
+}
+
+.track-item-name {
+  min-width: 0;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .track-item-pulse {
@@ -1005,13 +1012,16 @@ a {
 }
 
 .track-pill {
-  flex: none;
-  font-size: 0.75rem;
+  justify-self: end;
+  max-width: 100%;
+  font-size: 0.72rem;
   font-weight: 800;
-  padding: 4px 8px;
+  line-height: 1.2;
+  padding: 5px 10px;
   border-radius: 999px;
   background: var(--warning-soft);
   color: #9a5b00;
+  white-space: nowrap;
 }
 
 .track-items li.cooking .track-pill { background: var(--info-soft); color: var(--info); }
