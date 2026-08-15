@@ -95,6 +95,14 @@ function ensureAppSchema(PDO $pdo): void
                  MODIFY COLUMN deskripsi_en TEXT NULL'
             );
         }
+
+        $alertCol = $pdo->query("SHOW COLUMNS FROM orders LIKE 'pickup_alert'")->fetch();
+        if (!$alertCol) {
+            $pdo->exec(
+                'ALTER TABLE orders
+                 ADD COLUMN pickup_alert TINYINT(1) NOT NULL DEFAULT 1 AFTER nama_pelanggan'
+            );
+        }
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }

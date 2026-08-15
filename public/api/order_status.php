@@ -29,7 +29,7 @@ if (!$shop || shopFulfillment($shop) !== 'self_pickup') {
 
 $pdo = db();
 $stmt = $pdo->prepare(
-    'SELECT id, status_order, nama_pelanggan
+    'SELECT id, status_order, nama_pelanggan, pickup_alert
      FROM orders
      WHERE id = ? AND table_id = ? AND shop_id = ?
      LIMIT 1'
@@ -70,6 +70,7 @@ jsonResponse([
     'status_order' => $order['status_order'],
     'nama_pelanggan' => $order['nama_pelanggan'] ?? '',
     'stage' => trackStageFromItems($items),
+    'pickup_alert' => (int) ($order['pickup_alert'] ?? 1) === 1,
     'items' => $items,
     'ready_item_ids' => $readyIds,
     'sound' => shopSoundSettings($shop),

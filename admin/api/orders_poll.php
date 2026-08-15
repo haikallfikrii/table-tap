@@ -18,7 +18,7 @@ $shop = findShopById($shopId);
 
 $stmt = $pdo->prepare(
     "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar, o.jenis_hidang,
-            o.nama_pelanggan, o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga,
+            o.nama_pelanggan, o.pickup_alert, o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga,
             t.nomor_meja
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
@@ -62,6 +62,14 @@ foreach ($orders as $o) {
     if ($id > $sinceId) {
         $newIds[] = $id;
     }
+    $items = $itemsByOrder[$id] ?? [];
+    $hasReady = false;
+    foreach ($items as $it) {
+        if (in_array((string) $it['status_item'], ['siap', 'diambil'], true)) {
+            $hasReady = true;
+            break;
+        }
+    }
     $resultOrders[] = [
         'id' => $id,
         'table_id' => (int) $o['table_id'],
@@ -71,11 +79,13 @@ foreach ($orders as $o) {
         'status_bayar' => $o['status_bayar'],
         'jenis_hidang' => ($o['jenis_hidang'] ?? 'dine_in') === 'takeaway' ? 'takeaway' : 'dine_in',
         'nama_pelanggan' => $o['nama_pelanggan'] ?? '',
+        'pickup_alert' => (int) ($o['pickup_alert'] ?? 1) === 1,
+        'has_ready' => $hasReady,
         'subtotal' => (float) $o['subtotal'],
         'sst_rate' => (float) $o['sst_rate'],
         'sst_jumlah' => (float) $o['sst_jumlah'],
         'total_harga' => (float) $o['total_harga'],
-        'items' => $itemsByOrder[$id] ?? [],
+        'items' => $items,
     ];
 }
 
@@ -115,6 +125,7 @@ jsonResponse([
     'server_time' => date('c'),
     'max_id' => $maxId,
     'new_order_ids' => $newIds,
+    'fulfillment' => shopFulfillment($shop),
     'sound' => shopSoundSettings($shop),
     'stats' => [
         'active_orders' => count($resultOrders),

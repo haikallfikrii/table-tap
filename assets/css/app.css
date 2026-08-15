@@ -614,20 +614,39 @@ a {
   padding-top: 64px;
 }
 
-.track-sound-bar {
+.sound-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgba(26, 26, 26, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.sound-modal.hidden {
+  display: none;
+}
+
+.sound-modal-card {
   width: 100%;
+  max-width: 360px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  padding: 22px 20px 18px;
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.sound-modal-card h2 {
   margin: 0 0 8px;
+  font-size: 1.2rem;
 }
 
-.track-sound-bar .btn {
-  width: 100%;
-  animation: sound-nudge 1.6s ease-in-out infinite;
-}
-
-.track-sound-bar.on .btn {
-  animation: none;
-  background: var(--success);
-  border-color: var(--success);
+.sound-modal-card p {
+  margin: 0 0 16px;
+  color: var(--ink-muted);
 }
 
 .track-hero {
@@ -974,14 +993,9 @@ a {
   70% { box-shadow: 0 0 0 8px transparent; }
   100% { box-shadow: 0 0 0 0 transparent; }
 }
-@keyframes sound-nudge {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .track-hero *,
-  .track-sound-bar .btn,
   .track-banner.ready,
   .track-item-pulse,
   .track-steps li.is-current {

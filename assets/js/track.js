@@ -6,6 +6,7 @@
   if (!root) return;
 
   const pollUrl = root.dataset.pollUrl;
+  const collectUrl = root.dataset.collectUrl;
   const interval = Number(root.dataset.interval) || 4000;
   const lang = root.dataset.lang || 'my';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
@@ -16,16 +17,19 @@
   let primed = false;
   let busy = false;
   let alarmOn = false;
+  let muted = false;
+  let collecting = false;
 
-  if (sound) {
-    sound.armAutoUnlock();
-    sound.bindButton(document.getElementById('btn-track-sound'), {
-      on: i18n.sound_on || 'Sound on',
-    });
-    document.getElementById('btn-track-sound')?.addEventListener('click', function () {
-      document.getElementById('track-sound-bar')?.classList.add('on');
+  const modal = document.getElementById('sound-modal');
+  const okBtn = document.getElementById('btn-sound-ok');
+  if (okBtn && sound) {
+    okBtn.addEventListener('click', function () {
+      sound.unlock();
+      modal?.classList.add('hidden');
       syncReadyAlarm(lastStage);
     });
+  } else if (sound) {
+    sound.unlock();
   }
 
   function esc(s) {
@@ -64,6 +68,12 @@
     return i18n.order_queue || 'In the queue';
   }
 
+  function stopLoop() {
+    if (!sound) return;
+    sound.stopAlarm();
+    alarmOn = false;
+  }
+
   function buzz(pattern) {
     try {
       if (navigator.vibrate) navigator.vibrate(pattern);
@@ -72,6 +82,10 @@
 
   function playStageSound(key, isChange) {
     if (!sound) return;
+    if (muted) {
+      stopLoop();
+      return;
+    }
     if (key === 'ready') {
       if (!alarmOn || isChange) {
         sound.configure({
@@ -79,18 +93,14 @@
           interval_ms: 1100,
           volume: 100,
         });
-        sound.stopAlarm();
-        alarmOn = false;
+        stopLoop();
         sound.startAlarm();
         alarmOn = true;
         buzz([180, 80, 180, 80, 320]);
       }
       return;
     }
-    if (alarmOn) {
-      sound.stopAlarm();
-      alarmOn = false;
-    }
+    stopLoop();
     if (!isChange) return;
     if (key === 'cooking') {
       sound.chime('cooking');
@@ -104,6 +114,10 @@
   }
 
   function syncReadyAlarm(stage) {
+    if (muted) {
+      stopLoop();
+      return;
+    }
     if (stage === 'ready') playStageSound('ready', true);
   }
 
@@ -125,6 +139,10 @@
       el.classList.toggle('is-current', step === stage);
       el.classList.toggle('is-done', i < now);
     });
+    const collectBtn = document.getElementById('btn-i-collected');
+    if (collectBtn) {
+      collectBtn.style.display = stage === 'ready' ? '' : 'none';
+    }
     root.dataset.stage = stage;
   }
 
@@ -176,6 +194,8 @@
       if (!data.ok) return;
       const items = data.items || [];
       const stage = data.stage || 'queue';
+      muted = data.pickup_alert === false;
+      if (muted) stopLoop();
       const changes = detectChanges(items);
       render(data);
 
@@ -202,6 +222,34 @@
       busy = false;
     }
   }
+
+  document.getElementById('btn-i-collected')?.addEventListener('click', async function () {
+    if (collecting || !collectUrl) return;
+    collecting = true;
+    stopLoop();
+    muted = true;
+    this.disabled = true;
+    try {
+      const res = await fetch(collectUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          order: Number(root.dataset.order || 0),
+          meja: root.dataset.meja || '',
+          token: root.dataset.token || '',
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed');
+      await poll();
+    } catch (err) {
+      muted = false;
+      collecting = false;
+      this.disabled = false;
+    } finally {
+      collecting = false;
+    }
+  });
 
   poll();
   setInterval(poll, interval);
