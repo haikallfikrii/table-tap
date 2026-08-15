@@ -38,7 +38,7 @@ $plans = [
             t('lp_pf_menu'),
             t('lp_pf_dash'),
             t('lp_pf_hist_30'),
-            t('lp_pf_staff_3'),
+            t('lp_pf_staff_5'),
             t('lp_pf_support_mail'),
         ],
     ],
@@ -538,12 +538,12 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
               </div>
               <div class="order-card">
                 <div class="table-num" style="font-size:1.25rem"><?= e(t('manage_users')) ?></div>
-                <p class="order-meta">kasir · dapur · waiter</p>
+                <p class="order-meta">cashier · dapur · waiter</p>
               </div>
             </div>
           </div>
 
-          <div class="tb-scene" data-role="kasir" data-title="<?= e(t('kasir_title')) ?>">
+          <div class="tb-scene" data-role="kasir" data-title="<?= e(t('lp_demo_cashier')) ?>">
             <article class="order-card unpaid">
               <div class="order-card-header">
                 <div>
@@ -562,7 +562,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
               </ul>
               <div class="order-card-footer">
                 <div class="order-total">RM 18.50</div>
-                <span class="btn btn-success btn-sm"><?= e(t('mark_paid')) ?></span>
+                <span class="btn btn-success btn-sm"><?= e(t('lp_demo_paid')) ?></span>
               </div>
             </article>
           </div>
@@ -610,7 +610,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
 
       <div class="demo-shell reveal" id="demo-proto">
         <div class="demo-tabs" role="tablist">
-          <button type="button" class="demo-tab on" data-pane="pane-kasir" role="tab" aria-selected="true"><?= e(t('kasir_title')) ?></button>
+          <button type="button" class="demo-tab on" data-pane="pane-kasir" role="tab" aria-selected="true"><?= e(t('lp_demo_cashier')) ?></button>
           <button type="button" class="demo-tab" data-pane="pane-dapur" role="tab" aria-selected="false"><?= e(t('dapur_title')) ?></button>
           <button type="button" class="demo-tab" data-pane="pane-minuman" role="tab" aria-selected="false"><?= e(t('minuman_title')) ?></button>
           <button type="button" class="demo-tab" data-pane="pane-waiter" role="tab" aria-selected="false"><?= e(t('waiter_title')) ?></button>
@@ -635,7 +635,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
             </ul>
             <div class="order-card-footer">
               <div class="order-total">RM 18.50</div>
-              <button type="button" class="btn btn-success btn-sm" data-demo-act="pay"><?= e(t('mark_paid')) ?></button>
+              <button type="button" class="btn btn-success btn-sm" data-demo-act="pay"><?= e(t('lp_demo_paid')) ?></button>
             </div>
           </article>
           <article class="order-card">
@@ -851,7 +851,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       <div>
         <h4><?= e(t('lp_footer_staff')) ?></h4>
         <ul>
-          <li><a href="<?= e($loginUrl) ?>"><?= e(t('kasir_title')) ?></a></li>
+          <li><a href="<?= e($loginUrl) ?>"><?= e(t('lp_demo_cashier')) ?></a></li>
           <li><a href="<?= e($loginUrl) ?>"><?= e(t('dapur_title')) ?></a></li>
           <li><a href="<?= e($loginUrl) ?>"><?= e(t('minuman_title')) ?></a></li>
           <li><a href="<?= e($loginUrl) ?>"><?= e(t('owner_title')) ?></a></li>
