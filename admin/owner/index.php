@@ -50,7 +50,21 @@ $tableCountStmt = $pdo->prepare("SELECT COUNT(*) FROM tables WHERE shop_id = ? A
 $tableCountStmt->execute([$shopId]);
 $tableCount = (int) $tableCountStmt->fetchColumn();
 
+$ops = ownerOpsSnapshot($shopId, $shop);
+$selfPickup = ($ops['fulfillment'] ?? 'waiter') === 'self_pickup';
+$handoverUrl = $selfPickup ? baseUrl('admin/kasir.php') : baseUrl('admin/waiter.php');
+$handoverTitle = $selfPickup ? t('ops_pickup') : t('ops_handover');
+$handReadyLabel = $selfPickup ? t('ops_collect') : t('ops_ready');
+
+$adminScripts = [assetUrl('js/owner-ops.js')];
+
 $nav = 'home';
+
+function ownerOpsChip(string $label, int $n, string $id, string $mod = ''): void
+{
+    $cls = 'ops-chip' . ($mod !== '' ? ' ' . $mod : '') . ($n <= 0 ? ' hidden' : '');
+    echo '<span class="' . e($cls) . '">' . e($label) . ' <b id="' . e($id) . '">' . $n . '</b></span>';
+}
 ?>
 <?php require dirname(__DIR__, 2) . '/includes/admin_header.php'; ?>
 <?php require __DIR__ . '/_nav.php'; ?>
@@ -72,6 +86,49 @@ $nav = 'home';
     <div class="label"><?= e(t('manage_menu')) ?> / <?= e(t('manage_tables')) ?></div>
     <div class="value" style="font-size:1.2rem"><?= $menuCount ?> · <?= $tableCount ?></div>
   </div>
+</div>
+
+<div class="ops-head">
+  <h2><?= e(t('ops_live')) ?></h2>
+  <p><?= e(t('ops_open')) ?></p>
+</div>
+<div class="ops-board" id="ops-board"
+     data-poll-url="<?= e(baseUrl('admin/api/owner_ops_poll.php')) ?>"
+     data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>">
+  <a class="ops-card<?= $ops['kitchen']['items'] > 0 ? ' is-busy' : '' ?>" id="ops-card-kitchen" href="<?= e(baseUrl('admin/dapur.php')) ?>">
+    <div class="ops-kicker"><?= e(t('ops_kitchen')) ?></div>
+    <div class="ops-value"><span id="ops-kitchen-items"><?= (int) $ops['kitchen']['items'] ?></span></div>
+    <div class="ops-sub"><span id="ops-kitchen-orders"><?= (int) $ops['kitchen']['orders'] ?></span> <?= e(t('ops_orders_n')) ?></div>
+    <div class="ops-chips">
+      <?php ownerOpsChip(t('ops_queue'), (int) $ops['kitchen']['menunggu'], 'ops-kitchen-queue'); ?>
+      <?php ownerOpsChip(t('ops_cooking'), (int) $ops['kitchen']['sedang_dimasak'], 'ops-kitchen-cook', 'cook'); ?>
+    </div>
+  </a>
+  <a class="ops-card<?= $ops['drinks']['items'] > 0 ? ' is-busy' : '' ?>" id="ops-card-drinks" href="<?= e(baseUrl('admin/minuman.php')) ?>">
+    <div class="ops-kicker"><?= e(t('ops_drinks')) ?></div>
+    <div class="ops-value"><span id="ops-drinks-items"><?= (int) $ops['drinks']['items'] ?></span></div>
+    <div class="ops-sub"><span id="ops-drinks-orders"><?= (int) $ops['drinks']['orders'] ?></span> <?= e(t('ops_orders_n')) ?></div>
+    <div class="ops-chips">
+      <?php ownerOpsChip(t('ops_queue'), (int) $ops['drinks']['menunggu'], 'ops-drinks-queue'); ?>
+      <?php ownerOpsChip(t('ops_cooking'), (int) $ops['drinks']['sedang_dimasak'], 'ops-drinks-cook', 'cook'); ?>
+    </div>
+  </a>
+  <a class="ops-card<?= $ops['handover']['items'] > 0 ? ' is-busy' : '' ?>" id="ops-card-hand" href="<?= e($handoverUrl) ?>">
+    <div class="ops-kicker"><?= e($handoverTitle) ?></div>
+    <div class="ops-value"><span id="ops-hand-items"><?= (int) $ops['handover']['items'] ?></span></div>
+    <div class="ops-sub"><span id="ops-hand-orders"><?= (int) $ops['handover']['orders'] ?></span> <?= e(t('ops_orders_n')) ?></div>
+    <div class="ops-chips">
+      <?php ownerOpsChip($handReadyLabel, (int) $ops['handover']['siap'], 'ops-hand-ready', 'ready'); ?>
+      <?php if (!$selfPickup): ?>
+        <?php ownerOpsChip(t('ops_delivering'), (int) $ops['handover']['diambil'], 'ops-hand-deliver', 'deliver'); ?>
+      <?php endif; ?>
+    </div>
+  </a>
+  <a class="ops-card<?= $ops['unpaid']['orders'] > 0 ? ' is-busy is-alert' : '' ?>" id="ops-card-unpaid" href="<?= e(baseUrl('admin/kasir.php')) ?>">
+    <div class="ops-kicker"><?= e(t('ops_unpaid')) ?></div>
+    <div class="ops-value"><span id="ops-unpaid-n"><?= (int) $ops['unpaid']['orders'] ?></span></div>
+    <div class="ops-sub" id="ops-unpaid-amt"><?= e($ops['unpaid']['amount_fmt']) ?></div>
+  </a>
 </div>
 
 <div class="table-grid">
