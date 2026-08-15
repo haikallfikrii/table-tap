@@ -318,4 +318,78 @@
     });
   }
 
+  /* ---------- Case study: waiter vs pickup ---------- */
+  var casePlay = document.getElementById('case-play');
+  var caseBtns = document.querySelectorAll('[data-case]');
+  var lpHero = document.getElementById('lp-track-hero');
+  var lpTitle = document.getElementById('lp-track-title');
+  var pickupTimer = null;
+  var pickupIdx = 0;
+  var pickupStages = ['queue', 'cooking', 'ready', 'done'];
+
+  function setPickupStage(stage) {
+    if (!lpHero) return;
+    lpHero.setAttribute('data-stage', stage);
+    if (lpTitle) {
+      lpTitle.textContent = lpHero.getAttribute('data-t-' + stage) || '';
+    }
+    document.querySelectorAll('[data-lp-step]').forEach(function (el) {
+      var step = el.getAttribute('data-lp-step');
+      var order = pickupStages;
+      var i = order.indexOf(step);
+      var now = order.indexOf(stage);
+      el.classList.toggle('is-current', step === stage);
+      el.classList.toggle('is-done', i < now);
+    });
+  }
+
+  function stopPickupLoop() {
+    if (pickupTimer) {
+      clearInterval(pickupTimer);
+      pickupTimer = null;
+    }
+  }
+
+  function startPickupLoop() {
+    stopPickupLoop();
+    pickupIdx = 0;
+    setPickupStage(pickupStages[0]);
+    if (reduceMotion) return;
+    pickupTimer = setInterval(function () {
+      pickupIdx = (pickupIdx + 1) % pickupStages.length;
+      setPickupStage(pickupStages[pickupIdx]);
+    }, 1400);
+  }
+
+  function setCaseMode(mode) {
+    if (!casePlay) return;
+    casePlay.setAttribute('data-mode', mode);
+    caseBtns.forEach(function (b) {
+      var on = b.getAttribute('data-case') === mode;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    if (mode === 'pickup') startPickupLoop();
+    else stopPickupLoop();
+  }
+
+  caseBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      setCaseMode(btn.getAttribute('data-case') || 'waiter');
+    });
+  });
+
+  if (casePlay && 'IntersectionObserver' in window) {
+    var caseObs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) {
+          stopPickupLoop();
+          return;
+        }
+        if (casePlay.getAttribute('data-mode') === 'pickup') startPickupLoop();
+      });
+    }, { threshold: 0.25 });
+    caseObs.observe(casePlay);
+  }
+
 })();
