@@ -204,3 +204,88 @@ function collectSelfPickupReadyItems(PDO $pdo, int $orderId, int $shopId): void
         )->execute([$orderId, $shopId]);
     }
 }
+
+/** Live floor counts for the owner dashboard. */
+function ownerOpsSnapshot(int $shopId, ?array $shop = null): array
+{
+    $shop = $shop ?? findShopById($shopId);
+    $pickup = shopFulfillment($shop) === 'self_pickup';
+
+    $station = static function (): array {
+        return [
+            'items' => 0,
+            'orders' => 0,
+            'menunggu' => 0,
+            'sedang_dimasak' => 0,
+            'siap' => 0,
+            'diambil' => 0,
+        ];
+    };
+    $kitchen = $station();
+    $drinks = $station();
+    $handover = $station();
+    $kitOrders = [];
+    $drinkOrders = [];
+    $handOrders = [];
+
+    $stmt = db()->prepare(
+        "SELECT oi.order_id, oi.kategori_saat_order AS kat, oi.status_item AS st, COUNT(*) AS n
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         WHERE o.shop_id = ?
+           AND o.status_order != 'dibatalkan'
+           AND oi.status_item != 'dihantar'
+         GROUP BY oi.order_id, oi.kategori_saat_order, oi.status_item"
+    );
+    $stmt->execute([$shopId]);
+
+    foreach ($stmt->fetchAll() as $row) {
+        $n = (int) $row['n'];
+        $st = (string) $row['st'];
+        $oid = (int) $row['order_id'];
+        $kat = (string) $row['kat'];
+        $inKitchen = $st === 'menunggu' || $st === 'sedang_dimasak';
+        $inHandover = $pickup ? $st === 'siap' : ($st === 'siap' || $st === 'diambil');
+
+        if ($inKitchen) {
+            if ($kat === 'minuman') {
+                $drinks['items'] += $n;
+                $drinks[$st] += $n;
+                $drinkOrders[$oid] = true;
+            } else {
+                $kitchen['items'] += $n;
+                $kitchen[$st] += $n;
+                $kitOrders[$oid] = true;
+            }
+        }
+        if ($inHandover) {
+            $handover['items'] += $n;
+            $handover[$st] = ($handover[$st] ?? 0) + $n;
+            $handOrders[$oid] = true;
+        }
+    }
+
+    $kitchen['orders'] = count($kitOrders);
+    $drinks['orders'] = count($drinkOrders);
+    $handover['orders'] = count($handOrders);
+
+    $pay = db()->prepare(
+        "SELECT COUNT(*) AS n, COALESCE(SUM(total_harga), 0) AS amt
+         FROM orders
+         WHERE shop_id = ? AND status_bayar = 'belum_bayar' AND status_order != 'dibatalkan'"
+    );
+    $pay->execute([$shopId]);
+    $payRow = $pay->fetch() ?: ['n' => 0, 'amt' => 0];
+
+    return [
+        'fulfillment' => $pickup ? 'self_pickup' : 'waiter',
+        'kitchen' => $kitchen,
+        'drinks' => $drinks,
+        'handover' => $handover,
+        'unpaid' => [
+            'orders' => (int) $payRow['n'],
+            'amount' => (float) $payRow['amt'],
+            'amount_fmt' => formatMoney((float) $payRow['amt']),
+        ],
+    ];
+}

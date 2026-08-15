@@ -372,6 +372,103 @@ body.admin {
   border-color: var(--ink);
 }
 
+.ops-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 12px;
+}
+
+.ops-head h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.ops-head p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+
+.ops-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+a.ops-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+a.ops-card:hover {
+  border-color: var(--accent);
+}
+
+a.ops-card.is-busy {
+  border-color: var(--info);
+  box-shadow: 0 0 0 3px var(--info-soft);
+}
+
+a.ops-card.is-alert {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.ops-card .ops-kicker {
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ops-card .ops-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  margin: 4px 0 2px;
+  letter-spacing: -0.03em;
+}
+
+.ops-card .ops-sub {
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ops-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.ops-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--warning-soft);
+  color: #9a5b00;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.ops-chip.cook { background: var(--info-soft); color: var(--info); }
+.ops-chip.ready { background: var(--success-soft); color: var(--success); }
+.ops-chip.deliver { background: var(--info-soft); color: var(--info); }
+.ops-chip.pay { background: var(--accent-soft); color: var(--accent); }
+.ops-chip.hidden { display: none; }
+
 .table-list {
   width: 100%;
   border-collapse: collapse;
