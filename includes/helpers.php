@@ -174,6 +174,7 @@ function trackStageFromItems(array $items): string
         return 'queue';
     }
     $allDone = true;
+    $anyDeliver = false;
     $anyReady = false;
     $anyCook = false;
     foreach ($items as $it) {
@@ -181,7 +182,10 @@ function trackStageFromItems(array $items): string
         if ($st !== 'dihantar') {
             $allDone = false;
         }
-        if ($st === 'siap' || $st === 'diambil') {
+        if ($st === 'diambil') {
+            $anyDeliver = true;
+        }
+        if ($st === 'siap') {
             $anyReady = true;
         }
         if ($st === 'sedang_dimasak') {
@@ -190,6 +194,9 @@ function trackStageFromItems(array $items): string
     }
     if ($allDone) {
         return 'done';
+    }
+    if ($anyDeliver) {
+        return 'delivering';
     }
     if ($anyReady) {
         return 'ready';

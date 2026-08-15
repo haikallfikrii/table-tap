@@ -10,6 +10,8 @@
   const interval = Number(root.dataset.interval) || 4000;
   const lang = root.dataset.lang || 'my';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
+  const fulfillment = root.dataset.fulfillment || 'waiter';
+  const loopingReady = fulfillment === 'self_pickup';
   const sound = window.TableTapSound;
 
   let lastStage = root.dataset.stage || 'queue';
@@ -26,7 +28,11 @@
     okBtn.addEventListener('click', function () {
       sound.unlock();
       modal?.classList.add('hidden');
-      syncReadyAlarm(lastStage);
+      if (loopingReady) {
+        syncReadyAlarm(lastStage);
+      } else if (lastStage && lastStage !== 'queue') {
+        playStageSound(lastStage, true);
+      }
     });
   } else if (sound) {
     sound.unlock();
@@ -42,29 +48,33 @@
 
   function itemLabel(st) {
     if (st === 'sedang_dimasak') return i18n.status_cooking || 'Cooking';
-    if (st === 'siap' || st === 'diambil') return i18n.status_ready || 'Ready';
-    if (st === 'dihantar') return i18n.status_done || 'Collected';
+    if (st === 'siap') return i18n.status_ready || 'Ready';
+    if (st === 'diambil') return i18n.status_deliver || 'On the way';
+    if (st === 'dihantar') return i18n.status_done || 'Done';
     return i18n.status_queue || 'Waiting';
   }
 
   function itemClass(st) {
     if (st === 'sedang_dimasak') return 'cooking';
-    if (st === 'siap' || st === 'diambil') return 'ready';
+    if (st === 'siap') return 'ready';
+    if (st === 'diambil') return 'delivering';
     if (st === 'dihantar') return 'done';
     return 'queue';
   }
 
   function titleFor(key) {
     if (key === 'cooking') return i18n.title_cooking || 'Kitchen is cooking';
-    if (key === 'ready') return i18n.title_ready || 'Ready — please collect';
-    if (key === 'done') return i18n.title_done || 'Collected. Thank you!';
+    if (key === 'ready') return i18n.title_ready || 'Ready';
+    if (key === 'delivering') return i18n.title_delivering || 'On the way';
+    if (key === 'done') return i18n.title_done || 'Done';
     return i18n.title_queue || 'Order received';
   }
 
   function overallText(key) {
     if (key === 'cooking') return i18n.order_cooking || 'Being prepared';
-    if (key === 'ready') return i18n.order_ready || 'Ready for pickup';
-    if (key === 'done') return i18n.order_collected || 'Collected';
+    if (key === 'ready') return i18n.order_ready || 'Ready';
+    if (key === 'delivering') return i18n.order_delivering || 'On the way';
+    if (key === 'done') return i18n.order_collected || 'Done';
     return i18n.order_queue || 'In the queue';
   }
 
@@ -102,16 +112,32 @@
         stopLoop();
         return;
       }
-      if (!alarmOn || isChange) {
-        sound.configure({
-          mode: 'until_cleared',
-          interval_ms: 1100,
-          volume: 100,
-        });
-        stopLoop();
-        sound.startAlarm();
-        alarmOn = true;
-        buzz([180, 80, 180, 80, 320]);
+      if (loopingReady) {
+        if (!alarmOn || isChange) {
+          sound.configure({
+            mode: 'until_cleared',
+            interval_ms: 1100,
+            volume: 100,
+          });
+          stopLoop();
+          sound.startAlarm();
+          alarmOn = true;
+          buzz([180, 80, 180, 80, 320]);
+        }
+        return;
+      }
+      stopLoop();
+      if (isChange) {
+        sound.chime('ready');
+        buzz(120);
+      }
+      return;
+    }
+    if (key === 'delivering') {
+      stopLoop();
+      if (isChange) {
+        sound.chime('delivering');
+        buzz([80, 60, 80]);
       }
       return;
     }
@@ -126,7 +152,7 @@
   }
 
   function syncReadyAlarm(stage) {
-    if (muted) {
+    if (!loopingReady || muted) {
       stopLoop();
       return;
     }
@@ -145,15 +171,18 @@
     }
     document.querySelectorAll('#track-steps [data-step]').forEach(function (el) {
       const step = el.getAttribute('data-step');
-      const order = ['queue', 'cooking', 'ready', 'done'];
+      const order = [];
+      document.querySelectorAll('#track-steps [data-step]').forEach(function (s) {
+        order.push(s.getAttribute('data-step'));
+      });
       const i = order.indexOf(step);
       const now = order.indexOf(stage);
       el.classList.toggle('is-current', step === stage);
-      el.classList.toggle('is-done', i < now);
+      el.classList.toggle('is-done', now >= 0 && i < now);
     });
     const collectBtn = document.getElementById('btn-i-collected');
     if (collectBtn) {
-      collectBtn.style.display = stage === 'ready' ? '' : 'none';
+      collectBtn.style.display = loopingReady && stage === 'ready' ? '' : 'none';
     }
     root.dataset.stage = stage;
   }
@@ -184,7 +213,8 @@
       const prev = lastItems[it.id];
       if (prev && prev !== it.status_item) {
         if (it.status_item === 'sedang_dimasak') cooking = true;
-        if (it.status_item === 'siap' || it.status_item === 'diambil') ready = true;
+        if (it.status_item === 'siap') ready = true;
+        if (it.status_item === 'diambil') ready = true;
         if (it.status_item === 'dihantar') collected = true;
       }
     });
@@ -215,7 +245,7 @@
 
       if (!primed) {
         primed = true;
-        playStageSound(stage, stage === 'ready' || stage === 'cooking');
+        playStageSound(stage, loopingReady ? (stage === 'ready' || stage === 'cooking') : false);
         lastStage = stage;
         muted = !alertOn;
         return;

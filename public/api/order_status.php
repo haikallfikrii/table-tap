@@ -23,9 +23,11 @@ if (!$table) {
 }
 
 $shop = findShopById((int) $table['shop_id']);
-if (!$shop || shopFulfillment($shop) !== 'self_pickup') {
+if (!$shop || ($shop['status'] ?? '') !== 'aktif') {
     jsonError('Tracking unavailable', 403);
 }
+
+$fulfillment = shopFulfillment($shop);
 
 $pdo = db();
 $stmt = $pdo->prepare(
@@ -70,7 +72,8 @@ jsonResponse([
     'status_order' => $order['status_order'],
     'nama_pelanggan' => $order['nama_pelanggan'] ?? '',
     'stage' => trackStageFromItems($items),
-    'pickup_alert' => (int) ($order['pickup_alert'] ?? 1) === 1,
+    'fulfillment' => $fulfillment,
+    'pickup_alert' => $fulfillment !== 'self_pickup' || (int) ($order['pickup_alert'] ?? 1) === 1,
     'items' => $items,
     'ready_item_ids' => $readyIds,
     'sound' => shopSoundSettings($shop),
