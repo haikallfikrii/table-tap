@@ -48,9 +48,9 @@ if ($orderId > 0 && $nomorMeja !== '' && $token !== '') {
 $trackI18n = [
     'status_queue'    => t('status_item_menunggu'),
     'status_cooking'  => t('status_item_sedang'),
-    'status_ready'    => t('status_item_siap'),
+    'status_ready'    => $selfPickup ? t('status_item_siap') : t('status_item_ready_short'),
     'status_deliver'  => t('status_item_diambil'),
-    'status_done'     => $selfPickup ? t('status_item_dihantar') : t('order_arrived'),
+    'status_done'     => $selfPickup ? t('status_item_dihantar') : t('status_item_served'),
     'order_queue'     => t('order_queue'),
     'order_cooking'   => t('order_cooking'),
     'order_ready'     => $selfPickup ? t('order_ready') : t('order_ready_waiter'),
@@ -190,12 +190,12 @@ function trackStepClass(string $step, string $stage, array $order): string
         <?php foreach ($items as $it):
             $st = (string) $it['status_item'];
             $cls = $st === 'sedang_dimasak' ? 'cooking' : ($st === 'siap' ? 'ready' : ($st === 'diambil' ? 'delivering' : ($st === 'dihantar' ? 'done' : 'queue')));
-            $label = $st === 'sedang_dimasak' ? t('status_item_sedang') : ($st === 'siap' ? t('status_item_siap') : ($st === 'diambil' ? t('status_item_diambil') : ($st === 'dihantar' ? ($selfPickup ? t('status_item_dihantar') : t('order_arrived')) : t('status_item_menunggu'))));
+            $label = $st === 'sedang_dimasak' ? t('status_item_sedang') : ($st === 'siap' ? ($selfPickup ? t('status_item_siap') : t('status_item_ready_short')) : ($st === 'diambil' ? t('status_item_diambil') : ($st === 'dihantar' ? ($selfPickup ? t('status_item_dihantar') : t('status_item_served')) : t('status_item_menunggu'))));
             $nama = $lang === 'en' ? $it['nama_saat_order_en'] : $it['nama_saat_order_my'];
         ?>
           <li class="<?= e($cls) ?>">
             <span class="track-item-pulse" aria-hidden="true"></span>
-            <span><b><?= (int) $it['qty'] ?>×</b> <?= e($nama) ?></span>
+            <span class="track-item-name"><b><?= (int) $it['qty'] ?>×</b> <?= e($nama) ?></span>
             <span class="track-pill"><?= e($label) ?></span>
           </li>
         <?php endforeach; ?>

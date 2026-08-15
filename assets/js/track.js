@@ -198,7 +198,7 @@
       return (
         '<li class="' + itemClass(st) + '">' +
           '<span class="track-item-pulse" aria-hidden="true"></span>' +
-          '<span><b>' + esc(String(it.qty)) + '×</b> ' + esc(it.nama) + '</span>' +
+          '<span class="track-item-name"><b>' + esc(String(it.qty)) + '×</b> ' + esc(it.nama) + '</span>' +
           '<span class="track-pill">' + esc(itemLabel(st)) + '</span>' +
         '</li>'
       );

@@ -106,6 +106,8 @@ return [
     'status_item_siap'       => 'Siap diambil',
     'status_item_diambil'    => 'Sedang dihantar',
     'status_item_dihantar'   => 'Telah dihantar',
+    'status_item_served'     => 'Sampai',
+    'status_item_ready_short'=> 'Siap',
 
     // Kasir
     'kasir_title'       => 'Dashboard Kasir',

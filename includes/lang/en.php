@@ -106,6 +106,8 @@ return [
     'status_item_siap'       => 'Ready for pickup',
     'status_item_diambil'    => 'On the way',
     'status_item_dihantar'   => 'Delivered',
+    'status_item_served'     => 'Served',
+    'status_item_ready_short'=> 'Ready',
 
     // Kasir
     'kasir_title'       => 'Cashier Dashboard',
