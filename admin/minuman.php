@@ -13,6 +13,8 @@ requireLogin(['minuman', 'owner']);
 $user = currentUser();
 $lang = currentLang();
 $config = getConfig();
+$shop = findShopById(requireShopId());
+$selfPickup = shopFulfillment($shop) === 'self_pickup';
 $pageTitle = t('minuman_title');
 $showSound = true;
 $kategori = 'minuman';
@@ -24,8 +26,9 @@ $adminScripts = [
 
 $i18n = [
     'mark_done'        => t('mark_done'),
-    'mark_ready'       => t('mark_ready'),
+    'mark_ready'       => $selfPickup ? t('mark_ready_self') : t('mark_ready'),
     'mark_cooking'     => t('mark_cooking'),
+    'mark_collected'   => t('mark_collected'),
     'no_kitchen_items' => t('no_kitchen_items'),
     'table_n'          => t('table_n'),
     'notes'            => t('notes'),
@@ -44,6 +47,7 @@ $i18n = [
      data-poll-url="<?= e(baseUrl('admin/api/kitchen_poll.php')) ?>"
      data-update-url="<?= e(baseUrl('admin/api/item_status.php')) ?>"
      data-kategori="<?= e($kategori) ?>"
+     data-fulfillment="<?= e($selfPickup ? 'self_pickup' : 'waiter') ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 3000) ?>"
      data-lang="<?= e($lang) ?>"
      data-i18n="<?= e(json_encode($i18n, JSON_UNESCAPED_UNICODE)) ?>">

@@ -15,6 +15,7 @@ window.TableTapSound = (function () {
   let alarmStartedAt = 0;
   let alarmBeeps = 0;
   let onAlarmDone = null;
+  let wantAlarm = false;
 
   function unlock() {
     try {
@@ -32,10 +33,21 @@ window.TableTapSound = (function () {
       osc.start();
       osc.stop(audioCtx.currentTime + 0.01);
       enabled = true;
+      if (wantAlarm) {
+        startAlarm(onAlarmDone);
+      }
       return true;
     } catch (e) {
       return false;
     }
+  }
+
+  function armAutoUnlock() {
+    unlock();
+    const go = function () { unlock(); };
+    ['pointerdown', 'touchstart', 'click', 'keydown'].forEach(function (ev) {
+      document.addEventListener(ev, go, { capture: true, passive: true });
+    });
   }
 
   function configure(next) {
@@ -92,6 +104,7 @@ window.TableTapSound = (function () {
   }
 
   function stopAlarm() {
+    wantAlarm = false;
     if (alarmTimer) {
       clearTimeout(alarmTimer);
       alarmTimer = null;
@@ -117,8 +130,12 @@ window.TableTapSound = (function () {
   }
 
   function startAlarm(done) {
-    if (!enabled) return;
+    if (!enabled) {
+      wantAlarm = true;
+      return;
+    }
     if (alarmTimer) return;
+    wantAlarm = false;
     onAlarmDone = typeof done === 'function' ? done : null;
     alarmStartedAt = Date.now();
     alarmBeeps = 0;
@@ -137,5 +154,5 @@ window.TableTapSound = (function () {
     });
   }
 
-  return { unlock, beep, configure, startAlarm, stopAlarm, bindButton, isEnabled: () => enabled };
+  return { unlock, armAutoUnlock, beep, configure, startAlarm, stopAlarm, bindButton, isEnabled: () => enabled };
 })();

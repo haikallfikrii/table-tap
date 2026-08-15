@@ -8,6 +8,7 @@
   const meja = root.dataset.meja;
   const token = root.dataset.token;
   const submitUrl = root.dataset.submitUrl;
+  const fulfillment = root.dataset.fulfillment || 'waiter';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
 
   const money = (n) => {
@@ -24,6 +25,9 @@
     if (saved) cart = JSON.parse(saved) || [];
     const savedServe = sessionStorage.getItem('tt_serve_' + meja);
     if (savedServe === 'takeaway' || savedServe === 'dine_in') serveType = savedServe;
+    const savedName = sessionStorage.getItem('tt_name_' + meja);
+    const nameInput = document.getElementById('guest-name');
+    if (nameInput && savedName) nameInput.value = savedName;
   } catch (e) {
     cart = [];
   }
@@ -32,6 +36,8 @@
     try {
       sessionStorage.setItem('tt_cart_' + meja, JSON.stringify(cart));
       sessionStorage.setItem('tt_serve_' + meja, serveType);
+      const nameInput = document.getElementById('guest-name');
+      if (nameInput) sessionStorage.setItem('tt_name_' + meja, nameInput.value.trim());
     } catch (e) { /* ignore */ }
   }
 
@@ -171,6 +177,7 @@
       } else {
         cart.push({ id, nama, harga, qty: 1, catatan: '' });
       }
+      if (window.TableTapSound) TableTapSound.unlock();
       refresh();
     });
   });
@@ -224,11 +231,24 @@
     }
   });
 
+  document.getElementById('guest-name')?.addEventListener('input', persist);
+
   document.getElementById('btn-submit-order')?.addEventListener('click', async () => {
     if (cart.length === 0) {
       alert(i18n.select_items || 'Select items');
       return;
     }
+    let guestName = '';
+    if (fulfillment === 'self_pickup') {
+      const nameInput = document.getElementById('guest-name');
+      guestName = (nameInput && nameInput.value ? nameInput.value : '').trim();
+      if (guestName.length < 2) {
+        alert(i18n.guest_name_required || 'Enter your name');
+        if (nameInput) nameInput.focus();
+        return;
+      }
+    }
+    if (window.TableTapSound) TableTapSound.unlock();
     const btn = document.getElementById('btn-submit-order');
     if (btn) {
       btn.disabled = true;
@@ -243,6 +263,7 @@
           meja: meja,
           token: token,
           jenis_hidang: serveType,
+          nama_pelanggan: guestName,
           items: cart.map((i) => ({
             menu_item_id: i.id,
             qty: i.qty,
@@ -257,6 +278,7 @@
       try {
         sessionStorage.removeItem('tt_cart_' + meja);
         sessionStorage.removeItem('tt_serve_' + meja);
+        sessionStorage.removeItem('tt_name_' + meja);
       } catch (e) { /* ignore */ }
       window.location.href = data.redirect;
     } catch (err) {

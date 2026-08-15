@@ -40,7 +40,17 @@ if (!$item) {
     jsonError('Item not found', 404);
 }
 
+$shop = findShopById((int) $item['shop_id']);
+$selfPickup = shopFulfillment($shop) === 'self_pickup';
+
 if (in_array($status, $kitchenStatuses, true)) {
+    $kat = $item['kategori_saat_order'];
+    if ($kat === 'makanan') {
+        requireLoginApi(['dapur', 'owner']);
+    } else {
+        requireLoginApi(['minuman', 'owner']);
+    }
+} elseif ($status === 'dihantar' && $selfPickup) {
     $kat = $item['kategori_saat_order'];
     if ($kat === 'makanan') {
         requireLoginApi(['dapur', 'owner']);

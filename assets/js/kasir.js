@@ -89,7 +89,9 @@
             '<div class="order-card-header">' +
               '<div>' +
                 '<div class="table-num">' + esc(tableTitle(t.nomor_meja)) + '</div>' +
-                '<div class="order-meta">#' + o.id + ' · ' + esc(o.waktu_order) + '</div>' +
+                '<div class="order-meta">#' + o.id + ' · ' + esc(o.waktu_order) +
+                  (o.nama_pelanggan ? ' · ' + esc(o.nama_pelanggan) : '') +
+                '</div>' +
               '</div>' +
               '<div style="text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
                 (o.jenis_hidang === 'takeaway'

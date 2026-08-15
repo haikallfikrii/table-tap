@@ -104,7 +104,7 @@ function findTableByAccess(string $nomorMeja, string $token): ?array
 {
     $stmt = db()->prepare(
         "SELECT t.*, s.nama_kedai, s.slug, s.status AS shop_status,
-                s.sst_enabled, s.sst_rate, s.package_id
+                s.sst_enabled, s.sst_rate, s.package_id, s.fulfillment_mode
          FROM tables t
          INNER JOIN shops s ON s.id = t.shop_id
          WHERE t.nomor_meja = ? AND t.token_akses = ? AND t.status = 'aktif' AND s.status = 'aktif'

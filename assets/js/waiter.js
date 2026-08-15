@@ -94,6 +94,7 @@
           '<div class="serve-badge ' + (it.jenis_hidang === 'takeaway' ? 'bungkus' : 'sini') + '">' + esc(hidang) + '</div>' +
           '<div class="kitchen-qty">×' + it.qty + '</div>' +
           '<h2 class="kitchen-item-name">' + esc(it.nama) + '</h2>' +
+          (it.nama_pelanggan ? '<div class="order-meta">' + esc(it.nama_pelanggan) + '</div>' : '') +
           '<div class="order-meta">' + esc(kat) + '</div>' +
           note +
           '<div class="order-meta" style="margin:8px 0 14px">#' + it.order_id + ' · ' + esc(it.waktu_order) + '</div>' +
