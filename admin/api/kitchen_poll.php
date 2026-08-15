@@ -22,20 +22,24 @@ $lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
 
 $pdo = db();
 $shop = findShopById($shopId);
+$selfPickup = shopFulfillment($shop) === 'self_pickup';
+$statusList = $selfPickup
+    ? "'menunggu', 'sedang_dimasak', 'siap'"
+    : "'menunggu', 'sedang_dimasak'";
 
 $stmt = $pdo->prepare(
     "SELECT oi.id, oi.order_id, oi.qty, oi.catatan, oi.status_item,
             oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
-            o.waktu_order, o.jenis_hidang, t.nomor_meja
+            o.waktu_order, o.jenis_hidang, o.nama_pelanggan, t.nomor_meja
      FROM order_items oi
      INNER JOIN orders o ON o.id = oi.order_id
      INNER JOIN tables t ON t.id = o.table_id
      WHERE o.shop_id = ?
        AND oi.kategori_saat_order = ?
-       AND oi.status_item IN ('menunggu', 'sedang_dimasak')
+       AND oi.status_item IN ($statusList)
        AND o.status_order != 'dibatalkan'
      ORDER BY
-       FIELD(oi.status_item, 'menunggu', 'sedang_dimasak'),
+       FIELD(oi.status_item, 'menunggu', 'sedang_dimasak', 'siap'),
        o.waktu_order ASC,
        oi.id ASC"
 );
@@ -68,6 +72,8 @@ foreach ($items as $it) {
         'nomor_meja' => $it['nomor_meja'],
         'waktu_order' => $it['waktu_order'],
         'jenis_hidang' => ($it['jenis_hidang'] ?? 'dine_in') === 'takeaway' ? 'takeaway' : 'dine_in',
+        'nama_pelanggan' => $it['nama_pelanggan'] ?? '',
+        'fulfillment' => $selfPickup ? 'self_pickup' : 'waiter',
     ];
 }
 

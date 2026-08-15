@@ -35,6 +35,16 @@ if (!$shop || $shop['status'] !== 'aktif') {
     jsonError('Shop inactive', 403);
 }
 
+$selfPickup = shopFulfillment($shop) === 'self_pickup';
+$guestName = normalizeCustomerName((string) ($body['nama_pelanggan'] ?? ''));
+if ($selfPickup) {
+    if (!isValidCustomerName($guestName)) {
+        jsonError('Name required');
+    }
+} else {
+    $guestName = '';
+}
+
 // Normalize & validate items
 $normalized = [];
 foreach ($items as $row) {
@@ -112,8 +122,8 @@ try {
 
     $insOrder = $pdo->prepare(
         'INSERT INTO orders
-         (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, subtotal, sst_rate, sst_jumlah, total_harga)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+         (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, subtotal, sst_rate, sst_jumlah, total_harga)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     );
     $insOrder->execute([
         $shopId,
@@ -122,6 +132,7 @@ try {
         'menunggu',
         'belum_bayar',
         $jenisHidang,
+        $guestName !== '' ? $guestName : null,
         $totals['subtotal'],
         $totals['sst_rate'],
         $totals['sst_jumlah'],

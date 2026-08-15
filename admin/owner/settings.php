@@ -36,6 +36,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $soundDuration = max(3, min(300, (int) ($_POST['sound_duration_sec'] ?? 45)));
         $soundInterval = max(400, min(5000, (int) ($_POST['sound_interval_ms'] ?? 900)));
         $soundVolume = max(20, min(100, (int) ($_POST['sound_volume'] ?? 100)));
+        $fulfillment = (string) ($_POST['fulfillment_mode'] ?? 'waiter');
+        if (!in_array($fulfillment, ['waiter', 'self_pickup'], true)) {
+            $fulfillment = 'waiter';
+        }
         if ($namaKedai === '') {
             throw new RuntimeException(t('shop_name') . ' required');
         }
@@ -44,11 +48,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         }
         $pdo->prepare(
             'UPDATE shops SET nama_kedai = ?, sst_enabled = ?, sst_rate = ?,
+                    fulfillment_mode = ?,
                     sound_mode = ?, sound_repeat_count = ?, sound_duration_sec = ?,
                     sound_interval_ms = ?, sound_volume = ?
              WHERE id = ?'
         )->execute([
             $namaKedai, $sstEnabled, $sstRate,
+            $fulfillment,
             $soundMode, $soundCount, $soundDuration, $soundInterval, $soundVolume,
             $shopId,
         ]);
@@ -106,6 +112,18 @@ $retentionLabel = $shop['retention_days'] === null
     <div class="form-group">
       <label><?= e(t('sst_rate')) ?> (%)</label>
       <input type="number" step="0.01" min="0" max="100" name="sst_rate" value="<?= e(number_format((float) $shop['sst_rate'], 2, '.', '')) ?>">
+    </div>
+    <h3 style="margin:22px 0 8px"><?= e(t('fulfillment')) ?></h3>
+    <p class="order-meta" style="margin:0 0 12px"><?= e(t('fulfillment_hint')) ?></p>
+    <div class="form-group">
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px">
+        <input type="radio" name="fulfillment_mode" value="waiter" <?= shopFulfillment($shop) === 'waiter' ? 'checked' : '' ?>>
+        <span><strong><?= e(t('fulfillment_waiter')) ?></strong><br><span class="order-meta"><?= e(t('fulfillment_waiter_d')) ?></span></span>
+      </label>
+      <label style="display:flex;gap:8px;align-items:flex-start">
+        <input type="radio" name="fulfillment_mode" value="self_pickup" <?= shopFulfillment($shop) === 'self_pickup' ? 'checked' : '' ?>>
+        <span><strong><?= e(t('fulfillment_self')) ?></strong><br><span class="order-meta"><?= e(t('fulfillment_self_d')) ?></span></span>
+      </label>
     </div>
     <h3 style="margin:22px 0 8px"><?= e(t('sound_settings')) ?></h3>
     <p class="order-meta" style="margin:0 0 12px"><?= e(t('sound_settings_hint')) ?></p>

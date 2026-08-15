@@ -128,3 +128,26 @@ function purgeExpiredOrderHistory(?int $shopId = null): int
 
     return $deleted;
 }
+
+function shopFulfillment(?array $shop): string
+{
+    return (($shop['fulfillment_mode'] ?? '') === 'self_pickup') ? 'self_pickup' : 'waiter';
+}
+
+function normalizeCustomerName(string $name): string
+{
+    $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
+    if (function_exists('mb_substr')) {
+        return mb_substr($name, 0, 40);
+    }
+    return substr($name, 0, 40);
+}
+
+function isValidCustomerName(string $name): bool
+{
+    $len = function_exists('mb_strlen') ? mb_strlen($name) : strlen($name);
+    if ($len < 2 || $len > 40) {
+        return false;
+    }
+    return (bool) preg_match('/^[\p{L}\p{M}\d .\'-]+$/u', $name);
+}

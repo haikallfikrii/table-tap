@@ -560,15 +560,79 @@ a {
   margin: 12px 0;
 }
 
-.confirm-status {
-  display: inline-block;
-  padding: 8px 16px;
+.confirm-page.tracking {
+  justify-content: flex-start;
+  padding-top: 72px;
+}
+
+.track-hint {
+  margin: 0 0 16px;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+}
+
+.track-banner.cooking { background: var(--info-soft); color: var(--info); }
+.track-banner.ready { background: var(--success-soft); color: var(--success); }
+.track-banner.done { background: var(--accent-soft); color: var(--accent); }
+
+.track-items {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  gap: 8px;
+  text-align: left;
+}
+
+.track-items li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-weight: 700;
+}
+
+.track-pill {
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 8px;
   border-radius: 999px;
   background: var(--warning-soft);
   color: #9a5b00;
-  font-weight: 700;
-  margin-bottom: 28px;
 }
+
+.track-items li.cooking .track-pill { background: var(--info-soft); color: var(--info); }
+.track-items li.ready .track-pill { background: var(--success-soft); color: var(--success); }
+.track-items li.done .track-pill { background: var(--accent-soft); color: var(--accent); }
+
+.guest-name-field {
+  text-align: left;
+  margin: 12px 0 8px;
+}
+
+.guest-name-field label {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
+
+.guest-name-field input {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.guest-name-field .order-meta { margin: 6px 0 0; }
 
 .error-page {
   max-width: 480px;

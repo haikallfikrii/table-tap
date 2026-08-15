@@ -23,6 +23,7 @@ $brand = $table ? shopBrand($table) : ($config['app_name'] ?? 'TableTap');
 $menu = $table ? getMenuGrouped((int) $table['shop_id'], $lang) : [];
 $sstEnabled = $table && (int) ($table['sst_enabled'] ?? 0) === 1;
 $sstRate = $table ? (float) ($table['sst_rate'] ?? 0) : 0;
+$selfPickup = $table && shopFulfillment($table) === 'self_pickup';
 
 $i18nJs = [
     'cart_empty'    => t('cart_empty'),
@@ -32,6 +33,7 @@ $i18nJs = [
     'submitting'    => t('submitting'),
     'order_failed'  => t('order_failed'),
     'select_items'  => t('select_items'),
+    'guest_name_required' => t('guest_name_required'),
     'sst_enabled'   => $sstEnabled,
     'sst_rate'      => $sstRate,
     'subtotal'      => t('subtotal'),
@@ -71,6 +73,7 @@ $i18nJs = [
   data-meja="<?= e($table['nomor_meja']) ?>"
   data-token="<?= e($table['token_akses']) ?>"
   data-submit-url="<?= e(baseUrl('public/api/submit_order.php')) ?>"
+  data-fulfillment="<?= e($selfPickup ? 'self_pickup' : 'waiter') ?>"
   data-i18n="<?= e(json_encode($i18nJs, JSON_UNESCAPED_UNICODE)) ?>"
 >
   <header class="customer-header">
@@ -160,6 +163,13 @@ $i18nJs = [
       <button type="button" class="serve-opt on" data-serve="dine_in"><?= e(t('dine_in')) ?></button>
       <button type="button" class="serve-opt" data-serve="takeaway"><?= e(t('takeaway')) ?></button>
     </div>
+    <?php if ($selfPickup): ?>
+      <div class="guest-name-field">
+        <label for="guest-name"><?= e(t('guest_name')) ?></label>
+        <input type="text" id="guest-name" maxlength="40" autocomplete="name" placeholder="<?= e(t('guest_name_ph')) ?>" required>
+        <p class="order-meta"><?= e(t('guest_name_hint')) ?></p>
+      </div>
+    <?php endif; ?>
     <button type="button" class="btn btn-primary" id="btn-submit-order" style="width:100%" disabled>
       <?= e(t('submit_order')) ?>
     </button>
@@ -167,6 +177,9 @@ $i18nJs = [
 </aside>
 
 <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
+<?php if ($selfPickup): ?>
+<script src="<?= e(assetUrl('js/sound.js')) ?>"></script>
+<?php endif; ?>
 <script src="<?= e(assetUrl('js/order.js')) ?>"></script>
 </body>
 </html>
