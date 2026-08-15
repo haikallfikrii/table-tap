@@ -353,28 +353,49 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       <div class="case-play" id="case-play" data-mode="waiter">
         <article class="case-panel" data-panel="waiter">
           <p class="case-lead"><?= e(t('lp_case_waiter_d')) ?></p>
-          <ol class="case-flow">
-            <li><?= e(t('lp_case_w1')) ?></li>
-            <li><?= e(t('lp_case_w2')) ?></li>
-            <li><?= e(t('lp_case_w3')) ?></li>
-            <li><?= e(t('lp_case_w4')) ?></li>
+          <ol class="case-flow" id="waiter-flow">
+            <li data-w-step="scan" class="is-current"><?= e(t('lp_case_w1')) ?></li>
+            <li data-w-step="send"><?= e(t('lp_case_w2')) ?></li>
+            <li data-w-step="cook"><?= e(t('lp_case_w3')) ?></li>
+            <li data-w-step="serve"><?= e(t('lp_case_w4')) ?></li>
           </ol>
           <div class="case-scene waiter-scene" aria-hidden="true">
-            <div class="case-phone">
-              <div class="case-phone-bar"></div>
-              <div class="mini-item"><i>N</i><span>Nasi Lemak</span><b>+</b></div>
-              <div class="mini-item"><i>M</i><span>Mee Goreng</span><b>+</b></div>
-              <div class="mini-ok">✓</div>
-            </div>
-            <div class="case-dash">
-              <div class="case-kcard bounce">
-                <span class="badge amber"><?= e(t('status_menunggu')) ?></span>
-                <strong>Meja 5</strong>
-                <small>2× Nasi Lemak</small>
+            <div class="lp-waiter-hero" id="lp-waiter-hero" data-stage="scan"
+                 data-t-scan="<?= e(t('lp_wstage_scan')) ?>"
+                 data-t-send="<?= e(t('lp_wstage_send')) ?>"
+                 data-t-cook="<?= e(t('lp_wstage_cook')) ?>"
+                 data-t-serve="<?= e(t('lp_wstage_serve')) ?>"
+                 data-b-scan="<?= e(t('status_menunggu')) ?>"
+                 data-b-send="<?= e(t('status_diproses')) ?>"
+                 data-b-cook="<?= e(t('status_item_sedang')) ?>"
+                 data-b-serve="<?= e(t('status_item_dihantar')) ?>">
+              <div class="lp-wstage lp-w-scan">
+                <span class="w-phone">
+                  <span class="w-qr"></span>
+                  <span class="w-laser"></span>
+                </span>
               </div>
-              <div class="case-waiter">
-                <span class="tray"></span>
-                <span class="case-waiter-label"><?= e(t('waiter_title')) ?></span>
+              <div class="lp-wstage lp-w-send">
+                <span class="w-burst"></span>
+                <span class="w-send">↑</span>
+              </div>
+              <div class="lp-wstage lp-w-cook">
+                <span class="cook-lid"></span>
+                <span class="cook-pan"></span>
+                <span class="cook-flame"></span>
+              </div>
+              <div class="lp-wstage lp-w-serve">
+                <span class="w-table"></span>
+                <span class="w-tray"></span>
+                <span class="w-person"></span>
+              </div>
+            </div>
+            <div class="lp-track-copy">
+              <p class="lp-track-title" id="lp-waiter-title"><?= e(t('lp_wstage_scan')) ?></p>
+              <div class="w-dash-card" id="lp-waiter-card">
+                <span class="badge amber" id="lp-waiter-badge"><?= e(t('status_menunggu')) ?></span>
+                <strong><?= e(t('table_n', '5')) ?></strong>
+                <small>2× Nasi Lemak</small>
               </div>
             </div>
           </div>
@@ -778,6 +799,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
         <h4><?= e(t('lp_footer_product')) ?></h4>
         <ul>
           <li><a href="#features"><?= e(t('lp_nav_features')) ?></a></li>
+          <li><a href="#cases"><?= e(t('lp_nav_cases')) ?></a></li>
           <li><a href="#how"><?= e(t('lp_nav_how')) ?></a></li>
           <li><a href="#demo"><?= e(t('lp_nav_demo')) ?></a></li>
           <li><a href="#pricing"><?= e(t('lp_nav_pricing')) ?></a></li>
@@ -806,7 +828,14 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
 
     <div class="foot-bottom">
       <span>© <span id="lp-year">2026</span> <?= e($config['app_name']) ?>. <?= e(t('lp_rights')) ?></span>
-      <span><?= e(t('lp_stat_lang_l')) ?> · Malaysia 🇲🇾</span>
+      <span class="foot-credit">
+        <?= e(t('lp_developed_by')) ?>
+        <a href="https://dev-khalfikri.pantheonsite.io/" target="_blank" rel="noopener noreferrer">KalFikri</a>
+        ·
+        <a href="https://www.linkedin.com/in/muhamad-fikri-haikal-fullstack-web-developer/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        ·
+        <a href="mailto:muhamadfikrih29@gmail.com">muhamadfikrih29@gmail.com</a>
+      </span>
     </div>
   </div>
 </footer>

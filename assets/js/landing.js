@@ -323,6 +323,54 @@
   var caseBtns = document.querySelectorAll('[data-case]');
   var lpHero = document.getElementById('lp-track-hero');
   var lpTitle = document.getElementById('lp-track-title');
+  var lpWaiter = document.getElementById('lp-waiter-hero');
+  var lpWaiterTitle = document.getElementById('lp-waiter-title');
+  var lpWaiterBadge = document.getElementById('lp-waiter-badge');
+  var lpWaiterCard = document.getElementById('lp-waiter-card');
+  var waiterTimer = null;
+  var waiterIdx = 0;
+  var waiterStages = ['scan', 'send', 'cook', 'serve'];
+
+  function setWaiterStage(stage) {
+    if (!lpWaiter) return;
+    lpWaiter.setAttribute('data-stage', stage);
+    if (lpWaiterTitle) {
+      lpWaiterTitle.textContent = lpWaiter.getAttribute('data-t-' + stage) || '';
+    }
+    if (lpWaiterBadge) {
+      lpWaiterBadge.textContent = lpWaiter.getAttribute('data-b-' + stage) || '';
+      lpWaiterBadge.className = 'badge ' + (stage === 'serve' ? 'green' : (stage === 'cook' ? 'blue' : 'amber'));
+    }
+    if (lpWaiterCard) {
+      lpWaiterCard.classList.toggle('cook', stage === 'cook');
+      lpWaiterCard.classList.toggle('serve', stage === 'serve');
+    }
+    document.querySelectorAll('[data-w-step]').forEach(function (el) {
+      var step = el.getAttribute('data-w-step');
+      var i = waiterStages.indexOf(step);
+      var now = waiterStages.indexOf(stage);
+      el.classList.toggle('is-current', step === stage);
+      el.classList.toggle('is-done', i < now);
+    });
+  }
+
+  function stopWaiterLoop() {
+    if (waiterTimer) {
+      clearInterval(waiterTimer);
+      waiterTimer = null;
+    }
+  }
+
+  function startWaiterLoop() {
+    stopWaiterLoop();
+    waiterIdx = 0;
+    setWaiterStage(waiterStages[0]);
+    if (reduceMotion) return;
+    waiterTimer = setInterval(function () {
+      waiterIdx = (waiterIdx + 1) % waiterStages.length;
+      setWaiterStage(waiterStages[waiterIdx]);
+    }, 1400);
+  }
   var pickupTimer = null;
   var pickupIdx = 0;
   var pickupStages = ['queue', 'cooking', 'ready', 'done'];
@@ -369,8 +417,13 @@
       b.classList.toggle('on', on);
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
-    if (mode === 'pickup') startPickupLoop();
-    else stopPickupLoop();
+    if (mode === 'pickup') {
+      stopWaiterLoop();
+      startPickupLoop();
+    } else {
+      stopPickupLoop();
+      startWaiterLoop();
+    }
   }
 
   caseBtns.forEach(function (btn) {
@@ -384,9 +437,11 @@
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) {
           stopPickupLoop();
+          stopWaiterLoop();
           return;
         }
         if (casePlay.getAttribute('data-mode') === 'pickup') startPickupLoop();
+        else startWaiterLoop();
       });
     }, { threshold: 0.25 });
     caseObs.observe(casePlay);
