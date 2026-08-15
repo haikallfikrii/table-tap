@@ -16,6 +16,7 @@ window.TableTapSound = (function () {
   let alarmBeeps = 0;
   let onAlarmDone = null;
   let wantAlarm = false;
+  let pendingChime = null;
 
   function unlock() {
     try {
@@ -33,6 +34,11 @@ window.TableTapSound = (function () {
       osc.start();
       osc.stop(audioCtx.currentTime + 0.01);
       enabled = true;
+      if (pendingChime) {
+        const kind = pendingChime;
+        pendingChime = null;
+        chime(kind);
+      }
       if (wantAlarm) {
         startAlarm(onAlarmDone);
       }
@@ -103,6 +109,50 @@ window.TableTapSound = (function () {
     } catch (e) { /* ignore */ }
   }
 
+  function tone(freq, type, start, dur, vol) {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), start + 0.018);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    osc.connect(g);
+    g.connect(audioCtx.destination);
+    osc.start(start);
+    osc.stop(start + dur + 0.03);
+  }
+
+  function chime(kind) {
+    if (!enabled || !audioCtx) {
+      pendingChime = kind;
+      return;
+    }
+    pendingChime = null;
+    try {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      const peak = peakGain();
+      if (kind === 'cooking') {
+        tone(392, 'triangle', now, 0.16, peak * 0.4);
+        tone(523, 'triangle', now + 0.14, 0.2, peak * 0.48);
+        tone(659, 'sine', now + 0.3, 0.28, peak * 0.42);
+        return;
+      }
+      if (kind === 'done') {
+        tone(523, 'sine', now, 0.18, peak * 0.38);
+        tone(659, 'sine', now + 0.12, 0.2, peak * 0.44);
+        tone(784, 'sine', now + 0.26, 0.42, peak * 0.5);
+        return;
+      }
+      if (kind === 'queue') {
+        tone(494, 'sine', now, 0.14, peak * 0.28);
+        return;
+      }
+      beep();
+    } catch (e) { /* ignore */ }
+  }
+
   function stopAlarm() {
     wantAlarm = false;
     if (alarmTimer) {
@@ -154,5 +204,5 @@ window.TableTapSound = (function () {
     });
   }
 
-  return { unlock, armAutoUnlock, beep, configure, startAlarm, stopAlarm, bindButton, isEnabled: () => enabled };
+  return { unlock, armAutoUnlock, beep, chime, configure, startAlarm, stopAlarm, bindButton, isEnabled: () => enabled };
 })();
