@@ -117,6 +117,219 @@ function findTableByAccess(string $nomorMeja, string $token): ?array
     return $row ?: null;
 }
 
+function findTableByIdForShop(int $tableId, int $shopId): ?array
+{
+    $stmt = db()->prepare(
+        "SELECT t.*, s.nama_kedai, s.slug, s.status AS shop_status,
+                s.sst_enabled, s.sst_rate, s.package_id, s.fulfillment_mode,
+                p.kod AS package_kod
+         FROM tables t
+         INNER JOIN shops s ON s.id = t.shop_id
+         INNER JOIN packages p ON p.id = s.package_id
+         WHERE t.id = ? AND t.shop_id = ? AND t.status = 'aktif' AND s.status = 'aktif'
+         LIMIT 1"
+    );
+    $stmt->execute([$tableId, $shopId]);
+    $row = $stmt->fetch();
+    return $row ?: null;
+}
+
+function listActiveShopTables(int $shopId): array
+{
+    $stmt = db()->prepare(
+        "SELECT id, nomor_meja FROM tables
+         WHERE shop_id = ? AND status = 'aktif'
+         ORDER BY CAST(nomor_meja AS UNSIGNED), nomor_meja"
+    );
+    $stmt->execute([$shopId]);
+    return $stmt->fetchAll();
+}
+
+function staffStationHome(string $from): string
+{
+    return match ($from) {
+        'kasir' => baseUrl('admin/kasir.php'),
+        'owner' => baseUrl('admin/owner/index.php'),
+        default => baseUrl('admin/waiter.php'),
+    };
+}
+
+/**
+ * Create an order from a cart payload. Calls jsonError() on validation failure.
+ *
+ * @param array<int, mixed> $items
+ * @return array{order_id:int,totals:array}
+ */
+function createShopOrder(
+    array $table,
+    array $shop,
+    array $items,
+    string $jenisHidang,
+    string $guestName,
+    string $sumber,
+    bool $optionalGuestName = false
+): array {
+    if (!is_array($items) || $items === []) {
+        jsonError('Cart is empty');
+    }
+
+    $shopId = (int) $table['shop_id'];
+    $selfPickup = shopFulfillment($shop) === 'self_pickup';
+    $guestName = normalizeCustomerName($guestName);
+    if ($selfPickup) {
+        if (!isValidCustomerName($guestName)) {
+            jsonError('Name required');
+        }
+    } elseif (!$optionalGuestName || !isValidCustomerName($guestName)) {
+        $guestName = '';
+    }
+
+    $normalized = [];
+    foreach ($items as $row) {
+        $menuId = (int) ($row['menu_item_id'] ?? 0);
+        $qty = (int) ($row['qty'] ?? 0);
+        $catatan = trim((string) ($row['catatan'] ?? ''));
+        if ($menuId <= 0 || $qty <= 0) {
+            continue;
+        }
+        if (function_exists('mb_strlen') && mb_strlen($catatan) > 255) {
+            $catatan = mb_substr($catatan, 0, 255);
+        } elseif (strlen($catatan) > 255) {
+            $catatan = substr($catatan, 0, 255);
+        }
+        if (isset($normalized[$menuId])) {
+            $normalized[$menuId]['qty'] += $qty;
+            if ($catatan !== '') {
+                $normalized[$menuId]['catatan'] = $catatan;
+            }
+        } else {
+            $normalized[$menuId] = [
+                'menu_item_id' => $menuId,
+                'qty' => $qty,
+                'catatan' => $catatan,
+            ];
+        }
+    }
+
+    if ($normalized === []) {
+        jsonError('No valid items');
+    }
+
+    $pdo = db();
+    $placeholders = implode(',', array_fill(0, count($normalized), '?'));
+    $ids = array_keys($normalized);
+    $stmt = $pdo->prepare(
+        "SELECT id, nama_my, nama_en, harga, kategori, status_stok, is_active
+         FROM menu_items
+         WHERE shop_id = ? AND id IN ($placeholders)"
+    );
+    $stmt->execute(array_merge([$shopId], $ids));
+    $menuById = [];
+    foreach ($stmt->fetchAll() as $m) {
+        $menuById[(int) $m['id']] = $m;
+    }
+
+    $subtotal = 0.0;
+    $lines = [];
+    foreach ($normalized as $menuId => $line) {
+        if (!isset($menuById[$menuId])) {
+            jsonError('Menu item not found');
+        }
+        $m = $menuById[$menuId];
+        if (!(int) $m['is_active'] || $m['status_stok'] === 'habis') {
+            jsonError('Item unavailable: ' . $m['nama_my']);
+        }
+        $harga = (float) $m['harga'];
+        $qty = (int) $line['qty'];
+        $subtotal += $harga * $qty;
+        $lines[] = [
+            'menu_item_id' => $menuId,
+            'qty' => $qty,
+            'catatan' => $line['catatan'] !== '' ? $line['catatan'] : null,
+            'harga_saat_order' => $harga,
+            'nama_saat_order_my' => $m['nama_my'],
+            'nama_saat_order_en' => $m['nama_en'],
+            'kategori_saat_order' => $m['kategori'],
+        ];
+    }
+
+    $totals = calculateTotals($subtotal, $shop);
+    $sumber = $sumber === 'staf' ? 'staf' : 'qr';
+    $hasSumber = (bool) $pdo->query("SHOW COLUMNS FROM orders LIKE 'sumber_order'")->fetch();
+
+    try {
+        $pdo->beginTransaction();
+        if ($hasSumber) {
+            $insOrder = $pdo->prepare(
+                'INSERT INTO orders
+                 (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            $insOrder->execute([
+                $shopId,
+                (int) $table['id'],
+                appNow(),
+                'menunggu',
+                'belum_bayar',
+                $jenisHidang,
+                $guestName !== '' ? $guestName : null,
+                $sumber,
+                $totals['subtotal'],
+                $totals['sst_rate'],
+                $totals['sst_jumlah'],
+                $totals['total'],
+            ]);
+        } else {
+            $insOrder = $pdo->prepare(
+                'INSERT INTO orders
+                 (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, subtotal, sst_rate, sst_jumlah, total_harga)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            $insOrder->execute([
+                $shopId,
+                (int) $table['id'],
+                appNow(),
+                'menunggu',
+                'belum_bayar',
+                $jenisHidang,
+                $guestName !== '' ? $guestName : null,
+                $totals['subtotal'],
+                $totals['sst_rate'],
+                $totals['sst_jumlah'],
+                $totals['total'],
+            ]);
+        }
+        $orderId = (int) $pdo->lastInsertId();
+
+        $insItem = $pdo->prepare(
+            'INSERT INTO order_items
+             (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        );
+        foreach ($lines as $line) {
+            $insItem->execute([
+                $orderId,
+                $line['menu_item_id'],
+                $line['qty'],
+                $line['catatan'],
+                'menunggu',
+                $line['harga_saat_order'],
+                $line['nama_saat_order_my'],
+                $line['nama_saat_order_en'],
+                $line['kategori_saat_order'],
+            ]);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        jsonError('Failed to save order', 500);
+    }
+
+    return ['order_id' => $orderId, 'totals' => $totals];
+}
+
 function getMenuGrouped(int $shopId, string $lang = 'my'): array
 {
     $stmt = db()->prepare(

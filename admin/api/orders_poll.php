@@ -18,7 +18,7 @@ $shop = findShopById($shopId);
 
 $stmt = $pdo->prepare(
     "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar, o.jenis_hidang,
-            o.nama_pelanggan, o.pickup_alert, o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga,
+            o.nama_pelanggan, o.pickup_alert, o.sumber_order, o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga,
             t.nomor_meja
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
@@ -79,6 +79,7 @@ foreach ($orders as $o) {
         'status_bayar' => $o['status_bayar'],
         'jenis_hidang' => ($o['jenis_hidang'] ?? 'dine_in') === 'takeaway' ? 'takeaway' : 'dine_in',
         'nama_pelanggan' => $o['nama_pelanggan'] ?? '',
+        'sumber_order' => ($o['sumber_order'] ?? 'qr') === 'staf' ? 'staf' : 'qr',
         'pickup_alert' => (int) ($o['pickup_alert'] ?? 1) === 1,
         'has_ready' => $hasReady,
         'subtotal' => (float) $o['subtotal'],

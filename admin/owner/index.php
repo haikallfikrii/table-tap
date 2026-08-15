@@ -68,6 +68,7 @@ function ownerOpsChip(string $label, int $n, string $id, string $mod = ''): void
 ?>
 <?php require dirname(__DIR__, 2) . '/includes/admin_header.php'; ?>
 <?php require __DIR__ . '/_nav.php'; ?>
+<?php require dirname(__DIR__, 2) . '/includes/staff_order_flash.php'; ?>
 
 <div class="stat-row">
   <div class="stat-card">
@@ -132,6 +133,10 @@ function ownerOpsChip(string $label, int $n, string $id, string $mod = ''): void
 </div>
 
 <div class="table-grid">
+  <a class="order-card" href="<?= e(baseUrl('admin/staff_order.php?from=owner')) ?>" style="text-decoration:none">
+    <div class="table-num" style="font-size:1.4rem"><?= e(t('staff_order')) ?></div>
+    <p class="order-meta"><?= e(t('staff_pick_table')) ?></p>
+  </a>
   <a class="order-card" href="<?= e(baseUrl('admin/owner/menu.php')) ?>" style="text-decoration:none">
     <div class="table-num" style="font-size:1.4rem"><?= e(t('manage_menu')) ?></div>
     <p class="order-meta">CRUD · stok</p>
