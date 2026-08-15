@@ -232,6 +232,8 @@ return [
     'lp_hero_p2'        => 'Dwibahasa Melayu & English',
     'lp_hero_p3'        => 'Laporan jualan & untung automatik',
     'lp_cta_start'      => 'Mula sekarang',
+    'lp_wa_start'       => 'Hi TableTap, saya nak mula percubaan 1 minggu untuk kedai saya. Tolong bantu daftar.',
+    'lp_wa_plan'        => 'Hi TableTap, saya nak pakej %s (RM %s/bulan). Tolong bantu saya mula.',
     'lp_cta_demo'       => 'Lihat demo pelanggan',
     'lp_hero_note'      => 'Percubaan percuma 1 minggu. Tiada kontrak. Batal bila-bila masa.',
 
