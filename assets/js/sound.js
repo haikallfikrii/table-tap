@@ -140,9 +140,12 @@ window.TableTapSound = (function () {
         return;
       }
       if (kind === 'done') {
-        tone(523, 'sine', now, 0.18, peak * 0.38);
-        tone(659, 'sine', now + 0.12, 0.2, peak * 0.44);
-        tone(784, 'sine', now + 0.26, 0.42, peak * 0.5);
+        tone(261, 'sine', now, 0.95, peak * 0.2);
+        tone(523, 'sine', now, 0.32, peak * 0.42);
+        tone(659, 'triangle', now + 0.14, 0.36, peak * 0.5);
+        tone(784, 'sine', now + 0.28, 0.42, peak * 0.55);
+        tone(1046, 'triangle', now + 0.44, 0.55, peak * 0.5);
+        tone(1318, 'sine', now + 0.62, 0.7, peak * 0.32);
         return;
       }
       if (kind === 'queue') {
