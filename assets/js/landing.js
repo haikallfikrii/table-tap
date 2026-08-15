@@ -447,4 +447,12 @@
     caseObs.observe(casePlay);
   }
 
+  document.querySelectorAll('.card[data-feat]').forEach(function (card) {
+    card.addEventListener('click', function () {
+      card.classList.remove('bump');
+      void card.offsetWidth;
+      card.classList.add('bump');
+    });
+  });
+
 })();
