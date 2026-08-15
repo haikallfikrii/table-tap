@@ -305,6 +305,10 @@ return [
     'lp_case_p2'        => 'Watch queue → cooking',
     'lp_case_p3'        => 'Phone alerts when ready',
     'lp_case_p4'        => 'Collect at the counter',
+    'lp_wstage_scan'    => 'Scanning the table QR',
+    'lp_wstage_send'    => 'Order flies to the kitchen',
+    'lp_wstage_cook'    => 'Kitchen is cooking',
+    'lp_wstage_serve'   => 'Waiter is on the way',
 
     'lp_pricing_kicker' => 'Pricing',
     'lp_pricing_title'  => 'Fair plans for small shops',
@@ -367,4 +371,5 @@ return [
     'lp_footer_company' => 'Information',
     'lp_footer_staff'   => 'For staff',
     'lp_rights'         => 'All rights reserved.',
+    'lp_developed_by'   => 'Developed by',
 ];

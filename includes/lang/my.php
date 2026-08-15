@@ -305,6 +305,10 @@ return [
     'lp_case_p2'        => 'Lihat giliran → dapur',
     'lp_case_p3'        => 'Telefon berbunyi bila siap',
     'lp_case_p4'        => 'Ambil di kaunter',
+    'lp_wstage_scan'    => 'Mengimbas QR meja',
+    'lp_wstage_send'    => 'Pesanan terbang ke dapur',
+    'lp_wstage_cook'    => 'Dapur sedang masak',
+    'lp_wstage_serve'   => 'Waiter sedang hantar',
 
     'lp_pricing_kicker' => 'Harga',
     'lp_pricing_title'  => 'Pakej yang berpatutan untuk kedai kecil',
@@ -367,4 +371,5 @@ return [
     'lp_footer_company' => 'Maklumat',
     'lp_footer_staff'   => 'Untuk staf',
     'lp_rights'         => 'Hak cipta terpelihara.',
+    'lp_developed_by'   => 'Dibangunkan oleh',
 ];
