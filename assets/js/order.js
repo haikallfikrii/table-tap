@@ -220,11 +220,24 @@
     });
   });
 
-  document.querySelectorAll('[data-open-detail]').forEach(function (el) {
-    el.addEventListener('click', function () {
-      try {
-        openDetail(JSON.parse(el.getAttribute('data-open-detail') || '{}'));
-      } catch (err) { /* ignore */ }
+  root.addEventListener('click', function (e) {
+    const el = e.target.closest('[data-open-detail]');
+    if (!el || el.closest('[data-add-item]')) return;
+    try {
+      openDetail(JSON.parse(el.getAttribute('data-open-detail') || '{}'));
+    } catch (err) { /* ignore */ }
+  });
+
+  document.querySelectorAll('img.menu-item-photo').forEach(function (img) {
+    img.addEventListener('error', function () {
+      const el = document.createElement('div');
+      el.className = img.className + ' placeholder';
+      el.setAttribute('aria-hidden', 'true');
+      const detail = img.getAttribute('data-open-detail');
+      if (detail) el.setAttribute('data-open-detail', detail);
+      const letter = (img.getAttribute('alt') || '?').trim().charAt(0);
+      el.textContent = letter.toUpperCase();
+      img.replaceWith(el);
     });
   });
 

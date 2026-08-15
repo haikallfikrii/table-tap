@@ -100,6 +100,7 @@ $faqs = [
 
 $navLinks = [
     '#features' => t('lp_nav_features'),
+    '#cases'    => t('lp_nav_cases'),
     '#how'      => t('lp_nav_how'),
     '#demo'     => t('lp_nav_demo'),
     '#pricing'  => t('lp_nav_pricing'),
@@ -319,6 +320,108 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
             <p><?= e($desc) ?></p>
           </article>
         <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CASE: TABLE vs PICKUP ================= -->
+  <section class="sec cases" id="cases">
+    <div class="wrap">
+      <div class="sec-head center reveal">
+        <span class="kicker"><?= e(t('lp_case_kicker')) ?></span>
+        <h2><?= e(t('lp_case_title')) ?></h2>
+        <p><?= e(t('lp_case_sub')) ?></p>
+      </div>
+
+      <div class="case-pain reveal">
+        <div>
+          <span class="case-tag bad"><?= e(t('lp_case_pain')) ?></span>
+          <p><?= e(t('lp_case_pain_d')) ?></p>
+        </div>
+        <div class="case-pain-arrow" aria-hidden="true">→</div>
+        <div>
+          <span class="case-tag good"><?= e(t('lp_case_fix')) ?></span>
+          <p><?= e(t('lp_case_fix_d')) ?></p>
+        </div>
+      </div>
+
+      <div class="case-switch reveal" role="tablist" aria-label="<?= e(t('lp_nav_cases')) ?>">
+        <button type="button" class="on" data-case="waiter" role="tab" aria-selected="true"><?= e(t('lp_case_waiter')) ?></button>
+        <button type="button" data-case="pickup" role="tab" aria-selected="false"><?= e(t('lp_case_pickup')) ?></button>
+      </div>
+
+      <div class="case-play" id="case-play" data-mode="waiter">
+        <article class="case-panel" data-panel="waiter">
+          <p class="case-lead"><?= e(t('lp_case_waiter_d')) ?></p>
+          <ol class="case-flow">
+            <li><?= e(t('lp_case_w1')) ?></li>
+            <li><?= e(t('lp_case_w2')) ?></li>
+            <li><?= e(t('lp_case_w3')) ?></li>
+            <li><?= e(t('lp_case_w4')) ?></li>
+          </ol>
+          <div class="case-scene waiter-scene" aria-hidden="true">
+            <div class="case-phone">
+              <div class="case-phone-bar"></div>
+              <div class="mini-item"><i>N</i><span>Nasi Lemak</span><b>+</b></div>
+              <div class="mini-item"><i>M</i><span>Mee Goreng</span><b>+</b></div>
+              <div class="mini-ok">✓</div>
+            </div>
+            <div class="case-dash">
+              <div class="case-kcard bounce">
+                <span class="badge amber"><?= e(t('status_menunggu')) ?></span>
+                <strong>Meja 5</strong>
+                <small>2× Nasi Lemak</small>
+              </div>
+              <div class="case-waiter">
+                <span class="tray"></span>
+                <span class="case-waiter-label"><?= e(t('waiter_title')) ?></span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="case-panel" data-panel="pickup">
+          <p class="case-lead"><?= e(t('lp_case_pickup_d')) ?></p>
+          <ol class="case-flow">
+            <li><?= e(t('lp_case_p1')) ?></li>
+            <li><?= e(t('lp_case_p2')) ?></li>
+            <li><?= e(t('lp_case_p3')) ?></li>
+            <li><?= e(t('lp_case_p4')) ?></li>
+          </ol>
+          <div class="case-scene pickup-scene" aria-hidden="true">
+            <div class="lp-track-hero" id="lp-track-hero" data-stage="queue"
+                 data-t-queue="<?= e(t('track_title_queue')) ?>"
+                 data-t-cooking="<?= e(t('track_title_cooking')) ?>"
+                 data-t-ready="<?= e(t('track_title_ready')) ?>"
+                 data-t-done="<?= e(t('track_title_done')) ?>">
+              <div class="lp-stage lp-queue">
+                <span class="orb-ring"></span>
+                <span class="orb-ticket">#</span>
+              </div>
+              <div class="lp-stage lp-cook">
+                <span class="cook-lid"></span>
+                <span class="cook-pan"></span>
+                <span class="cook-flame"></span>
+              </div>
+              <div class="lp-stage lp-ready">
+                <span class="ready-ping"></span>
+                <span class="ready-bag">!</span>
+              </div>
+              <div class="lp-stage lp-done">
+                <span class="done-check">✓</span>
+              </div>
+            </div>
+            <div class="lp-track-copy">
+              <p class="lp-track-title" id="lp-track-title"><?= e(t('track_title_queue')) ?></p>
+              <ul class="lp-track-steps">
+                <li data-lp-step="queue" class="is-current"><?= e(t('step_queue')) ?></li>
+                <li data-lp-step="cooking"><?= e(t('step_cook')) ?></li>
+                <li data-lp-step="ready"><?= e(t('step_ready')) ?></li>
+                <li data-lp-step="done"><?= e(t('step_done')) ?></li>
+              </ul>
+            </div>
+          </div>
+        </article>
       </div>
     </div>
   </section>
