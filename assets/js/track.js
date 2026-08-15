@@ -80,13 +80,28 @@
     } catch (e) { /* ignore */ }
   }
 
+  let doneChimePlayed = false;
+
+  function playDoneChime() {
+    if (!sound || doneChimePlayed) return;
+    doneChimePlayed = true;
+    stopLoop();
+    sound.chime('done');
+    buzz([50, 70, 90, 70, 140]);
+  }
+
   function playStageSound(key, isChange) {
     if (!sound) return;
-    if (muted) {
-      stopLoop();
+    if (key === 'done') {
+      if (isChange) playDoneChime();
+      else stopLoop();
       return;
     }
     if (key === 'ready') {
+      if (muted) {
+        stopLoop();
+        return;
+      }
       if (!alarmOn || isChange) {
         sound.configure({
           mode: 'until_cleared',
@@ -105,9 +120,6 @@
     if (key === 'cooking') {
       sound.chime('cooking');
       buzz(160);
-    } else if (key === 'done') {
-      sound.chime('done');
-      buzz(40);
     } else {
       sound.chime('queue');
     }
@@ -194,28 +206,32 @@
       if (!data.ok) return;
       const items = data.items || [];
       const stage = data.stage || 'queue';
-      muted = data.pickup_alert === false;
-      if (muted) stopLoop();
+      const alertOn = data.pickup_alert !== false;
       const changes = detectChanges(items);
+      const becameDone = stage === 'done' && lastStage !== 'done';
+      muted = !alertOn && stage !== 'done';
+      if (!alertOn && stage !== 'done') stopLoop();
       render(data);
 
       if (!primed) {
         primed = true;
         playStageSound(stage, stage === 'ready' || stage === 'cooking');
         lastStage = stage;
+        muted = !alertOn;
         return;
       }
 
-      if (stage !== lastStage) {
+      if (becameDone) {
+        playDoneChime();
+      } else if (stage !== lastStage) {
         playStageSound(stage, true);
       } else if (changes.ready && stage === 'ready') {
         playStageSound('ready', true);
       } else if (changes.cooking && stage !== 'ready') {
         playStageSound('cooking', true);
-      } else if (changes.collected && stage === 'done') {
-        playStageSound('done', true);
       }
       lastStage = stage;
+      muted = !alertOn;
     } catch (e) {
       /* keep polling */
     } finally {
@@ -227,7 +243,6 @@
     if (collecting || !collectUrl) return;
     collecting = true;
     stopLoop();
-    muted = true;
     this.disabled = true;
     try {
       const res = await fetch(collectUrl, {
@@ -241,6 +256,7 @@
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Failed');
+      busy = false;
       await poll();
     } catch (err) {
       muted = false;
