@@ -68,7 +68,16 @@ return [
     'order_cooking'     => 'Sedang disediakan',
     'order_ready'       => 'Siap — sila ambil',
     'order_collected'   => 'Sudah diambil',
-    'keep_page_open'    => 'Biarkan halaman ini terbuka. Bunyi berbunyi bila makanan siap.',
+    'keep_page_open'    => 'Biarkan halaman ini terbuka. Ketik untuk aktifkan suara — berbunyi setiap kali status berubah, dan berulang bila siap diambil.',
+    'tap_alerts'        => 'Ketik untuk bunyi notifikasi',
+    'track_title_queue' => 'Pesanan diterima',
+    'track_title_cooking' => 'Dapur sedang masak',
+    'track_title_ready' => 'Siap — sila ke kaunter',
+    'track_title_done'  => 'Sudah diambil. Terima kasih!',
+    'step_queue'        => 'Giliran',
+    'step_cook'         => 'Dapur',
+    'step_ready'        => 'Ambil',
+    'step_done'         => 'Selesai',
 
     // Order statuses
     'status_menunggu'        => 'Menunggu',

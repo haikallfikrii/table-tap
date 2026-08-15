@@ -166,3 +166,36 @@ function getMenuGrouped(int $shopId, string $lang = 'my'): array
 
     return $grouped;
 }
+
+/** Overall self-pickup track stage from order_items rows. */
+function trackStageFromItems(array $items): string
+{
+    if ($items === []) {
+        return 'queue';
+    }
+    $allDone = true;
+    $anyReady = false;
+    $anyCook = false;
+    foreach ($items as $it) {
+        $st = (string) ($it['status_item'] ?? '');
+        if ($st !== 'dihantar') {
+            $allDone = false;
+        }
+        if ($st === 'siap' || $st === 'diambil') {
+            $anyReady = true;
+        }
+        if ($st === 'sedang_dimasak') {
+            $anyCook = true;
+        }
+    }
+    if ($allDone) {
+        return 'done';
+    }
+    if ($anyReady) {
+        return 'ready';
+    }
+    if ($anyCook) {
+        return 'cooking';
+    }
+    return 'queue';
+}

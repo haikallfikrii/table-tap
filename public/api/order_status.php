@@ -52,7 +52,7 @@ $readyIds = [];
 foreach ($itemStmt->fetchAll() as $it) {
     $st = (string) $it['status_item'];
     $id = (int) $it['id'];
-    if (in_array($st, ['siap', 'diambil', 'dihantar'], true)) {
+    if (in_array($st, ['siap', 'diambil'], true)) {
         $readyIds[] = $id;
     }
     $items[] = [
@@ -69,6 +69,7 @@ jsonResponse([
     'order_id' => $orderId,
     'status_order' => $order['status_order'],
     'nama_pelanggan' => $order['nama_pelanggan'] ?? '',
+    'stage' => trackStageFromItems($items),
     'items' => $items,
     'ready_item_ids' => $readyIds,
     'sound' => shopSoundSettings($shop),

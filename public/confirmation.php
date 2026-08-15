@@ -54,7 +54,18 @@ $trackI18n = [
     'order_cooking'   => t('order_cooking'),
     'order_ready'     => t('order_ready'),
     'order_collected' => t('order_collected'),
+    'title_queue'     => t('track_title_queue'),
+    'title_cooking'   => t('track_title_cooking'),
+    'title_ready'     => t('track_title_ready'),
+    'title_done'      => t('track_title_done'),
+    'sound_on'        => t('sound_on'),
 ];
+$stage = $selfPickup ? trackStageFromItems($items) : 'queue';
+$trackTitle = $selfPickup
+    ? ($stage === 'cooking' ? t('track_title_cooking')
+        : ($stage === 'ready' ? t('track_title_ready')
+            : ($stage === 'done' ? t('track_title_done') : t('track_title_queue'))))
+    : t('order_sent');
 ?>
 <!DOCTYPE html>
 <html lang="<?= e($lang === 'en' ? 'en' : 'ms') ?>">
@@ -72,13 +83,55 @@ $trackI18n = [
     <p><?= e(t('invalid_table')) ?></p>
   </div>
 <?php else: ?>
-  <div class="confirm-page<?= $selfPickup ? ' tracking' : '' ?>"<?= $selfPickup ? ' id="track-app" data-poll-url="' . e(baseUrl('public/api/order_status.php?order=' . $orderId . '&meja=' . urlencode($nomorMeja) . '&token=' . urlencode($token))) . '" data-interval="' . (int) ($config['poll_interval_ms'] ?? 4000) . '" data-lang="' . e($lang) . '" data-i18n="' . e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) . '"' : '' ?>>
+  <div class="confirm-page<?= $selfPickup ? ' tracking' : '' ?>"<?= $selfPickup ? ' id="track-app" data-stage="' . e($stage) . '" data-poll-url="' . e(baseUrl('public/api/order_status.php?order=' . $orderId . '&meja=' . urlencode($nomorMeja) . '&token=' . urlencode($token))) . '" data-interval="' . (int) ($config['poll_interval_ms'] ?? 4000) . '" data-lang="' . e($lang) . '" data-i18n="' . e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) . '"' : '' ?>>
     <div class="lang-toggle" style="position:absolute;top:16px;right:16px">
       <button type="button" data-set-lang="my" class="<?= $lang === 'my' ? 'active' : '' ?>"><?= e(t('lang_my')) ?></button>
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
     </div>
-    <div class="confirm-icon" aria-hidden="true">✓</div>
-    <h1><?= e(t('order_sent')) ?></h1>
+    <?php if ($selfPickup): ?>
+      <div class="track-sound-bar" id="track-sound-bar">
+        <button type="button" class="btn btn-primary" id="btn-track-sound"><?= e(t('tap_alerts')) ?></button>
+      </div>
+      <div class="track-hero" id="track-hero" data-stage="<?= e($stage) ?>" aria-hidden="true">
+        <div class="track-stage track-stage-queue">
+          <span class="orb-ring"></span>
+          <span class="orb-ring delay"></span>
+          <span class="orb-ticket">#</span>
+          <i class="orb-dot d1"></i>
+          <i class="orb-dot d2"></i>
+          <i class="orb-dot d3"></i>
+        </div>
+        <div class="track-stage track-stage-cooking">
+          <span class="cook-pan"></span>
+          <span class="cook-lid"></span>
+          <span class="cook-steam s1"></span>
+          <span class="cook-steam s2"></span>
+          <span class="cook-steam s3"></span>
+          <span class="cook-flame"></span>
+        </div>
+        <div class="track-stage track-stage-ready">
+          <span class="ready-ping p1"></span>
+          <span class="ready-ping p2"></span>
+          <span class="ready-ping p3"></span>
+          <span class="ready-bag">!</span>
+        </div>
+        <div class="track-stage track-stage-done">
+          <span class="done-burst b1"></span>
+          <span class="done-burst b2"></span>
+          <span class="done-burst b3"></span>
+          <span class="done-check">✓</span>
+        </div>
+      </div>
+      <ol class="track-steps" id="track-steps">
+        <li data-step="queue" class="<?= $stage === 'queue' ? 'is-current' : ($stage !== 'queue' ? 'is-done' : '') ?>"><?= e(t('step_queue')) ?></li>
+        <li data-step="cooking" class="<?= $stage === 'cooking' ? 'is-current' : (in_array($stage, ['ready', 'done'], true) ? 'is-done' : '') ?>"><?= e(t('step_cook')) ?></li>
+        <li data-step="ready" class="<?= $stage === 'ready' ? 'is-current' : ($stage === 'done' ? 'is-done' : '') ?>"><?= e(t('step_ready')) ?></li>
+        <li data-step="done" class="<?= $stage === 'done' ? 'is-current' : '' ?>"><?= e(t('step_done')) ?></li>
+      </ol>
+    <?php else: ?>
+      <div class="confirm-icon" aria-hidden="true">✓</div>
+    <?php endif; ?>
+    <h1 id="track-title"><?= e($trackTitle) ?></h1>
     <p style="color:var(--ink-muted);margin:0"><?= e($brand) ?> · <?= e(t('table')) ?> <?= e($table['nomor_meja']) ?></p>
     <?php if (!empty($order['nama_pelanggan'])): ?>
       <p style="margin:6px 0 0;font-weight:800"><?= e($order['nama_pelanggan']) ?></p>
@@ -94,8 +147,12 @@ $trackI18n = [
       </p>
     <?php endif; ?>
     <p style="margin:8px 0;font-weight:700;font-size:1.2rem"><?= e(formatMoney($order['total_harga'])) ?></p>
-    <div class="confirm-status track-banner queue" id="track-banner">
-      <?= e($selfPickup ? t('order_queue') : t('order_waiting')) ?>
+    <div class="confirm-status track-banner <?= e($selfPickup ? $stage : 'queue') ?>" id="track-banner">
+      <?= e($selfPickup
+          ? ($stage === 'cooking' ? t('order_cooking')
+              : ($stage === 'ready' ? t('order_ready')
+                  : ($stage === 'done' ? t('order_collected') : t('order_queue'))))
+          : t('order_waiting')) ?>
     </div>
     <?php if ($selfPickup): ?>
       <p class="track-hint"><?= e(t('keep_page_open')) ?></p>
@@ -107,6 +164,7 @@ $trackI18n = [
             $nama = $lang === 'en' ? $it['nama_saat_order_en'] : $it['nama_saat_order_my'];
         ?>
           <li class="<?= e($cls) ?>">
+            <span class="track-item-pulse" aria-hidden="true"></span>
             <span><b><?= (int) $it['qty'] ?>×</b> <?= e($nama) ?></span>
             <span class="track-pill"><?= e($label) ?></span>
           </li>

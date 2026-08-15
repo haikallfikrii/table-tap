@@ -68,7 +68,16 @@ return [
     'order_cooking'     => 'Being prepared',
     'order_ready'       => 'Ready — please collect',
     'order_collected'   => 'Collected',
-    'keep_page_open'    => 'Keep this page open. It beeps when your food is ready.',
+    'keep_page_open'    => 'Keep this page open. Tap to enable sound — it alerts on every status change and loops when ready.',
+    'tap_alerts'        => 'Tap to enable pickup alerts',
+    'track_title_queue' => 'Order received',
+    'track_title_cooking' => 'Kitchen is cooking',
+    'track_title_ready' => 'Ready — please collect',
+    'track_title_done'  => 'Collected. Thank you!',
+    'step_queue'        => 'Queue',
+    'step_cook'         => 'Cooking',
+    'step_ready'        => 'Collect',
+    'step_done'         => 'Done',
 
     // Order statuses
     'status_menunggu'        => 'Waiting',

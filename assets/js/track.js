@@ -1,20 +1,32 @@
 /**
- * Customer self-pickup tracker — live item status + auto alert when ready
+ * Customer self-pickup tracker — live stages, looping hero, status sounds
  */
 (function () {
   const root = document.getElementById('track-app');
-  if (!root || typeof TableTapSound === 'undefined') return;
+  if (!root) return;
 
   const pollUrl = root.dataset.pollUrl;
   const interval = Number(root.dataset.interval) || 4000;
   const lang = root.dataset.lang || 'my';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
+  const sound = window.TableTapSound;
 
-  let knownReady = new Set();
+  let lastStage = root.dataset.stage || 'queue';
+  let lastItems = {};
   let primed = false;
   let busy = false;
+  let alarmOn = false;
 
-  TableTapSound.armAutoUnlock();
+  if (sound) {
+    sound.armAutoUnlock();
+    sound.bindButton(document.getElementById('btn-track-sound'), {
+      on: i18n.sound_on || 'Sound on',
+    });
+    document.getElementById('btn-track-sound')?.addEventListener('click', function () {
+      document.getElementById('track-sound-bar')?.classList.add('on');
+      syncReadyAlarm(lastStage);
+    });
+  }
 
   function esc(s) {
     return String(s)
@@ -38,21 +50,11 @@
     return 'queue';
   }
 
-  function overall(items) {
-    if (!items.length) return 'queue';
-    const allDone = items.every(function (it) {
-      return it.status_item === 'dihantar';
-    });
-    if (allDone) return 'done';
-    const anyReady = items.some(function (it) {
-      return it.status_item === 'siap' || it.status_item === 'diambil';
-    });
-    if (anyReady) return 'ready';
-    const anyCook = items.some(function (it) {
-      return it.status_item === 'sedang_dimasak';
-    });
-    if (anyCook) return 'cooking';
-    return 'queue';
+  function titleFor(key) {
+    if (key === 'cooking') return i18n.title_cooking || 'Kitchen is cooking';
+    if (key === 'ready') return i18n.title_ready || 'Ready — please collect';
+    if (key === 'done') return i18n.title_done || 'Collected. Thank you!';
+    return i18n.title_queue || 'Order received';
   }
 
   function overallText(key) {
@@ -62,20 +64,81 @@
     return i18n.order_queue || 'In the queue';
   }
 
-  function render(data) {
-    const items = data.items || [];
-    const key = overall(items);
+  function buzz(pattern) {
+    try {
+      if (navigator.vibrate) navigator.vibrate(pattern);
+    } catch (e) { /* ignore */ }
+  }
+
+  function playStageSound(key, isChange) {
+    if (!sound) return;
+    if (key === 'ready') {
+      if (!alarmOn || isChange) {
+        sound.configure({
+          mode: 'until_cleared',
+          interval_ms: 1100,
+          volume: 100,
+        });
+        sound.stopAlarm();
+        alarmOn = false;
+        sound.startAlarm();
+        alarmOn = true;
+        buzz([180, 80, 180, 80, 320]);
+      }
+      return;
+    }
+    if (alarmOn) {
+      sound.stopAlarm();
+      alarmOn = false;
+    }
+    if (!isChange) return;
+    if (key === 'cooking') {
+      sound.chime('cooking');
+      buzz(160);
+    } else if (key === 'done') {
+      sound.chime('done');
+      buzz(40);
+    } else {
+      sound.chime('queue');
+    }
+  }
+
+  function syncReadyAlarm(stage) {
+    if (stage === 'ready') playStageSound('ready', true);
+  }
+
+  function setHero(stage) {
+    const hero = document.getElementById('track-hero');
+    if (hero) hero.setAttribute('data-stage', stage);
+    const title = document.getElementById('track-title');
+    if (title) title.textContent = titleFor(stage);
     const banner = document.getElementById('track-banner');
     if (banner) {
-      banner.className = 'confirm-status track-banner ' + key;
-      banner.textContent = overallText(key);
+      banner.className = 'confirm-status track-banner ' + stage;
+      banner.textContent = overallText(stage);
     }
+    document.querySelectorAll('#track-steps [data-step]').forEach(function (el) {
+      const step = el.getAttribute('data-step');
+      const order = ['queue', 'cooking', 'ready', 'done'];
+      const i = order.indexOf(step);
+      const now = order.indexOf(stage);
+      el.classList.toggle('is-current', step === stage);
+      el.classList.toggle('is-done', i < now);
+    });
+    root.dataset.stage = stage;
+  }
+
+  function render(data) {
+    const items = data.items || [];
+    const key = data.stage || 'queue';
+    setHero(key);
     const list = document.getElementById('track-items');
     if (!list) return;
     list.innerHTML = items.map(function (it) {
       const st = it.status_item;
       return (
         '<li class="' + itemClass(st) + '">' +
+          '<span class="track-item-pulse" aria-hidden="true"></span>' +
           '<span><b>' + esc(String(it.qty)) + '×</b> ' + esc(it.nama) + '</span>' +
           '<span class="track-pill">' + esc(itemLabel(st)) + '</span>' +
         '</li>'
@@ -83,16 +146,22 @@
     }).join('');
   }
 
-  function alertReady(sound) {
-    TableTapSound.unlock();
-    TableTapSound.configure({
-      mode: 'duration',
-      duration_sec: 18,
-      interval_ms: (sound && sound.interval_ms) || 900,
-      volume: (sound && sound.volume) || 100,
+  function detectChanges(items) {
+    let cooking = false;
+    let ready = false;
+    let collected = false;
+    items.forEach(function (it) {
+      const prev = lastItems[it.id];
+      if (prev && prev !== it.status_item) {
+        if (it.status_item === 'sedang_dimasak') cooking = true;
+        if (it.status_item === 'siap' || it.status_item === 'diambil') ready = true;
+        if (it.status_item === 'dihantar') collected = true;
+      }
     });
-    TableTapSound.stopAlarm();
-    TableTapSound.startAlarm();
+    const map = {};
+    items.forEach(function (it) { map[it.id] = it.status_item; });
+    lastItems = map;
+    return { cooking: cooking, ready: ready, collected: collected };
   }
 
   async function poll() {
@@ -105,16 +174,28 @@
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       const data = await res.json();
       if (!data.ok) return;
+      const items = data.items || [];
+      const stage = data.stage || 'queue';
+      const changes = detectChanges(items);
       render(data);
-      const ready = data.ready_item_ids || [];
-      const fresh = ready.filter(function (id) { return !knownReady.has(id); });
+
       if (!primed) {
-        ready.forEach(function (id) { knownReady.add(id); });
         primed = true;
-      } else if (fresh.length) {
-        fresh.forEach(function (id) { knownReady.add(id); });
-        alertReady(data.sound || {});
+        playStageSound(stage, stage === 'ready' || stage === 'cooking');
+        lastStage = stage;
+        return;
       }
+
+      if (stage !== lastStage) {
+        playStageSound(stage, true);
+      } else if (changes.ready && stage === 'ready') {
+        playStageSound('ready', true);
+      } else if (changes.cooking && stage !== 'ready') {
+        playStageSound('cooking', true);
+      } else if (changes.collected && stage === 'done') {
+        playStageSound('done', true);
+      }
+      lastStage = stage;
     } catch (e) {
       /* keep polling */
     } finally {
