@@ -165,21 +165,84 @@
     document.getElementById('cart-sheet')?.classList.remove('open');
   }
 
+  function addToCart(id, nama, harga) {
+    const existing = findLine(id);
+    if (existing) {
+      existing.qty += 1;
+    } else {
+      cart.push({ id, nama, harga, qty: 1, catatan: '' });
+    }
+    if (window.TableTapSound) TableTapSound.unlock();
+    refresh();
+  }
+
+  let detailItem = null;
+
+  function closeDetail() {
+    document.getElementById('detail-overlay')?.classList.remove('open');
+    document.getElementById('detail-sheet')?.classList.remove('open');
+  }
+
+  function openDetail(data) {
+    detailItem = data;
+    const title = document.getElementById('detail-title');
+    const body = document.getElementById('detail-body');
+    const addBtn = document.getElementById('detail-add');
+    if (title) title.textContent = data.nama || '';
+    const photos = Array.isArray(data.photos) ? data.photos : [];
+    let gallery = '';
+    if (photos.length) {
+      gallery = '<div class="detail-gallery">' + photos.map(function (src, i) {
+        return '<img src="' + escapeHtml(src) + '" alt="" loading="lazy"' + (i === 0 ? ' class="on"' : '') + '>';
+      }).join('') + '</div>';
+      if (photos.length > 1) {
+        gallery += '<div class="detail-dots">' + photos.map(function (_, i) {
+          return '<button type="button" class="detail-dot' + (i === 0 ? ' on' : '') + '" data-slide="' + i + '"></button>';
+        }).join('') + '</div>';
+      }
+    }
+    if (body) {
+      body.innerHTML = gallery +
+        (data.desc ? '<p class="detail-desc">' + escapeHtml(data.desc) + '</p>' : '') +
+        '<p class="detail-price">' + escapeHtml(data.harga_l || '') + '</p>';
+    }
+    if (addBtn) {
+      addBtn.disabled = !!data.out;
+    }
+    document.getElementById('detail-overlay')?.classList.add('open');
+    document.getElementById('detail-sheet')?.classList.add('open');
+  }
+
   // Add buttons
   document.querySelectorAll('[data-add-item]').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const id = Number(btn.dataset.addItem);
-      const nama = btn.dataset.nama || '';
-      const harga = Number(btn.dataset.harga) || 0;
-      const existing = findLine(id);
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        cart.push({ id, nama, harga, qty: 1, catatan: '' });
-      }
-      if (window.TableTapSound) TableTapSound.unlock();
-      refresh();
+      addToCart(Number(btn.dataset.addItem), btn.dataset.nama || '', Number(btn.dataset.harga) || 0);
     });
+  });
+
+  document.querySelectorAll('[data-open-detail]').forEach(function (el) {
+    el.addEventListener('click', function () {
+      try {
+        openDetail(JSON.parse(el.getAttribute('data-open-detail') || '{}'));
+      } catch (err) { /* ignore */ }
+    });
+  });
+
+  document.getElementById('detail-overlay')?.addEventListener('click', closeDetail);
+  document.getElementById('btn-close-detail')?.addEventListener('click', closeDetail);
+  document.getElementById('detail-add')?.addEventListener('click', function () {
+    if (!detailItem || detailItem.out) return;
+    addToCart(Number(detailItem.id), detailItem.nama || '', Number(detailItem.harga) || 0);
+    closeDetail();
+  });
+  document.getElementById('detail-body')?.addEventListener('click', function (e) {
+    const dot = e.target.closest('[data-slide]');
+    if (!dot) return;
+    const i = Number(dot.getAttribute('data-slide'));
+    const imgs = document.querySelectorAll('.detail-gallery img');
+    const dots = document.querySelectorAll('.detail-dot');
+    imgs.forEach(function (img, idx) { img.classList.toggle('on', idx === i); });
+    dots.forEach(function (d, idx) { d.classList.toggle('on', idx === i); });
   });
 
   document.getElementById('cart-bar-btn')?.addEventListener('click', openSheet);

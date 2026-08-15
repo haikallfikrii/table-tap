@@ -24,6 +24,7 @@ $menu = $table ? getMenuGrouped((int) $table['shop_id'], $lang) : [];
 $sstEnabled = $table && (int) ($table['sst_enabled'] ?? 0) === 1;
 $sstRate = $table ? (float) ($table['sst_rate'] ?? 0) : 0;
 $selfPickup = $table && shopFulfillment($table) === 'self_pickup';
+$canGallery = $table && shopHasFeature($table, 'menu_gallery');
 
 $i18nJs = [
     'cart_empty'    => t('cart_empty'),
@@ -102,14 +103,27 @@ $i18nJs = [
           <?php foreach ($menu[$kat] as $item):
             $out = $item['status_stok'] === 'habis';
             $initial = mb_strtoupper(mb_substr($item['nama'], 0, 1));
+            $photos = [];
+            foreach ($item['gallery'] ?? [] as $src) {
+                $photos[] = baseUrl($src);
+            }
+            $detail = [
+                'id' => (int) $item['id'],
+                'nama' => $item['nama'],
+                'desc' => (string) ($item['deskripsi'] ?? ''),
+                'harga' => (float) $item['harga'],
+                'harga_l' => formatMoney((float) $item['harga']),
+                'photos' => $photos,
+                'out' => $out,
+            ];
           ?>
             <article class="menu-item<?= $out ? ' out' : '' ?>">
               <?php if (!empty($item['foto_url'])): ?>
-                <img class="menu-item-photo" src="<?= e(baseUrl($item['foto_url'])) ?>" alt="<?= e($item['nama']) ?>" loading="lazy">
+                <img class="menu-item-photo<?= $canGallery ? ' tap' : '' ?>" src="<?= e(baseUrl($item['foto_url'])) ?>" alt="<?= e($item['nama']) ?>" loading="lazy"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>>
               <?php else: ?>
-                <div class="menu-item-photo placeholder" aria-hidden="true"><?= e($initial) ?></div>
+                <div class="menu-item-photo placeholder<?= $canGallery ? ' tap' : '' ?>" aria-hidden="true"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>><?= e($initial) ?></div>
               <?php endif; ?>
-              <div class="menu-item-body">
+              <div class="menu-item-body"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>>
                 <h3><?= e($item['nama']) ?></h3>
                 <?php if ($item['deskripsi']): ?>
                   <p><?= e($item['deskripsi']) ?></p>
@@ -117,6 +131,7 @@ $i18nJs = [
                 <span class="menu-item-price">
                   <?= e(formatMoney($item['harga'])) ?>
                   <?php if ($out): ?> · <?= e(t('out_of_stock')) ?><?php endif; ?>
+                  <?php if ($canGallery): ?> · <?= e(t('menu_see_detail')) ?><?php endif; ?>
                 </span>
               </div>
               <button
@@ -175,6 +190,20 @@ $i18nJs = [
     </button>
   </div>
 </aside>
+
+<?php if ($canGallery): ?>
+<div class="sheet-overlay" id="detail-overlay"></div>
+<aside class="cart-sheet detail-sheet" id="detail-sheet" aria-label="<?= e(t('menu_detail')) ?>">
+  <div class="cart-sheet-header">
+    <h2 id="detail-title"><?= e(t('menu_detail')) ?></h2>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-close-detail"><?= e(t('close')) ?></button>
+  </div>
+  <div class="cart-sheet-body" id="detail-body"></div>
+  <div class="cart-sheet-footer">
+    <button type="button" class="btn btn-primary" id="detail-add" style="width:100%"><?= e(t('add_to_cart')) ?></button>
+  </div>
+</aside>
+<?php endif; ?>
 
 <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
 <?php if ($selfPickup): ?>

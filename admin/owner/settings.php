@@ -40,6 +40,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         if (!in_array($fulfillment, ['waiter', 'self_pickup'], true)) {
             $fulfillment = 'waiter';
         }
+        if ($fulfillment === 'self_pickup' && !shopHasFeature($shop, 'self_pickup')) {
+            $fulfillment = 'waiter';
+        }
         if ($namaKedai === '') {
             throw new RuntimeException(t('shop_name') . ' required');
         }
@@ -70,6 +73,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 }
 
 $shop = getShopOrFail($shopId);
+$canSelfPickup = shopHasFeature($shop, 'self_pickup');
 $retentionLabel = $shop['retention_days'] === null
     ? t('retention_forever')
     : ((int) $shop['retention_days'] . ' ' . t('days'));
@@ -115,13 +119,16 @@ $retentionLabel = $shop['retention_days'] === null
     </div>
     <h3 style="margin:22px 0 8px"><?= e(t('fulfillment')) ?></h3>
     <p class="order-meta" style="margin:0 0 12px"><?= e(t('fulfillment_hint')) ?></p>
+    <?php if (!$canSelfPickup): ?>
+      <p class="order-meta" style="margin:0 0 12px;color:var(--accent)"><?= e(t('fulfillment_upgrade')) ?></p>
+    <?php endif; ?>
     <div class="form-group">
       <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px">
         <input type="radio" name="fulfillment_mode" value="waiter" <?= shopFulfillment($shop) === 'waiter' ? 'checked' : '' ?>>
         <span><strong><?= e(t('fulfillment_waiter')) ?></strong><br><span class="order-meta"><?= e(t('fulfillment_waiter_d')) ?></span></span>
       </label>
-      <label style="display:flex;gap:8px;align-items:flex-start">
-        <input type="radio" name="fulfillment_mode" value="self_pickup" <?= shopFulfillment($shop) === 'self_pickup' ? 'checked' : '' ?>>
+      <label style="display:flex;gap:8px;align-items:flex-start<?= $canSelfPickup ? '' : ';opacity:.55' ?>">
+        <input type="radio" name="fulfillment_mode" value="self_pickup" <?= shopFulfillment($shop) === 'self_pickup' ? 'checked' : '' ?> <?= $canSelfPickup ? '' : 'disabled' ?>>
         <span><strong><?= e(t('fulfillment_self')) ?></strong><br><span class="order-meta"><?= e(t('fulfillment_self_d')) ?></span></span>
       </label>
     </div>
