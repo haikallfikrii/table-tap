@@ -206,9 +206,7 @@ $i18nJs = [
 <?php endif; ?>
 
 <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
-<?php if ($selfPickup): ?>
 <script src="<?= e(assetUrl('js/sound.js')) ?>"></script>
-<?php endif; ?>
 <script src="<?= e(assetUrl('js/order.js')) ?>"></script>
 </body>
 </html>

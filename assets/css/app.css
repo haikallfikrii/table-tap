@@ -690,6 +690,7 @@ a {
 .track-hero[data-stage="queue"] .track-stage-queue,
 .track-hero[data-stage="cooking"] .track-stage-cooking,
 .track-hero[data-stage="ready"] .track-stage-ready,
+.track-hero[data-stage="delivering"] .track-stage-delivering,
 .track-hero[data-stage="done"] .track-stage-done {
   display: flex;
 }
@@ -814,6 +815,51 @@ a {
   box-shadow: 0 12px 28px rgba(42, 157, 143, 0.4);
 }
 
+.track-stage-delivering .w-table {
+  position: absolute;
+  right: 28px;
+  bottom: 42px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #c4a574;
+  box-shadow: 0 8px 0 #8d6e46;
+}
+
+.track-stage-delivering .w-person {
+  position: absolute;
+  left: 28px;
+  bottom: 52px;
+  width: 20px;
+  height: 38px;
+  border-radius: 10px 10px 4px 4px;
+  background: var(--info);
+  animation: w-walk 1s ease-in-out infinite;
+}
+
+.track-stage-delivering .w-person::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f4d6b8;
+}
+
+.track-stage-delivering .w-tray {
+  position: absolute;
+  left: 38px;
+  bottom: 72px;
+  width: 30px;
+  height: 7px;
+  border-radius: 3px;
+  background: #eee;
+  box-shadow: 0 2px 0 #bbb;
+  animation: w-walk 1s ease-in-out infinite;
+}
+
 .done-check {
   width: 86px;
   height: 86px;
@@ -853,6 +899,10 @@ a {
   width: 100%;
   margin: 0 0 16px;
   padding: 0;
+}
+
+.track-steps.waiter {
+  grid-template-columns: repeat(5, 1fr);
 }
 
 .track-steps li {
@@ -898,6 +948,7 @@ a {
   color: var(--success);
   animation: ready-flash 1s ease-in-out infinite;
 }
+.track-banner.delivering { background: var(--info-soft); color: var(--info); }
 .track-banner.done { background: var(--accent-soft); color: var(--accent); }
 
 .track-items {
@@ -942,6 +993,11 @@ a {
   animation-duration: 0.7s;
 }
 
+.track-items li.delivering .track-item-pulse {
+  background: var(--info);
+  animation-duration: 0.8s;
+}
+
 .track-items li.done .track-item-pulse {
   background: var(--accent);
   animation: none;
@@ -960,6 +1016,7 @@ a {
 
 .track-items li.cooking .track-pill { background: var(--info-soft); color: var(--info); }
 .track-items li.ready .track-pill { background: var(--success-soft); color: var(--success); }
+.track-items li.delivering .track-pill { background: var(--info-soft); color: var(--info); }
 .track-items li.done .track-pill { background: var(--accent-soft); color: var(--accent); }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -992,6 +1049,10 @@ a {
   0%, 100% { transform: translateY(0) rotate(-4deg) scale(1); }
   40% { transform: translateY(-16px) rotate(5deg) scale(1.08); }
   70% { transform: translateY(-4px) rotate(-2deg); }
+}
+@keyframes w-walk {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(48px); }
 }
 @keyframes check-pop {
   0%, 100% { transform: scale(1) rotate(-8deg); }

@@ -148,6 +148,17 @@ window.TableTapSound = (function () {
         tone(1318, 'sine', now + 0.62, 0.7, peak * 0.32);
         return;
       }
+      if (kind === 'ready') {
+        tone(880, 'square', now, 0.12, peak * 0.35);
+        tone(1174, 'sine', now + 0.12, 0.28, peak * 0.48);
+        return;
+      }
+      if (kind === 'delivering') {
+        tone(392, 'triangle', now, 0.14, peak * 0.35);
+        tone(494, 'triangle', now + 0.14, 0.16, peak * 0.4);
+        tone(587, 'sine', now + 0.3, 0.32, peak * 0.45);
+        return;
+      }
       if (kind === 'queue') {
         tone(494, 'sine', now, 0.14, peak * 0.28);
         return;
