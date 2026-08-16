@@ -876,5 +876,6 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
 <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
 <script src="<?= e(assetUrl('js/sound.js')) ?>"></script>
 <script src="<?= e(assetUrl('js/landing.js')) ?>"></script>
+<?= chatlmWidgetHtml() ?>
 </body>
 </html>
