@@ -87,6 +87,21 @@ function assetUrl(string $path): string
     return $url;
 }
 
+/** ChatLM sales/support popup. Empty api key disables the widget. */
+function chatlmWidgetHtml(): string
+{
+    $c = getConfig();
+    if (array_key_exists('chatlm_enabled', $c) && !$c['chatlm_enabled']) {
+        return '';
+    }
+    $key = trim((string) ($c['chatlm_api_key'] ?? 'df78d68075cf72f71568061bf7e17726424993dcd938fb16b1331cd12dd63b41'));
+    $base = rtrim((string) ($c['chatlm_base_url'] ?? 'https://chatlm.tech'), '/');
+    if ($key === '' || $base === '') {
+        return '';
+    }
+    return '<script src="' . e($base) . '/widget/widget.js" data-api-key="' . e($key) . '" data-base-url="' . e($base) . '" defer></script>' . "\n";
+}
+
 function uploadPath(string $filename = ''): string
 {
     $dir = dirname(__DIR__) . '/assets/uploads/menu';
