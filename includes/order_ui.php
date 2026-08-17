@@ -51,6 +51,7 @@ $pageSubtitle = $cafeBrowseMode
   data-cafe-verify="<?= e($cafeVerify) ?>"
   data-checkout-url="<?= e($checkoutUrl) ?>"
   data-send-otp-url="<?= e($sendOtpUrl) ?>"
+  data-prefill-name="<?= e($prefillGuestName) ?>"
   data-table-id="<?= (int) $table['id'] ?>"
   data-submit-url="<?= e($submitUrl) ?>"
   data-fulfillment="<?= e($selfPickup ? 'self_pickup' : 'waiter') ?>"

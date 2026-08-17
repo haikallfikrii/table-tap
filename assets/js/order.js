@@ -15,6 +15,7 @@
   const cafeVerify = root.dataset.cafeVerify || 'email';
   const checkoutUrl = root.dataset.checkoutUrl || '';
   const sendOtpUrl = root.dataset.sendOtpUrl || '';
+  const prefillName = (root.dataset.prefillName || '').trim();
   const tableId = Number(root.dataset.tableId || 0);
   const submitUrl = root.dataset.submitUrl;
   const fulfillment = root.dataset.fulfillment || 'waiter';
@@ -324,24 +325,44 @@
 
   document.getElementById('guest-name')?.addEventListener('input', persist);
 
+  function resolveGuestName() {
+    const nameInput = document.getElementById('guest-name');
+    if (nameInput) {
+      const v = (nameInput.value || '').trim();
+      if (v.length >= 2) return v;
+    }
+    if (prefillName.length >= 2) return prefillName;
+    return '';
+  }
+
+  function checkoutGuestName() {
+    const n = (checkoutName?.value || '').trim();
+    if (n.length >= 2) return n;
+    const email = (checkoutEmail?.value || '').trim();
+    if (email.includes('@')) {
+      const local = email.split('@')[0].trim();
+      if (local.length >= 2) return local;
+    }
+    return n;
+  }
+
   document.getElementById('btn-submit-order')?.addEventListener('click', async () => {
     if (cart.length === 0) {
       alert(i18n.select_items || 'Select items');
       return;
     }
-    let guestName = '';
-    const nameInput = document.getElementById('guest-name');
-    if (nameInput) guestName = (nameInput.value || '').trim();
-    if (fulfillment === 'self_pickup' && !cafeBrowse && guestName.length < 2) {
+    const guestName = resolveGuestName();
+    // Session sudah ada nama — server guna nama sesi; jangan block di client
+    if (fulfillment === 'self_pickup' && !cafeBrowse && !sessionToken && guestName.length < 2) {
       alert(i18n.guest_name_required || 'Enter your name');
-      if (nameInput) nameInput.focus();
+      document.getElementById('guest-name')?.focus();
       return;
     }
     if (cafeBrowse) {
       openCheckoutSheet();
       return;
     }
-    await submitOrder(guestName);
+    await submitOrder(guestName || resolveGuestName());
   });
 
   async function submitOrder(guestName) {
@@ -428,13 +449,17 @@
   }
 
   async function runCafeCheckout(code) {
+    const guestName = checkoutGuestName();
+    if (fulfillment === 'self_pickup' && guestName.length < 2) {
+      throw new Error(i18n.guest_name_required || 'Enter your name');
+    }
     const res = await fetch(checkoutUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({
         shop: shopSlug,
         token: shopToken,
-        nama_pelanggan: (checkoutName?.value || '').trim(),
+        nama_pelanggan: guestName,
         email: (checkoutEmail?.value || '').trim(),
         code: code || '',
         jenis_hidang: serveType,
@@ -452,7 +477,7 @@
   }
 
   document.getElementById('btn-checkout-send')?.addEventListener('click', async function () {
-    const name = (checkoutName?.value || '').trim();
+    const name = checkoutGuestName();
     const email = (checkoutEmail?.value || '').trim();
     if (fulfillment === 'self_pickup' && name.length < 2) {
       alert(i18n.guest_name_required || 'Enter name');
