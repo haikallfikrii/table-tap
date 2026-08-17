@@ -34,7 +34,7 @@ $stmt = $pdo->prepare(
            AND o.waktu_lunas >= DATE_SUB(NOW(), INTERVAL 4 HOUR)
          )
        )
-     ORDER BY o.waktu_order ASC, o.id ASC"
+     ORDER BY o.waktu_order DESC, o.id DESC"
 );
 $stmt->execute([$shopId]);
 $orders = $stmt->fetchAll();
@@ -121,8 +121,21 @@ foreach ($resultOrders as $o) {
     }
 }
 
-uksort($byTable, static function ($a, $b) {
-    return strnatcasecmp((string) $a, (string) $b);
+foreach ($byTable as &$tbl) {
+    usort($tbl['orders'], static fn(array $a, array $b): int => $b['id'] <=> $a['id']);
+}
+unset($tbl);
+
+uksort($byTable, static function (string $a, string $b) use ($byTable): int {
+    $maxA = 0;
+    $maxB = 0;
+    foreach ($byTable[$a]['orders'] as $o) {
+        $maxA = max($maxA, (int) $o['id']);
+    }
+    foreach ($byTable[$b]['orders'] as $o) {
+        $maxB = max($maxB, (int) $o['id']);
+    }
+    return $maxB <=> $maxA;
 });
 
 $grandTotal = 0.0;
@@ -146,5 +159,6 @@ jsonResponse([
         'unpaid_orders' => $unpaidCount,
         'grand_total' => round($grandTotal, 2),
     ],
+    'orders' => $resultOrders,
     'tables' => array_values($byTable),
 ]);

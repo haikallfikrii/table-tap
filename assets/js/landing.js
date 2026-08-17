@@ -495,72 +495,98 @@
     }, 1400);
   }
 
-  /* ---------- All-in-one orbit ---------- */
+  /* ---------- All-in-one peek animation ---------- */
   var aioStage = document.getElementById('aio-stage');
-  var aioOrbit = aioStage && aioStage.querySelector('.aio-orbit');
   var aioStatus = document.getElementById('aio-status');
-  var aioSats = aioOrbit ? aioOrbit.querySelectorAll('.aio-sat') : [];
-  var aioKeys = ['printer', 'pos', 'calc', 'paper'];
-  var aioIdx = 0;
-  var aioTimer = null;
+  var aioChips = aioStage ? aioStage.querySelectorAll('.aio-chip') : [];
+  var toolKeys = ['pos', 'calc', 'paper'];
+  var toolIdx = 0;
+  var toolTimer = null;
+  var printerTimer = null;
   var aioLabels = {};
 
-  aioSats.forEach(function (sat) {
-    var k = sat.getAttribute('data-aio');
-    var lab = sat.querySelector('.aio-label');
+  aioChips.forEach(function (chip) {
+    var k = chip.getAttribute('data-aio');
+    var lab = chip.querySelector('.aio-label');
     if (k && lab) aioLabels[k] = lab.textContent;
   });
 
-  function setAioFocus(key) {
-    aioSats.forEach(function (sat) {
-      var k = sat.getAttribute('data-aio');
-      sat.classList.toggle('is-active', k === key);
-      sat.classList.toggle('is-out', k !== key);
+  function aioStatusText(key) {
+    if (!aioStatus || !aioLabels[key]) return;
+    var prefix = document.documentElement.lang === 'en' ? 'No longer needed: ' : 'Tak perlu lagi: ';
+    aioStatus.textContent = prefix + aioLabels[key];
+  }
+
+  function peekAio(key) {
+    aioChips.forEach(function (chip) {
+      chip.classList.remove('is-peek', 'is-struck');
     });
-    if (aioStatus && aioLabels[key]) {
-      aioStatus.textContent = (document.documentElement.lang === 'en' ? 'No longer needed: ' : 'Tak perlu lagi: ') + aioLabels[key];
+    var chip = aioStage.querySelector('.aio-chip[data-aio="' + key + '"]');
+    if (!chip) return;
+    void chip.offsetWidth;
+    chip.classList.add('is-peek', 'is-struck');
+    aioStatusText(key);
+  }
+
+  function stopAioLoops() {
+    if (toolTimer) { clearInterval(toolTimer); toolTimer = null; }
+    if (printerTimer) { clearInterval(printerTimer); printerTimer = null; }
+    aioChips.forEach(function (chip) {
+      chip.classList.remove('is-peek', 'is-struck');
+    });
+  }
+
+  function startAioLoops() {
+    stopAioLoops();
+    if (reduceMotion) {
+      peekAio('pos');
+      return;
     }
+    peekAio(toolKeys[0]);
+    toolTimer = setInterval(function () {
+      toolIdx = (toolIdx + 1) % toolKeys.length;
+      peekAio(toolKeys[toolIdx]);
+    }, 3800);
+    printerTimer = setInterval(function () {
+      peekAio('printer');
+    }, 7600);
+    setTimeout(function () {
+      peekAio('printer');
+    }, 1900);
   }
 
-  function startAioLoop() {
-    if (!aioOrbit || reduceMotion) return;
-    aioOrbit.classList.add('spinning');
-    aioTimer = setInterval(function () {
-      aioIdx = (aioIdx + 1) % aioKeys.length;
-      setAioFocus(aioKeys[aioIdx]);
-    }, 2200);
-    setAioFocus(aioKeys[0]);
-  }
-
-  function stopAioLoop() {
-    if (aioTimer) { clearInterval(aioTimer); aioTimer = null; }
-    if (aioOrbit) aioOrbit.classList.remove('spinning');
-  }
-
-  if (aioStage && aioSats.length) {
-    aioSats.forEach(function (sat) {
-      sat.addEventListener('click', function () {
-        var k = sat.getAttribute('data-aio');
+  if (aioStage && aioChips.length) {
+    aioChips.forEach(function (chip) {
+      chip.addEventListener('click', function () {
+        var k = chip.getAttribute('data-aio');
         if (!k) return;
-        aioIdx = aioKeys.indexOf(k);
-        if (aioTimer) clearInterval(aioTimer);
-        setAioFocus(k);
-        aioTimer = setInterval(function () {
-          aioIdx = (aioIdx + 1) % aioKeys.length;
-          setAioFocus(aioKeys[aioIdx]);
-        }, 2200);
+        if (k !== 'printer') {
+          toolIdx = toolKeys.indexOf(k);
+          if (toolIdx < 0) return;
+        }
+        stopAioLoops();
+        peekAio(k);
+        if (!reduceMotion) {
+          toolTimer = setInterval(function () {
+            toolIdx = (toolIdx + 1) % toolKeys.length;
+            peekAio(toolKeys[toolIdx]);
+          }, 3800);
+          printerTimer = setInterval(function () {
+            peekAio('printer');
+          }, 7600);
+        }
       });
     });
     if ('IntersectionObserver' in window) {
       var aioObs = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
-          if (entry.isIntersecting) startAioLoop();
-          else stopAioLoop();
+          if (entry.isIntersecting) startAioLoops();
+          else stopAioLoops();
         });
       }, { threshold: 0.2 });
       aioObs.observe(aioStage);
     } else {
-      startAioLoop();
+      startAioLoops();
     }
   }
 

@@ -109,15 +109,25 @@
     if (elTotal) elTotal.textContent = money(stats.grand_total || 0);
 
     const tables = data.tables || [];
-    if (tables.length === 0) {
+    let orders = Array.isArray(data.orders) ? data.orders.slice() : [];
+    if (orders.length === 0 && tables.length > 0) {
+      tables.forEach(function (t) {
+        (t.orders || []).forEach(function (o) {
+          orders.push(Object.assign({}, o, { nomor_meja: o.nomor_meja || t.nomor_meja }));
+        });
+      });
+    }
+    orders.sort(function (a, b) { return (b.id || 0) - (a.id || 0); });
+
+    if (orders.length === 0) {
       root.innerHTML = '<div class="empty-state">' + esc(i18n.no_orders || 'No orders') + '</div>';
       return;
     }
 
     const newSet = new Set(data.new_order_ids || []);
 
-    root.innerHTML = tables.map((t) => {
-      return t.orders.map((o) => {
+    root.innerHTML = orders.map(function (o) {
+        const t = { nomor_meja: o.nomor_meja };
         const unpaid = o.status_bayar === 'belum_bayar';
         const isNew = newSet.has(o.id);
         const itemsHtml = (o.items || []).map((it) => {
@@ -183,7 +193,6 @@
             '</div>' +
           '</article>'
         );
-      }).join('');
     }).join('');
   }
 
