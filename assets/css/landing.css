@@ -981,12 +981,12 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 }
 
 .aio-visual {
-  --aio-r: 118px;
+  --aio-r: 132px;
   --aio-cycle: 16s;
-  --aio-step: 4s;
+  --aio-spin: 9s;
   position: relative;
-  width: min(100%, 340px);
-  height: 320px;
+  width: min(100%, 380px);
+  height: 360px;
   margin: 0 auto 20px;
 }
 
@@ -994,9 +994,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: absolute;
   left: 50%;
   top: 50%;
-  width: calc(var(--aio-r) * 2 + 24px);
-  height: calc(var(--aio-r) * 2 + 24px);
-  margin: calc(-1 * (var(--aio-r) + 12px)) 0 0 calc(-1 * (var(--aio-r) + 12px));
+  width: calc(var(--aio-r) * 2 + 28px);
+  height: calc(var(--aio-r) * 2 + 28px);
+  margin: calc(-1 * (var(--aio-r) + 14px)) 0 0 calc(-1 * (var(--aio-r) + 14px));
   border-radius: 50%;
   border: 1px dashed rgba(232, 93, 4, 0.22);
   z-index: 1;
@@ -1008,13 +1008,22 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 200px;
-  height: 200px;
-  margin: -100px 0 0 -100px;
+  width: 220px;
+  height: 220px;
+  margin: -110px 0 0 -110px;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(232, 93, 4, 0.14) 0%, transparent 70%);
   z-index: 0;
   animation: aio-glow-pulse 3s ease-in-out infinite;
+}
+
+.aio-orbit {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  animation: aio-orbit-spin var(--aio-spin) linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
 }
 
 .aio-hub {
@@ -1041,65 +1050,58 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 
 .aio-sat {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 10;
-}
-
-.aio-sat-spin {
-  position: absolute;
   left: 50%;
   top: 50%;
   width: 0;
   height: 0;
-  animation: aio-orbit-spin var(--aio-cycle) linear infinite;
-  animation-delay: calc(var(--i) * var(--aio-step) * -1);
+  transform: rotate(var(--angle));
+  pointer-events: none;
+}
+
+.aio-sat-arm {
+  animation: aio-arm-pulse var(--aio-cycle) cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
   animation-play-state: paused;
-  will-change: transform;
+  will-change: transform, opacity;
 }
 
 .aio-chip-wrap {
-  animation: aio-counter-spin var(--aio-cycle) linear infinite;
-  animation-delay: calc(var(--i) * var(--aio-step) * -1);
+  animation: aio-counter-orbit var(--aio-spin) linear infinite;
   animation-play-state: paused;
   will-change: transform;
 }
 
 .aio-chip {
   position: relative;
-  width: 92px;
+  width: 76px;
   margin: 0;
-  padding: 10px 8px 12px;
-  border-radius: 16px;
+  padding: 8px 6px 10px;
+  border-radius: 14px;
   background: var(--surface);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-sm);
   display: grid;
-  gap: 6px;
+  gap: 5px;
   justify-items: center;
   pointer-events: auto;
   cursor: default;
+  transform: translateX(-50%);
   will-change: transform, opacity, filter;
-  animation: aio-chip-orbit var(--aio-cycle) cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
-  animation-delay: calc(var(--i) * var(--aio-step) * -1);
+  animation: aio-chip-strike var(--aio-cycle) ease-in-out infinite;
   animation-play-state: paused;
-  transform: translate(-50%, 0) scale(0.04);
-  opacity: 0;
 }
 
 .aio-strike-line {
   position: absolute;
-  left: 8px;
-  right: 8px;
+  left: 6px;
+  right: 6px;
   top: 50%;
   height: 2px;
-  margin-top: 6px;
+  margin-top: 4px;
   background: var(--danger);
   border-radius: 1px;
   transform: scaleX(0);
   transform-origin: left center;
   animation: aio-strike-draw var(--aio-cycle) ease-in-out infinite;
-  animation-delay: calc(var(--i) * var(--aio-step) * -1);
   animation-play-state: paused;
   pointer-events: none;
 }
@@ -1115,22 +1117,21 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   border-radius: 1px;
   transform: rotate(-52deg) scaleX(0);
   transform-origin: left center;
-  animation: aio-strike-draw var(--aio-cycle) ease-in-out infinite;
-  animation-delay: calc(var(--i) * var(--aio-step) * -1 + 0.06s);
+  animation: aio-strike-draw-alt var(--aio-cycle) ease-in-out infinite;
   animation-play-state: paused;
 }
 
 .aio-label {
   position: relative;
-  font-size: 0.68rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.15;
   color: var(--ink-soft);
   transition: color 0.15s ease;
 }
 
 .aio-chip.is-active-label {
-  border-color: rgba(220, 53, 69, 0.35);
+  border-color: rgba(220, 53, 69, 0.45);
   box-shadow: 0 8px 20px -10px rgba(220, 53, 69, 0.35);
 }
 
@@ -1138,7 +1139,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   color: var(--danger);
 }
 
-.aio-visual.is-running .aio-sat-spin,
+.aio-visual.is-running .aio-orbit,
+.aio-visual.is-running .aio-sat-arm,
 .aio-visual.is-running .aio-chip-wrap,
 .aio-visual.is-running .aio-chip,
 .aio-visual.is-running .aio-strike-line,
@@ -1147,76 +1149,76 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 }
 
 .aio-ico {
-  width: 32px;
-  height: 28px;
+  width: 30px;
+  height: 26px;
   border-radius: 6px;
   background: var(--brand-soft);
   position: relative;
 }
 
-/* Emerge → orbit 360° → strike → absorb (each item = 25% of cycle) */
+/* All tools emerge, orbit together, strike together, absorb together */
 @keyframes aio-orbit-spin {
-  0%, 22%, 100% { transform: rotate(0deg); }
-  3% { transform: rotate(0deg); }
-  17% { transform: rotate(360deg); }
-  22% { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes aio-counter-spin {
-  0%, 3%, 22%, 100% { transform: rotate(0deg); }
-  17% { transform: rotate(-360deg); }
-  22% { transform: rotate(-360deg); }
+@keyframes aio-counter-orbit {
+  from { transform: rotate(calc(-1 * var(--angle))); }
+  to { transform: rotate(calc(-1 * var(--angle) - 360deg)); }
 }
 
-@keyframes aio-chip-orbit {
-  0%, 22%, 100% {
-    transform: translate(-50%, 0) scale(0.04);
+@keyframes aio-arm-pulse {
+  0%, 92%, 100% {
+    transform: translate(-50%, 0) scale(0.12);
     opacity: 0;
-    filter: grayscale(1) blur(1px);
-    box-shadow: none;
   }
-  1.5% {
-    transform: translate(-50%, calc(-1 * var(--aio-r) * 0.12)) scale(0.55);
-    opacity: 0.55;
-    filter: grayscale(0.35) blur(0);
+  5% {
+    transform: translate(-50%, calc(-1 * var(--aio-r) * 0.2)) scale(0.5);
+    opacity: 0.45;
   }
-  3.5% {
-    transform: translate(-50%, calc(-1 * var(--aio-r))) scale(1);
-    opacity: 1;
-    filter: grayscale(0) blur(0);
-    box-shadow: var(--shadow);
-  }
-  14% {
-    transform: translate(-50%, calc(-1 * var(--aio-r))) scale(1.04);
-    opacity: 1;
-  }
-  17% {
+  9%, 66% {
     transform: translate(-50%, calc(-1 * var(--aio-r))) scale(1);
     opacity: 1;
   }
-  18.5% {
-    transform: translate(-50%, calc(-1 * var(--aio-r))) scale(0.92);
-    opacity: 0.85;
-    filter: grayscale(0.25);
+  72%, 78% {
+    transform: translate(-50%, calc(-1 * var(--aio-r))) scale(0.96);
+    opacity: 0.92;
   }
-  20% {
-    transform: translate(-50%, calc(-1 * var(--aio-r) * 0.35)) scale(0.62);
-    opacity: 0.5;
-    filter: grayscale(0.65) blur(0.5px);
+  86% {
+    transform: translate(-50%, calc(-1 * var(--aio-r) * 0.18)) scale(0.42);
+    opacity: 0.3;
   }
-  22% {
-    transform: translate(-50%, 0) scale(0.04);
+  92% {
+    transform: translate(-50%, 0) scale(0.12);
     opacity: 0;
-    filter: grayscale(1) blur(1px);
+  }
+}
+
+@keyframes aio-chip-strike {
+  0%, 68%, 88%, 100% {
+    filter: grayscale(0);
+    border-color: var(--line);
+  }
+  72%, 82% {
+    filter: grayscale(0.55);
+    border-color: rgba(220, 53, 69, 0.45);
   }
 }
 
 @keyframes aio-strike-draw {
-  0%, 14%, 22%, 100% { transform: scaleX(0); opacity: 0; }
-  15% { transform: scaleX(0); opacity: 1; }
-  16.5%, 19% { transform: scaleX(1); opacity: 1; }
-  20.5% { transform: scaleX(1); opacity: 0.35; }
-  22% { transform: scaleX(0); opacity: 0; }
+  0%, 68%, 88%, 100% { transform: scaleX(0); opacity: 0; }
+  71% { transform: scaleX(0); opacity: 1; }
+  73%, 81% { transform: scaleX(1); opacity: 1; }
+  85% { transform: scaleX(1); opacity: 0.35; }
+  88% { transform: scaleX(0); opacity: 0; }
+}
+
+@keyframes aio-strike-draw-alt {
+  0%, 68%, 88%, 100% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
+  71% { transform: rotate(-52deg) scaleX(0); opacity: 1; }
+  73%, 81% { transform: rotate(-52deg) scaleX(1); opacity: 1; }
+  85% { transform: rotate(-52deg) scaleX(1); opacity: 0.35; }
+  88% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
 }
 
 @keyframes aio-glow-pulse {
@@ -1286,6 +1288,92 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   height: 2px;
   background: var(--line);
   box-shadow: 0 5px 0 var(--line), 0 10px 0 var(--line);
+}
+
+.aio-ico-pager {
+  background: #2f2f2f;
+}
+.aio-ico-pager::before {
+  content: "";
+  position: absolute;
+  inset: 5px 7px 9px;
+  border-radius: 4px;
+  border: 2px solid #888;
+}
+.aio-ico-pager::after {
+  content: ")))";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  text-align: center;
+  font-size: 0.46rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: #ffb347;
+}
+
+.aio-ico-menu {
+  background: #fff;
+  box-shadow: inset 0 0 0 2px var(--line);
+}
+.aio-ico-menu::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 5px;
+  background: var(--brand);
+  border-radius: 2px 0 0 2px;
+}
+.aio-ico-menu::after {
+  content: "MENU";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-left: 4px;
+  font-size: 0.42rem;
+  font-weight: 900;
+  color: var(--ink-soft);
+}
+
+.aio-ico-radio {
+  background: #1f2937;
+}
+.aio-ico-radio::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  width: 2px;
+  height: 7px;
+  margin-left: -1px;
+  background: #9ca3af;
+  border-radius: 1px;
+}
+.aio-ico-radio::after {
+  content: "";
+  position: absolute;
+  inset: 8px 6px 4px;
+  border-radius: 3px;
+  background: #374151;
+  box-shadow: inset 0 -4px 0 #111827;
+}
+
+.aio-ico-whatsapp {
+  background: #25d366;
+}
+.aio-ico-whatsapp::after {
+  content: "WA";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.58rem;
+  font-weight: 900;
+  color: #fff;
 }
 
 .aio-status {
@@ -1424,8 +1512,10 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 }
 
 @media (max-width: 800px) {
-  .case-switch-3 { grid-template-columns: 1fr; max-width: none; border-radius: var(--radius-sm); }
-  .aio-visual { height: 260px; }
+  .aio-visual {
+    --aio-r: 118px;
+    height: 340px;
+  }
 }
 
 /* ---------- Steps ---------- */
@@ -2355,8 +2445,25 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 .case-play[data-mode="cafe"] [data-panel="cafe"] { display: block; }
 
 .case-switch-3 {
-  grid-template-columns: repeat(3, 1fr);
-  max-width: 640px;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.case-switch-3::-webkit-scrollbar { display: none; }
+
+.case-switch-3 button {
+  flex: 0 0 auto;
+  scroll-snap-align: center;
+  white-space: nowrap;
+  min-width: max-content;
+  padding: 0 18px;
 }
 
 .case-lead { margin: 0 0 14px; font-weight: 650; color: var(--ink-soft); }
@@ -2941,18 +3048,22 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .ps-send { animation: none !important; }
   .aio-chip.is-peek { animation: none !important; opacity: 1; transform: translate(-50%, calc(-50% - 80px)) scale(1); }
   .aio-chip-printer.is-peek { transform: translate(calc(-50% - 100px), -50%) scale(1); }
-  .aio-sat-spin,
+  .aio-orbit,
+  .aio-sat-arm,
   .aio-chip-wrap,
   .aio-chip,
-  .aio-strike-line { animation: none !important; }
-  .aio-sat[data-aio="printer"] .aio-chip {
+  .aio-strike-line,
+  .aio-strike-line::after { animation: none !important; }
+  .aio-orbit { transform: none; }
+  .aio-sat-arm {
     transform: translate(-50%, calc(-1 * var(--aio-r))) scale(1);
     opacity: 1;
-    filter: none;
   }
-  .aio-sat[data-aio="printer"] .aio-strike-line {
+  .aio-chip-wrap { transform: rotate(calc(-1 * var(--angle))); }
+  .aio-strike-line,
+  .aio-strike-line::after {
     transform: scaleX(1);
     opacity: 1;
   }
-  .aio-sat:not([data-aio="printer"]) { display: none; }
+  .aio-strike-line::after { transform: rotate(-52deg) scaleX(1); }
 }
