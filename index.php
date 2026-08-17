@@ -378,7 +378,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       <div class="aio-stage reveal" id="aio-stage"
            data-aio-active="<?= e(t('lp_aio_active')) ?>"
            data-aio-strike="<?= e(t('lp_aio_strike_msg')) ?>">
-        <div class="aio-visual">
+        <div class="aio-visual" style="--aio-count:<?= (int) $aioCount ?>">
           <div class="aio-ring" aria-hidden="true"></div>
           <div class="aio-glow" aria-hidden="true"></div>
           <div class="aio-orbit" aria-hidden="true">
@@ -395,9 +395,9 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
           ];
           $aioCount = count($aioItems);
           foreach ($aioItems as $aioIdx => [$aioKey, $aioLabel]):
-              $aioAngle = ($aioIdx * 360) / $aioCount;
+              $aioAngle = (($aioIdx * 360) / $aioCount) - 90;
           ?>
-          <div class="aio-sat" data-aio="<?= e($aioKey) ?>" style="--angle:<?= round($aioAngle, 2) ?>deg">
+          <div class="aio-sat" data-aio="<?= e($aioKey) ?>" style="--angle:<?= round($aioAngle, 2) ?>deg; --i:<?= (int) $aioIdx ?>">
             <div class="aio-sat-arm">
               <div class="aio-chip-wrap">
                 <button type="button" class="aio-chip" data-aio="<?= e($aioKey) ?>" aria-label="<?= e($aioLabel) ?>">

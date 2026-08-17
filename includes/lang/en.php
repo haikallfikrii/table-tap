@@ -398,7 +398,7 @@ return [
 
     'lp_allinone_kicker'=> 'All-in-one',
     'lp_allinone_title' => 'One system. No extra hardware.',
-    'lp_allinone_sub'   => 'Old tools emerge together, orbit TableTap, get crossed out, and return — fully replaced.',
+    'lp_allinone_sub'   => 'Exit from the top of TableTap, orbit twice (show tools → strike), then re-enter one by one.',
     'lp_aio_printer'    => 'Receipt printer',
     'lp_aio_pos'        => 'Cash register / POS',
     'lp_aio_calc'       => 'Calculator & order pad',
