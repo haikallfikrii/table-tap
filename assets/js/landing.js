@@ -499,27 +499,30 @@
   var aioStage = document.getElementById('aio-stage');
   var aioVisual = aioStage && aioStage.querySelector('.aio-visual');
   var aioStatus = document.getElementById('aio-status');
-  var aioKeys = ['printer', 'pos', 'calc', 'paper'];
-  var aioLabels = {};
-  var aioIdx = 0;
+  var aioActiveText = aioStage ? aioStage.getAttribute('data-aio-active') : '';
+  var aioStrikeText = aioStage ? aioStage.getAttribute('data-aio-strike') : '';
+  var aioChips = aioStage ? aioStage.querySelectorAll('.aio-chip') : [];
   var aioStatusTimer = null;
-  var aioStepMs = 4000;
+  var aioStrikeTimer = null;
+  var aioStrikeReleaseTimer = null;
+  var aioCycleMs = 16000;
+  var aioStrikeAtMs = 11200;
+  var aioStrikeHoldMs = 2400;
 
-  if (aioStage) {
-    aioKeys.forEach(function (key) {
-      var chip = aioStage.querySelector('.aio-chip[data-aio="' + key + '"]');
-      var lab = chip && chip.querySelector('.aio-label');
-      if (lab) aioLabels[key] = lab.textContent;
+  function aioSetActiveLabel(on) {
+    aioChips.forEach(function (chip) {
+      chip.classList.toggle('is-active-label', on);
     });
   }
 
-  function aioStatusText(key) {
-    if (!aioStatus || !aioLabels[key]) return;
-    var prefix = document.documentElement.lang === 'en' ? 'No longer needed: ' : 'Tak perlu lagi: ';
-    aioStatus.textContent = prefix + aioLabels[key];
-    aioStage.querySelectorAll('.aio-chip').forEach(function (chip) {
-      chip.classList.toggle('is-active-label', chip.getAttribute('data-aio') === key);
-    });
+  function aioShowActive() {
+    if (aioStatus && aioActiveText) aioStatus.textContent = aioActiveText;
+    aioSetActiveLabel(false);
+  }
+
+  function aioShowStrike() {
+    if (aioStatus && aioStrikeText) aioStatus.textContent = aioStrikeText;
+    aioSetActiveLabel(true);
   }
 
   function stopAioStatus() {
@@ -527,22 +530,40 @@
       clearInterval(aioStatusTimer);
       aioStatusTimer = null;
     }
+    if (aioStrikeTimer) {
+      clearTimeout(aioStrikeTimer);
+      aioStrikeTimer = null;
+    }
+    if (aioStrikeReleaseTimer) {
+      clearTimeout(aioStrikeReleaseTimer);
+      aioStrikeReleaseTimer = null;
+    }
     if (aioVisual) aioVisual.classList.remove('is-running');
+    aioShowActive();
+  }
+
+  function scheduleAioStrike() {
+    if (aioStrikeTimer) clearTimeout(aioStrikeTimer);
+    if (aioStrikeReleaseTimer) clearTimeout(aioStrikeReleaseTimer);
+    aioStrikeTimer = setTimeout(function () {
+      aioShowStrike();
+      aioStrikeReleaseTimer = setTimeout(aioShowActive, aioStrikeHoldMs);
+    }, aioStrikeAtMs);
   }
 
   function startAioStatus() {
     stopAioStatus();
     if (!aioStage || reduceMotion) {
-      aioStatusText(aioKeys[0]);
+      aioShowStrike();
       return;
     }
     if (aioVisual) aioVisual.classList.add('is-running');
-    aioIdx = 0;
-    aioStatusText(aioKeys[0]);
+    aioShowActive();
+    scheduleAioStrike();
     aioStatusTimer = setInterval(function () {
-      aioIdx = (aioIdx + 1) % aioKeys.length;
-      aioStatusText(aioKeys[aioIdx]);
-    }, aioStepMs);
+      aioShowActive();
+      scheduleAioStrike();
+    }, aioCycleMs);
   }
 
   if (aioStage) {
