@@ -14,6 +14,7 @@ $body = readJsonBody();
 $orderId = (int) ($body['order'] ?? 0);
 $nomorMeja = trim((string) ($body['meja'] ?? ''));
 $token = trim((string) ($body['token'] ?? ''));
+$guestToken = trim((string) ($body['guest_token'] ?? ''));
 
 if ($orderId <= 0 || $nomorMeja === '' || $token === '') {
     jsonError('Invalid request', 400);
@@ -30,14 +31,20 @@ if (!$shop || shopFulfillment($shop) !== 'self_pickup') {
 }
 
 $pdo = db();
+$hasGuestToken = orderGuestTokenColumnExists();
+$guestCol = $hasGuestToken ? ', guest_token' : '';
 $stmt = $pdo->prepare(
-    "SELECT id FROM orders
+    "SELECT id{$guestCol} FROM orders
      WHERE id = ? AND table_id = ? AND shop_id = ? AND status_order != 'dibatalkan'
      LIMIT 1"
 );
 $stmt->execute([$orderId, (int) $table['id'], (int) $table['shop_id']]);
-if (!$stmt->fetch()) {
+$orderRow = $stmt->fetch();
+if (!$orderRow) {
     jsonError('Order not found', 404);
+}
+if (!verifyOrderGuestToken($orderRow, $guestToken)) {
+    jsonError('Invalid order access', 403);
 }
 
 collectSelfPickupReadyItems($pdo, $orderId, (int) $table['shop_id']);

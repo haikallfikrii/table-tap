@@ -160,6 +160,7 @@ CREATE TABLE `orders` (
   `status_bayar` ENUM('belum_bayar', 'lunas') NOT NULL DEFAULT 'belum_bayar',
   `jenis_hidang` ENUM('dine_in', 'takeaway') NOT NULL DEFAULT 'dine_in',
   `nama_pelanggan` VARCHAR(40) DEFAULT NULL,
+  `guest_token` VARCHAR(64) DEFAULT NULL,
   `pickup_alert` TINYINT(1) NOT NULL DEFAULT 1,
   `sumber_order` ENUM('qr', 'staf') NOT NULL DEFAULT 'qr',
   `subtotal` DECIMAL(10,2) NOT NULL DEFAULT 0.00,

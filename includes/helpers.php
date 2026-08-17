@@ -288,6 +288,9 @@ function createShopOrder(
         jsonError('No valid items');
     }
 
+    assertCartLimits($normalized);
+    assertTableOrderRateLimit((int) $table['id'], $shopId);
+
     $pdo = db();
     $placeholders = implode(',', array_fill(0, count($normalized), '?'));
     $ids = array_keys($normalized);
@@ -329,10 +332,33 @@ function createShopOrder(
     $totals = calculateTotals($subtotal, $shop);
     $sumber = $sumber === 'staf' ? 'staf' : 'qr';
     $hasSumber = (bool) $pdo->query("SHOW COLUMNS FROM orders LIKE 'sumber_order'")->fetch();
+    $hasGuestToken = orderGuestTokenColumnExists();
+    $guestToken = $hasGuestToken ? generateOrderGuestToken() : null;
 
     try {
         $pdo->beginTransaction();
-        if ($hasSumber) {
+        if ($hasSumber && $hasGuestToken) {
+            $insOrder = $pdo->prepare(
+                'INSERT INTO orders
+                 (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            $insOrder->execute([
+                $shopId,
+                (int) $table['id'],
+                appNow(),
+                'menunggu',
+                'belum_bayar',
+                $jenisHidang,
+                $guestName !== '' ? $guestName : null,
+                $guestToken,
+                $sumber,
+                $totals['subtotal'],
+                $totals['sst_rate'],
+                $totals['sst_jumlah'],
+                $totals['total'],
+            ]);
+        } elseif ($hasSumber) {
             $insOrder = $pdo->prepare(
                 'INSERT INTO orders
                  (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
@@ -347,6 +373,26 @@ function createShopOrder(
                 $jenisHidang,
                 $guestName !== '' ? $guestName : null,
                 $sumber,
+                $totals['subtotal'],
+                $totals['sst_rate'],
+                $totals['sst_jumlah'],
+                $totals['total'],
+            ]);
+        } elseif ($hasGuestToken) {
+            $insOrder = $pdo->prepare(
+                'INSERT INTO orders
+                 (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, subtotal, sst_rate, sst_jumlah, total_harga)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            $insOrder->execute([
+                $shopId,
+                (int) $table['id'],
+                appNow(),
+                'menunggu',
+                'belum_bayar',
+                $jenisHidang,
+                $guestName !== '' ? $guestName : null,
+                $guestToken,
                 $totals['subtotal'],
                 $totals['sst_rate'],
                 $totals['sst_jumlah'],
@@ -400,7 +446,11 @@ function createShopOrder(
         jsonError('Failed to save order', 500);
     }
 
-    return ['order_id' => $orderId, 'totals' => $totals];
+    return [
+        'order_id' => $orderId,
+        'totals' => $totals,
+        'guest_token' => $guestToken ?? '',
+    ];
 }
 
 function getMenuGrouped(int $shopId, string $lang = 'my'): array
@@ -492,3 +542,5 @@ function trackStageFromItems(array $items): string
     }
     return 'queue';
 }
+
+require_once __DIR__ . '/customer_orders.php';

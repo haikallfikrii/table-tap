@@ -11,6 +11,7 @@ require_once dirname(__DIR__, 2) . '/includes/helpers.php';
 $orderId = (int) ($_GET['order'] ?? 0);
 $nomorMeja = trim((string) ($_GET['meja'] ?? ''));
 $token = trim((string) ($_GET['token'] ?? ''));
+$guestToken = trim((string) ($_GET['gt'] ?? ''));
 $lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
 
 if ($orderId <= 0 || $nomorMeja === '' || $token === '') {
@@ -30,16 +31,21 @@ if (!$shop || ($shop['status'] ?? '') !== 'aktif') {
 $fulfillment = shopFulfillment($shop);
 
 $pdo = db();
+$hasGuestToken = orderGuestTokenColumnExists();
+$guestCol = $hasGuestToken ? ', guest_token' : '';
 $stmt = $pdo->prepare(
-    'SELECT id, status_order, nama_pelanggan, pickup_alert
+    "SELECT id, status_order, nama_pelanggan, pickup_alert{$guestCol}
      FROM orders
      WHERE id = ? AND table_id = ? AND shop_id = ?
-     LIMIT 1'
+     LIMIT 1"
 );
 $stmt->execute([$orderId, (int) $table['id'], (int) $table['shop_id']]);
 $order = $stmt->fetch();
 if (!$order) {
     jsonError('Order not found', 404);
+}
+if (!verifyOrderGuestToken($order, $guestToken)) {
+    jsonError('Invalid order access', 403);
 }
 
 $itemStmt = $pdo->prepare(
