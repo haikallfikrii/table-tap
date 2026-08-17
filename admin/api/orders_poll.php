@@ -90,6 +90,7 @@ foreach ($orders as $o) {
         'jenis_hidang' => ($o['jenis_hidang'] ?? 'dine_in') === 'takeaway' ? 'takeaway' : 'dine_in',
         'nama_pelanggan' => $o['nama_pelanggan'] ?? '',
         'customer_email_masked' => $customerEmail !== '' ? maskEmail($customerEmail) : '',
+        'customer_email' => $customerEmail,
         'has_customer_email' => $customerEmail !== '',
         'sumber_order' => ($o['sumber_order'] ?? 'qr') === 'staf' ? 'staf' : 'qr',
         'pickup_alert' => (int) ($o['pickup_alert'] ?? 1) === 1,

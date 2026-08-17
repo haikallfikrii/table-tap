@@ -34,9 +34,10 @@ $countStmt->execute([$shopId]);
 $totalRows = (int) $countStmt->fetchColumn();
 $totalPages = max(1, (int) ceil($totalRows / $perPage));
 
+$emailCol = orderCustomerEmailColumnExists() ? ', o.customer_email, o.nama_pelanggan' : ', o.nama_pelanggan';
 $stmt = $pdo->prepare(
     "SELECT o.id, o.waktu_order, o.waktu_lunas, o.subtotal, o.sst_jumlah, o.total_harga,
-            o.status_order, o.jenis_hidang, t.nomor_meja
+            o.status_order, o.jenis_hidang, t.nomor_meja{$emailCol}
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
      WHERE o.shop_id = ? AND o.status_bayar = 'lunas'
@@ -68,12 +69,14 @@ $retentionLabel = ($shop['retention_days'] ?? null) === null
         <th><?= e(t('sst')) ?></th>
         <th><?= e(t('total')) ?></th>
         <th><?= e(t('date')) ?></th>
+        <th><?= e(t('guest_name')) ?></th>
+        <th><?= e(t('customer_email')) ?></th>
         <th><?= e(t('receipt')) ?></th>
       </tr>
     </thead>
     <tbody>
       <?php if (!$rows): ?>
-        <tr><td colspan="8"><?= e(t('no_data')) ?></td></tr>
+        <tr><td colspan="10"><?= e(t('no_data')) ?></td></tr>
       <?php endif; ?>
       <?php foreach ($rows as $r): ?>
         <tr>
@@ -84,6 +87,8 @@ $retentionLabel = ($shop['retention_days'] ?? null) === null
           <td><?= e(formatMoney($r['sst_jumlah'])) ?></td>
           <td><strong><?= e(formatMoney($r['total_harga'])) ?></strong></td>
           <td><?= e($r['waktu_lunas'] ?: $r['waktu_order']) ?></td>
+          <td><?= e((string) ($r['nama_pelanggan'] ?? '')) ?></td>
+          <td><?php if (!empty($r['customer_email'])): ?><a href="mailto:<?= e($r['customer_email']) ?>"><?= e($r['customer_email']) ?></a><?php else: ?>—<?php endif; ?></td>
           <td>
             <a class="btn btn-secondary btn-sm" href="<?= e(baseUrl('admin/receipt.php?order=' . (int) $r['id'] . '&print=1')) ?>" target="_blank" rel="noopener"><?= e(t('print_receipt')) ?></a>
           </td>

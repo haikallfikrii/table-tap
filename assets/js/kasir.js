@@ -166,6 +166,9 @@
                   (o.nama_pelanggan ? ' · ' + esc(o.nama_pelanggan) : '') +
                   (o.sumber_order === 'staf' ? ' · ' + esc(i18n.sourced_staff || 'Staff') : '') +
                 '</div>' +
+                (o.customer_email
+                  ? '<div class="order-customer-email"><a href="mailto:' + encodeURIComponent(o.customer_email) + '">' + esc(o.customer_email) + '</a></div>'
+                  : '') +
               '</div>' +
               '<div class="order-card-badges">' + statusBadges(o, unpaid) + '</div>' +
             '</div>' +

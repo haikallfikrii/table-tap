@@ -57,6 +57,8 @@ $plans = [
             t('lp_pf_reports'),
             t('lp_pf_sst'),
             t('lp_pf_self_pickup'),
+            t('lp_pf_cafe'),
+            t('lp_pf_receipt'),
             t('lp_pf_staff_10'),
             t('lp_pf_support_wa'),
         ],
@@ -80,8 +82,11 @@ $plans = [
 
 $features = [
     ['qr', t('lp_f1_t'), t('lp_f1_d')],
+    ['cafe', t('lp_f7_t'), t('lp_f7_d')],
     ['bell', t('lp_f2_t'), t('lp_f2_d')],
     ['cook', t('lp_f3_t'), t('lp_f3_d')],
+    ['receipt', t('lp_f8_t'), t('lp_f8_d')],
+    ['shield', t('lp_f9_t'), t('lp_f9_d')],
     ['cam', t('lp_f4_t'), t('lp_f4_d')],
     ['chart', t('lp_f5_t'), t('lp_f5_d')],
     ['bill', t('lp_f6_t'), t('lp_f6_d')],
@@ -101,10 +106,13 @@ $faqs = [
     [t('lp_q4'), t('lp_a4')],
     [t('lp_q5'), t('lp_a5')],
     [t('lp_q6'), t('lp_a6')],
+    [t('lp_q7'), t('lp_a7')],
+    [t('lp_q8'), t('lp_a8')],
 ];
 
 $navLinks = [
     '#features' => t('lp_nav_features'),
+    '#allinone' => t('lp_nav_allinone'),
     '#cases'    => t('lp_nav_cases'),
     '#how'      => t('lp_nav_how'),
     '#demo'     => t('lp_nav_demo'),
@@ -340,6 +348,12 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
                 <span class="fi-cam"></span><span class="fi-flash"></span>
               <?php elseif ($kind === 'chart'): ?>
                 <span class="fi-bar b1"></span><span class="fi-bar b2"></span><span class="fi-bar b3"></span>
+              <?php elseif ($kind === 'cafe'): ?>
+                <span class="fi-cafe-cup"></span><span class="fi-cafe-steam s1"></span><span class="fi-cafe-steam s2"></span>
+              <?php elseif ($kind === 'receipt'): ?>
+                <span class="fi-bill"></span><span class="fi-mail">@</span>
+              <?php elseif ($kind === 'shield'): ?>
+                <span class="fi-shield"></span><span class="fi-lock"></span>
               <?php else: ?>
                 <span class="fi-bill"></span><span class="fi-tick">✓</span>
               <?php endif; ?>
@@ -348,6 +362,50 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
             <p><?= e($desc) ?></p>
           </article>
         <?php endforeach; ?>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= ALL-IN-ONE ================= -->
+  <section class="sec allinone-sec" id="allinone">
+    <div class="wrap">
+      <div class="sec-head center reveal">
+        <span class="kicker"><?= e(t('lp_allinone_kicker')) ?></span>
+        <h2><?= e(t('lp_allinone_title')) ?></h2>
+        <p><?= e(t('lp_allinone_sub')) ?></p>
+      </div>
+
+      <div class="aio-stage reveal" id="aio-stage" aria-hidden="true">
+        <div class="aio-orbit">
+          <button type="button" class="aio-sat" data-aio="printer" style="--a:0deg">
+            <span class="aio-ico aio-ico-printer"></span>
+            <span class="aio-label"><?= e(t('lp_aio_printer')) ?></span>
+          </button>
+          <button type="button" class="aio-sat" data-aio="pos" style="--a:90deg">
+            <span class="aio-ico aio-ico-pos"></span>
+            <span class="aio-label"><?= e(t('lp_aio_pos')) ?></span>
+          </button>
+          <button type="button" class="aio-sat" data-aio="calc" style="--a:180deg">
+            <span class="aio-ico aio-ico-calc"></span>
+            <span class="aio-label"><?= e(t('lp_aio_calc')) ?></span>
+          </button>
+          <button type="button" class="aio-sat" data-aio="paper" style="--a:270deg">
+            <span class="aio-ico aio-ico-paper"></span>
+            <span class="aio-label"><?= e(t('lp_aio_paper')) ?></span>
+          </button>
+          <div class="aio-hub">
+            <img src="<?= e($logo) ?>" alt="" width="48" height="48">
+            <strong><?= e(t('lp_aio_hub')) ?></strong>
+            <small><?= e(t('lp_aio_hub_sub')) ?></small>
+          </div>
+        </div>
+        <p class="aio-status" id="aio-status"><?= e(t('lp_aio_active')) ?></p>
+        <div class="aio-pills">
+          <span class="aio-pill"><?= e(t('lp_aio_pill_encrypt')) ?></span>
+          <span class="aio-pill"><?= e(t('lp_aio_pill_spam')) ?></span>
+          <span class="aio-pill"><?= e(t('lp_aio_pill_receipt')) ?></span>
+          <span class="aio-pill"><?= e(t('lp_aio_pill_cloud')) ?></span>
+        </div>
       </div>
     </div>
   </section>
@@ -387,8 +445,9 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
         </div>
       </div>
 
-      <div class="case-switch reveal" role="tablist" aria-label="<?= e(t('lp_nav_cases')) ?>">
+      <div class="case-switch reveal case-switch-3" role="tablist" aria-label="<?= e(t('lp_nav_cases')) ?>">
         <button type="button" class="on" data-case="waiter" role="tab" aria-selected="true"><?= e(t('lp_case_waiter')) ?></button>
+        <button type="button" data-case="cafe" role="tab" aria-selected="false"><?= e(t('lp_case_cafe')) ?></button>
         <button type="button" data-case="pickup" role="tab" aria-selected="false"><?= e(t('lp_case_pickup')) ?></button>
       </div>
 
@@ -438,6 +497,32 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
                 <span class="badge amber" id="lp-waiter-badge"><?= e(t('status_menunggu')) ?></span>
                 <strong><?= e(t('table_n', '5')) ?></strong>
                 <small>2× Nasi Lemak</small>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="case-panel" data-panel="cafe">
+          <p class="case-lead"><?= e(t('lp_case_cafe_d')) ?></p>
+          <ol class="case-flow" id="cafe-flow">
+            <li data-c-step="scan" class="is-current"><?= e(t('lp_case_c1')) ?></li>
+            <li data-c-step="otp"><?= e(t('lp_case_c2')) ?></li>
+            <li data-c-step="track"><?= e(t('lp_case_c3')) ?></li>
+            <li data-c-step="receipt"><?= e(t('lp_case_c4')) ?></li>
+          </ol>
+          <div class="case-scene cafe-scene" aria-hidden="true">
+            <div class="lp-cafe-hero" id="lp-cafe-hero" data-stage="scan">
+              <div class="lp-cstage lp-c-scan"><span class="c-shop-qr"></span><span class="c-laser"></span></div>
+              <div class="lp-cstage lp-c-otp"><span class="c-otp-box">●●●●●●</span><span class="c-mail">@</span></div>
+              <div class="lp-cstage lp-c-track"><span class="c-track-bar"></span><span class="c-track-dot"></span></div>
+              <div class="lp-cstage lp-c-receipt"><span class="c-receipt-slip"></span><span class="c-check">✓</span></div>
+            </div>
+            <div class="lp-track-copy">
+              <p class="lp-track-title" id="lp-cafe-title"><?= e(t('lp_case_c1')) ?></p>
+              <div class="w-dash-card cafe-card">
+                <span class="badge green"><?= e(t('cafe_email')) ?></span>
+                <strong><?= e(t('ordering_cafe')) ?></strong>
+                <small><?= e(t('lp_aio_pill_spam')) ?></small>
               </div>
             </div>
           </div>
