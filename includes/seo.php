@@ -18,10 +18,10 @@ function seoFaviconLinks(): void
 {
     $base = rtrim(appBaseUrl(), '/');
     ?>
-  <link rel="icon" href="<?= e($base) ?>/favicon.ico" sizes="48x48">
-  <link rel="icon" type="image/png" sizes="48x48" href="<?= e(brandIconUrl('tabletap-icon-48.png')) ?>">
-  <link rel="icon" type="image/png" sizes="96x96" href="<?= e(brandIconUrl('tabletap-icon-96.png')) ?>">
   <link rel="icon" type="image/png" sizes="192x192" href="<?= e(brandIconUrl('tabletap-icon-192.png')) ?>">
+  <link rel="icon" type="image/png" sizes="96x96" href="<?= e(brandIconUrl('tabletap-icon-96.png')) ?>">
+  <link rel="icon" type="image/png" sizes="48x48" href="<?= e(brandIconUrl('tabletap-icon-48.png')) ?>">
+  <link rel="icon" href="<?= e($base) ?>/favicon.ico" sizes="48x48">
   <link rel="apple-touch-icon" sizes="180x180" href="<?= e(brandIconUrl('apple-touch-icon.png')) ?>">
   <link rel="manifest" href="<?= e($base) ?>/site.webmanifest">
     <?php

@@ -6,7 +6,7 @@ Options -Indexes
 
   RewriteRule ^sitemap\.xml$ sitemap.php [L]
   RewriteRule ^robots\.txt$ robots.php [L]
-  RewriteRule ^favicon\.ico$ assets/img/brand/favicon.ico [L]
+  RewriteRule ^favicon\.ico$ favicon.php [L]
   RewriteRule ^site\.webmanifest$ site.webmanifest.php [L]
   RewriteRule ^blog/?$ blog/index.php [L,QSA]
   RewriteRule ^blog/([a-z0-9-]+)/?$ blog/post.php?slug=$1 [L,QSA]
