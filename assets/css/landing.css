@@ -2473,8 +2473,12 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 .case-switch-3 {
   display: flex;
   flex-wrap: nowrap;
+  justify-content: center;
   gap: 8px;
+  width: fit-content;
   max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   -webkit-overflow-scrolling: touch;
@@ -2490,6 +2494,13 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   white-space: nowrap;
   min-width: max-content;
   padding: 0 18px;
+}
+
+@media (max-width: 640px) {
+  .case-switch-3 {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .case-lead { margin: 0 0 14px; font-weight: 650; color: var(--ink-soft); }
