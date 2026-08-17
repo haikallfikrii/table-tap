@@ -149,6 +149,7 @@ return [
     'receipt_not_paid'  => 'Receipt is only available for paid orders.',
     'receipt_no_email'  => 'No customer email on file.',
     'receipt_send_failed' => 'Failed to send e-receipt. Check SMTP settings.',
+    'receipt_after_paid' => 'Available after marking as paid',
 
     // Kitchen / drinks
     'dapur_title'       => 'Kitchen Dashboard',

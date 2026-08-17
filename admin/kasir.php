@@ -47,6 +47,7 @@ $i18n = [
     'print_receipt' => t('print_receipt'),
     'send_receipt'  => t('send_receipt'),
     'receipt'       => t('receipt'),
+    'receipt_after_paid' => t('receipt_after_paid'),
     'receipt_email_prompt' => t('receipt_email_prompt'),
     'receipt_sent'  => t('receipt_sent'),
     'receipt_send_failed' => t('receipt_send_failed'),
