@@ -59,7 +59,7 @@
     if (busy || !pollUrl) return;
     busy = true;
     try {
-      const res = await fetch(pollUrl, { headers: { Accept: 'application/json' } });
+      const res = await TableTapLive.fetch(pollUrl);
       const data = await res.json();
       if (data.ok && data.ops) apply(data.ops);
     } catch (e) {
@@ -69,6 +69,5 @@
     }
   }
 
-  poll();
-  setInterval(poll, interval);
+  TableTapLive.loop(poll, interval);
 })();

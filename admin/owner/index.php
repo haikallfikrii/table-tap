@@ -56,7 +56,7 @@ $handoverUrl = $selfPickup ? baseUrl('admin/kasir.php') : baseUrl('admin/waiter.
 $handoverTitle = $selfPickup ? t('ops_pickup') : t('ops_handover');
 $handReadyLabel = $selfPickup ? t('ops_collect') : t('ops_ready');
 
-$adminScripts = [assetUrl('js/owner-ops.js')];
+$adminScripts = [assetUrl('js/live-poll.js'), assetUrl('js/owner-ops.js')];
 
 $nav = 'home';
 
