@@ -1,5 +1,10 @@
 /* TableTap — blog pages (interactive + SEO-friendly layout) */
 
+/* Sticky/fixed TOC breaks when body hides horizontal overflow */
+body.blog-page.blog-single {
+  overflow-x: visible;
+}
+
 .blog-page .blog-read-progress {
   position: fixed;
   top: 0;
@@ -302,19 +307,56 @@ a.blog-tag:hover {
   .blog-single-layout {
     grid-template-columns: 220px 1fr;
   }
+}
 
-  .blog-toc {
-    position: sticky;
-    top: 88px;
+.blog-toc-aside {
+  position: relative;
+  align-self: start;
+}
+
+@media (max-width: 959px) {
+  .blog-toc-aside {
+    order: 2;
   }
 }
 
-.blog-toc {
+.blog-toc-panel {
   padding: 18px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
+}
+
+@media (min-width: 960px) {
+  .blog-toc-panel {
+    position: fixed;
+    top: 88px;
+    z-index: 50;
+    width: 220px;
+    max-height: calc(100vh - 104px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+
+  .blog-toc-panel::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .blog-toc-panel::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 999px;
+  }
+
+  .blog-toc-aside.is-at-bottom .blog-toc-panel {
+    position: absolute;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+  }
 }
 
 .blog-toc-title {
@@ -603,10 +645,6 @@ a.blog-tag:hover {
 
   .blog-filter {
     flex-shrink: 0;
-  }
-
-  .blog-toc {
-    order: 2;
   }
 }
 

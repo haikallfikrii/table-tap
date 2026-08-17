@@ -62,6 +62,51 @@
     });
   }
 
+  /* ---------- Single: fixed TOC sidebar ---------- */
+  var tocAside = document.querySelector('.blog-toc-aside');
+  var tocPanel = document.getElementById('blog-toc-panel');
+  var singleLayout = document.querySelector('.blog-single-layout');
+  var navOffset = 88;
+
+  function pinToc() {
+    if (!tocAside || !tocPanel) return;
+
+    if (window.innerWidth < 960) {
+      tocPanel.style.cssText = '';
+      tocAside.classList.remove('is-at-bottom');
+      tocAside.style.minHeight = '';
+      return;
+    }
+
+    var asideRect = tocAside.getBoundingClientRect();
+    var panelH = tocPanel.offsetHeight;
+    var layoutBottom = singleLayout
+      ? singleLayout.getBoundingClientRect().bottom
+      : asideRect.bottom;
+
+    tocPanel.style.position = 'fixed';
+    tocPanel.style.top = navOffset + 'px';
+    tocPanel.style.left = asideRect.left + 'px';
+    tocPanel.style.width = asideRect.width + 'px';
+
+    var pinBottom = layoutBottom - panelH - 16 < navOffset;
+    tocAside.classList.toggle('is-at-bottom', pinBottom);
+    tocAside.style.minHeight = pinBottom ? panelH + 'px' : '';
+
+    if (pinBottom) {
+      tocPanel.style.position = '';
+      tocPanel.style.top = '';
+      tocPanel.style.left = '';
+      tocPanel.style.width = '';
+    }
+  }
+
+  if (tocPanel) {
+    window.addEventListener('scroll', pinToc, { passive: true });
+    window.addEventListener('resize', pinToc);
+    pinToc();
+  }
+
   /* ---------- Single: reading progress bar ---------- */
   var progressBar = document.getElementById('blog-read-progress');
   var article = document.getElementById('blog-article');

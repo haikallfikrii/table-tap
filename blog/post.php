@@ -67,17 +67,19 @@ publicLayoutStart([
 
   <div class="blog-single-layout">
     <?php if ($toc !== []): ?>
-    <aside class="blog-toc reveal" aria-label="<?= e(t('blog_toc')) ?>">
-      <p class="blog-toc-title"><?= e(t('blog_toc')) ?></p>
-      <nav id="blog-toc-nav">
-        <ol>
-          <?php foreach ($toc as $item): ?>
-            <li class="blog-toc-l<?= (int) $item['level'] ?>">
-              <a href="#<?= e($item['id']) ?>"><?= e($item['text']) ?></a>
-            </li>
-          <?php endforeach; ?>
-        </ol>
-      </nav>
+    <aside class="blog-toc-aside reveal" aria-label="<?= e(t('blog_toc')) ?>">
+      <div class="blog-toc-panel" id="blog-toc-panel">
+        <p class="blog-toc-title"><?= e(t('blog_toc')) ?></p>
+        <nav id="blog-toc-nav">
+          <ol>
+            <?php foreach ($toc as $item): ?>
+              <li class="blog-toc-l<?= (int) $item['level'] ?>">
+                <a href="#<?= e($item['id']) ?>"><?= e($item['text']) ?></a>
+              </li>
+            <?php endforeach; ?>
+          </ol>
+        </nav>
+      </div>
     </aside>
     <?php endif; ?>
 
