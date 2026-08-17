@@ -383,55 +383,36 @@ a.blog-tag:hover {
 }
 
 #blog-toc-nav li {
-  position: relative;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   counter-increment: toc;
 }
 
-#blog-toc-nav li::before {
+#blog-toc-nav a {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  padding: 8px 10px;
+  border-radius: 10px;
+  transition: color 0.2s, background 0.2s;
+}
+
+#blog-toc-nav a::before {
   content: counter(toc);
-  position: absolute;
-  left: 0;
-  top: 7px;
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
   text-align: center;
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   color: var(--ink-soft);
   background: var(--bg);
   border: 1px solid var(--line);
   border-radius: 50%;
-  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s, box-shadow 0.2s;
-  pointer-events: none;
-}
-
-#blog-toc-nav li.is-active::before {
-  background: var(--brand);
-  border-color: var(--brand);
-  color: #fff;
-  transform: scale(1.1);
-  box-shadow: 0 0 0 3px rgba(232, 93, 4, 0.2);
-}
-
-.blog-toc-l3 {
-  padding-left: 8px;
-}
-
-.blog-toc-l3::before {
-  display: none;
-}
-
-#blog-toc-nav a {
-  display: block;
-  font-size: 0.875rem;
-  line-height: 1.4;
-  color: var(--ink-soft);
-  padding: 6px 10px 6px 26px;
-  border-radius: 8px;
-  border-left: 3px solid transparent;
-  transition: color 0.2s, background 0.2s, border-color 0.2s, font-weight 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
 #blog-toc-nav a:hover {
@@ -444,12 +425,38 @@ a.blog-tag:hover {
   color: var(--brand-dark);
   font-weight: 600;
   background: var(--brand-soft);
-  border-left-color: var(--brand);
+}
+
+#blog-toc-nav li.is-active > a::before,
+#blog-toc-nav a.active::before {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
 }
 
 .blog-toc-l3 a {
-  padding-left: 14px;
+  padding-left: 20px;
   font-size: 0.8125rem;
+}
+
+.blog-toc-l3 a::before {
+  content: '·';
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--line);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+.blog-toc-l3.is-active > a::before,
+.blog-toc-l3 a.active::before {
+  color: var(--brand);
+  background: transparent;
+  border: none;
 }
 
 .blog-article {
