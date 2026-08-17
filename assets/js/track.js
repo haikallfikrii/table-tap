@@ -331,6 +331,8 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Failed');
       busy = false;
+      lastStage = 'done';
+      playDoneChime();
       await poll();
     } catch (err) {
       muted = false;

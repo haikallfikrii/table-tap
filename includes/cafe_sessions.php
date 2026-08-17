@@ -314,7 +314,7 @@ function fetchActiveSessionOrders(array $session, string $lang): array
          FROM orders
          WHERE session_id = ? AND shop_id = ?
            AND status_bayar = 'belum_bayar'
-           AND status_order NOT IN ('selesai', 'dibatalkan')
+           AND status_order != 'dibatalkan'
          ORDER BY id DESC"
     );
     $stmt->execute([$sessionId, $shopId]);

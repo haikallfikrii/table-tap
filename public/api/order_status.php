@@ -77,7 +77,9 @@ jsonResponse([
     'order_id' => $orderId,
     'status_order' => $order['status_order'],
     'nama_pelanggan' => $order['nama_pelanggan'] ?? '',
-    'stage' => trackStageFromItems($items),
+    'stage' => ($order['status_order'] ?? '') === 'selesai'
+        ? 'done'
+        : trackStageFromItems($items, $fulfillment),
     'fulfillment' => $fulfillment,
     'pickup_alert' => $fulfillment !== 'self_pickup' || (int) ($order['pickup_alert'] ?? 1) === 1,
     'items' => $items,
