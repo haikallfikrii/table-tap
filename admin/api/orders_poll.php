@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/shop.php';
+require_once dirname(__DIR__, 2) . '/includes/verification.php';
 
 $user = requireLoginApi(['kasir', 'owner']);
 $shopId = requireShopIdApi();
@@ -16,9 +17,10 @@ $lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
 $pdo = db();
 $shop = findShopById($shopId);
 
+$emailCol = orderCustomerEmailColumnExists() ? ', o.customer_email' : '';
 $stmt = $pdo->prepare(
     "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar, o.jenis_hidang,
-            o.nama_pelanggan, o.pickup_alert, o.sumber_order, o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga,
+            o.nama_pelanggan, o.pickup_alert, o.sumber_order, o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga{$emailCol},
             t.nomor_meja
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
@@ -70,6 +72,7 @@ foreach ($orders as $o) {
             break;
         }
     }
+    $customerEmail = trim((string) ($o['customer_email'] ?? ''));
     $resultOrders[] = [
         'id' => $id,
         'table_id' => (int) $o['table_id'],
@@ -79,6 +82,8 @@ foreach ($orders as $o) {
         'status_bayar' => $o['status_bayar'],
         'jenis_hidang' => ($o['jenis_hidang'] ?? 'dine_in') === 'takeaway' ? 'takeaway' : 'dine_in',
         'nama_pelanggan' => $o['nama_pelanggan'] ?? '',
+        'customer_email_masked' => $customerEmail !== '' ? maskEmail($customerEmail) : '',
+        'has_customer_email' => $customerEmail !== '',
         'sumber_order' => ($o['sumber_order'] ?? 'qr') === 'staf' ? 'staf' : 'qr',
         'pickup_alert' => (int) ($o['pickup_alert'] ?? 1) === 1,
         'has_ready' => $hasReady,

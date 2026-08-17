@@ -68,11 +68,12 @@ $retentionLabel = ($shop['retention_days'] ?? null) === null
         <th><?= e(t('sst')) ?></th>
         <th><?= e(t('total')) ?></th>
         <th><?= e(t('date')) ?></th>
+        <th><?= e(t('receipt')) ?></th>
       </tr>
     </thead>
     <tbody>
       <?php if (!$rows): ?>
-        <tr><td colspan="7"><?= e(t('no_data')) ?></td></tr>
+        <tr><td colspan="8"><?= e(t('no_data')) ?></td></tr>
       <?php endif; ?>
       <?php foreach ($rows as $r): ?>
         <tr>
@@ -83,6 +84,9 @@ $retentionLabel = ($shop['retention_days'] ?? null) === null
           <td><?= e(formatMoney($r['sst_jumlah'])) ?></td>
           <td><strong><?= e(formatMoney($r['total_harga'])) ?></strong></td>
           <td><?= e($r['waktu_lunas'] ?: $r['waktu_order']) ?></td>
+          <td>
+            <a class="btn btn-secondary btn-sm" href="<?= e(baseUrl('admin/receipt.php?order=' . (int) $r['id'] . '&print=1')) ?>" target="_blank" rel="noopener"><?= e(t('print_receipt')) ?></a>
+          </td>
         </tr>
       <?php endforeach; ?>
     </tbody>

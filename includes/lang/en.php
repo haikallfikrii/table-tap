@@ -138,6 +138,18 @@ return [
     'no_orders'         => 'No active orders',
     'table_n'           => 'Table %s',
 
+    // Receipt
+    'receipt'           => 'Receipt',
+    'print_receipt'     => 'Print receipt',
+    'send_receipt'      => 'Send e-receipt',
+    'receipt_send_confirm' => 'Send e-receipt to customer?',
+    'receipt_email_prompt' => 'Customer email for e-receipt:',
+    'receipt_sent'      => 'E-receipt sent',
+    'receipt_not_found' => 'Order not found.',
+    'receipt_not_paid'  => 'Receipt is only available for paid orders.',
+    'receipt_no_email'  => 'No customer email on file.',
+    'receipt_send_failed' => 'Failed to send e-receipt. Check SMTP settings.',
+
     // Kitchen / drinks
     'dapur_title'       => 'Kitchen Dashboard',
     'minuman_title'     => 'Drinks Dashboard',

@@ -44,6 +44,12 @@ $i18n = [
     'mark_collected'=> t('mark_collected'),
     'silence_alert' => t('silence_alert'),
     'sourced_staff' => t('sourced_staff'),
+    'print_receipt' => t('print_receipt'),
+    'send_receipt'  => t('send_receipt'),
+    'receipt_send_confirm' => t('receipt_send_confirm'),
+    'receipt_email_prompt' => t('receipt_email_prompt'),
+    'receipt_sent'  => t('receipt_sent'),
+    'receipt_send_failed' => t('receipt_send_failed'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
@@ -72,6 +78,8 @@ $i18n = [
      data-poll-url="<?= e(baseUrl('admin/api/orders_poll.php')) ?>"
      data-paid-url="<?= e(baseUrl('admin/api/mark_paid.php')) ?>"
      data-pickup-url="<?= e(baseUrl('admin/api/pickup_action.php')) ?>"
+     data-receipt-url="<?= e(baseUrl('admin/receipt.php')) ?>"
+     data-send-receipt-url="<?= e(baseUrl('admin/api/send_receipt.php')) ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 3000) ?>"
      data-lang="<?= e($lang) ?>"
      data-i18n="<?= e(json_encode($i18n, JSON_UNESCAPED_UNICODE)) ?>">

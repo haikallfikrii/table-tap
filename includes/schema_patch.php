@@ -163,6 +163,20 @@ function ensureAppSchema(PDO $pdo): void
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
 
+        $orderEmailCol = $pdo->query("SHOW COLUMNS FROM orders LIKE 'customer_email'")->fetch();
+        if (!$orderEmailCol) {
+            $pdo->exec(
+                'ALTER TABLE orders ADD COLUMN customer_email VARCHAR(255) DEFAULT NULL AFTER nama_pelanggan'
+            );
+        }
+
+        $sessionEmailCol = $pdo->query("SHOW COLUMNS FROM customer_sessions LIKE 'contact_email'")->fetch();
+        if (!$sessionEmailCol) {
+            $pdo->exec(
+                'ALTER TABLE customer_sessions ADD COLUMN contact_email VARCHAR(255) DEFAULT NULL AFTER contact_hash'
+            );
+        }
+
         $pdo->exec(
             "CREATE TABLE IF NOT EXISTS verification_codes (
                 id INT UNSIGNED NOT NULL AUTO_INCREMENT,

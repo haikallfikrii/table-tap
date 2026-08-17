@@ -32,7 +32,7 @@ if ($contactHash === null) {
     jsonError(t('cafe_otp_invalid'), 400);
 }
 
-$session = createCustomerSession($shop, $nama, $contactHash, true);
+$session = createCustomerSession($shop, $nama, $contactHash, true, normalizeEmail($email));
 
 jsonResponse([
     'ok' => true,
