@@ -376,28 +376,29 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       </div>
 
       <div class="aio-stage reveal" id="aio-stage" aria-hidden="true">
-        <div class="aio-orbit">
-          <button type="button" class="aio-sat" data-aio="printer" style="--a:0deg">
-            <span class="aio-ico aio-ico-printer"></span>
-            <span class="aio-label"><?= e(t('lp_aio_printer')) ?></span>
-          </button>
-          <button type="button" class="aio-sat" data-aio="pos" style="--a:90deg">
-            <span class="aio-ico aio-ico-pos"></span>
-            <span class="aio-label"><?= e(t('lp_aio_pos')) ?></span>
-          </button>
-          <button type="button" class="aio-sat" data-aio="calc" style="--a:180deg">
-            <span class="aio-ico aio-ico-calc"></span>
-            <span class="aio-label"><?= e(t('lp_aio_calc')) ?></span>
-          </button>
-          <button type="button" class="aio-sat" data-aio="paper" style="--a:270deg">
-            <span class="aio-ico aio-ico-paper"></span>
-            <span class="aio-label"><?= e(t('lp_aio_paper')) ?></span>
-          </button>
+        <div class="aio-visual">
+          <div class="aio-glow" aria-hidden="true"></div>
           <div class="aio-hub">
             <img src="<?= e($logo) ?>" alt="" width="48" height="48">
             <strong><?= e(t('lp_aio_hub')) ?></strong>
             <small><?= e(t('lp_aio_hub_sub')) ?></small>
           </div>
+          <button type="button" class="aio-chip aio-chip-printer" data-aio="printer" data-track="printer">
+            <span class="aio-ico aio-ico-printer"></span>
+            <span class="aio-label"><?= e(t('lp_aio_printer')) ?></span>
+          </button>
+          <button type="button" class="aio-chip" data-aio="pos" data-track="tools" data-slot="0">
+            <span class="aio-ico aio-ico-pos"></span>
+            <span class="aio-label"><?= e(t('lp_aio_pos')) ?></span>
+          </button>
+          <button type="button" class="aio-chip" data-aio="calc" data-track="tools" data-slot="1">
+            <span class="aio-ico aio-ico-calc"></span>
+            <span class="aio-label"><?= e(t('lp_aio_calc')) ?></span>
+          </button>
+          <button type="button" class="aio-chip" data-aio="paper" data-track="tools" data-slot="2">
+            <span class="aio-ico aio-ico-paper"></span>
+            <span class="aio-label"><?= e(t('lp_aio_paper')) ?></span>
+          </button>
         </div>
         <p class="aio-status" id="aio-status"><?= e(t('lp_aio_active')) ?></p>
         <div class="aio-pills">
