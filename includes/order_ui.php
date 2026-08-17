@@ -3,9 +3,16 @@
 $staffMode = $staffMode ?? false;
 $staffBackUrl = $staffBackUrl ?? '';
 $submitUrl = $submitUrl ?? baseUrl('public/api/submit_order.php');
-$showGuestName = $selfPickup || $staffMode;
+$showGuestName = ($selfPickup || $staffMode) && empty($cafeMode);
+$cafeMode = $cafeMode ?? false;
+$sessionToken = $sessionToken ?? '';
+$sessionOrderUrl = $sessionOrderUrl ?? '';
+$prefillGuestName = $prefillGuestName ?? '';
 $activeOrders = $activeOrders ?? [];
 $trackOrdersUrl = $trackOrdersUrl ?? '';
+$pageSubtitle = $cafeMode
+    ? t('cafe_session_label', (string) ($prefillGuestName ?: '—'))
+    : t('table') . ' ' . $table['nomor_meja'] . ($staffMode ? ' · ' . t('staff_order') : '');
 ?>
 <!DOCTYPE html>
 <html lang="<?= e($lang === 'en' ? 'en' : 'ms') ?>">
@@ -13,7 +20,7 @@ $trackOrdersUrl = $trackOrdersUrl ?? '';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#e85d04">
-  <title><?= e($brand) ?> — <?= e(t('table')) ?> <?= e($table['nomor_meja']) ?></title>
+  <title><?= e($brand) ?> — <?= e($cafeMode ? t('cafe_order_title') : t('table') . ' ' . $table['nomor_meja']) ?></title>
   <link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
 </head>
 <body>
@@ -25,9 +32,11 @@ $trackOrdersUrl = $trackOrdersUrl ?? '';
 <?php endif; ?>
 <div
   id="order-app"
-  class="customer-app<?= $staffMode ? ' staff-mode' : '' ?>"
+  class="customer-app<?= $staffMode ? ' staff-mode' : '' ?><?= $cafeMode ? ' cafe-mode' : '' ?>"
   data-meja="<?= e($table['nomor_meja']) ?>"
-  data-token="<?= e($staffMode ? '' : $table['token_akses']) ?>"
+  data-token="<?= e($staffMode || $cafeMode ? '' : $table['token_akses']) ?>"
+  data-session="<?= e($cafeMode ? $sessionToken : '') ?>"
+  data-session-url="<?= e($cafeMode ? $sessionOrderUrl : '') ?>"
   data-table-id="<?= (int) $table['id'] ?>"
   data-submit-url="<?= e($submitUrl) ?>"
   data-fulfillment="<?= e($selfPickup ? 'self_pickup' : 'waiter') ?>"
@@ -38,11 +47,16 @@ $trackOrdersUrl = $trackOrdersUrl ?? '';
   <header class="customer-header">
     <div class="brand">
       <span class="brand-name"><?= e($brand) ?></span>
-      <span class="brand-table"><?= e(t('table')) ?> <?= e($table['nomor_meja']) ?><?= $staffMode ? ' · ' . e(t('staff_order')) : '' ?></span>
+      <span class="brand-table"><?= e($pageSubtitle) ?></span>
     </div>
-    <div class="lang-toggle">
-      <button type="button" data-set-lang="my" class="<?= $lang === 'my' ? 'active' : '' ?>"><?= e(t('lang_my')) ?></button>
-      <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
+    <div class="header-actions">
+      <?php if ($cafeMode && !$staffMode): ?>
+      <button type="button" class="btn btn-ghost btn-sm cafe-link-btn" id="btn-my-link" title="<?= e(t('cafe_my_link')) ?>"><?= e(t('cafe_my_link')) ?></button>
+      <?php endif; ?>
+      <div class="lang-toggle">
+        <button type="button" data-set-lang="my" class="<?= $lang === 'my' ? 'active' : '' ?>"><?= e(t('lang_my')) ?></button>
+        <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
+      </div>
     </div>
   </header>
 
@@ -159,15 +173,38 @@ $trackOrdersUrl = $trackOrdersUrl ?? '';
     <?php if ($showGuestName): ?>
       <div class="guest-name-field">
         <label for="guest-name"><?= e(t('guest_name')) ?></label>
-        <input type="text" id="guest-name" maxlength="40" autocomplete="name" placeholder="<?= e(t('guest_name_ph')) ?>" <?= $selfPickup ? 'required' : '' ?>>
+        <input type="text" id="guest-name" maxlength="40" autocomplete="name" placeholder="<?= e(t('guest_name_ph')) ?>" value="<?= e($prefillGuestName) ?>" <?= $selfPickup ? 'required' : '' ?>>
         <p class="order-meta"><?= e($staffMode && !$selfPickup ? t('guest_name_staff_hint') : t('guest_name_hint')) ?></p>
       </div>
+    <?php elseif ($cafeMode && $selfPickup && $prefillGuestName !== ''): ?>
+      <p class="order-meta cafe-name-note"><?= e(t('cafe_order_as', $prefillGuestName)) ?></p>
     <?php endif; ?>
     <button type="button" class="btn btn-primary" id="btn-submit-order" style="width:100%" disabled>
       <?= e(t('submit_order')) ?>
     </button>
   </div>
 </aside>
+
+<?php if ($cafeMode && !$staffMode): ?>
+<div class="sheet-overlay" id="link-overlay"></div>
+<aside class="cart-sheet cafe-link-sheet" id="link-sheet" aria-label="<?= e(t('cafe_my_link')) ?>">
+  <div class="cart-sheet-header">
+    <h2><?= e(t('cafe_my_link')) ?></h2>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-close-link"><?= e(t('close')) ?></button>
+  </div>
+  <div class="cart-sheet-body">
+    <p class="order-meta"><?= e(t('cafe_my_link_hint')) ?></p>
+    <div class="cafe-link-qr">
+      <img id="cafe-link-qr" src="" alt="QR" width="200" height="200">
+    </div>
+    <div class="form-group">
+      <label><?= e(t('cafe_my_link_url')) ?></label>
+      <input type="text" id="cafe-link-url" readonly value="<?= e($sessionOrderUrl) ?>">
+    </div>
+    <button type="button" class="btn btn-primary" id="btn-copy-link" style="width:100%"><?= e(t('cafe_copy_link')) ?></button>
+  </div>
+</aside>
+<?php endif; ?>
 
 <?php if ($canGallery): ?>
 <div class="sheet-overlay" id="detail-overlay"></div>

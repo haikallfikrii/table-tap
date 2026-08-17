@@ -1,7 +1,8 @@
 <?php
 /**
  * AJAX: submit customer order
- * POST JSON: { meja, token, jenis_hidang, items: [{ menu_item_id, qty, catatan }] }
+ * POST JSON table: { meja, token, ... }
+ * POST JSON cafe:  { session, ... }
  */
 
 declare(strict_types=1);
@@ -12,18 +13,34 @@ require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 requirePost();
 
 $body = readJsonBody();
+$sessionToken = trim((string) ($body['session'] ?? ''));
 $nomorMeja = trim((string) ($body['meja'] ?? ''));
 $token = trim((string) ($body['token'] ?? ''));
 $items = $body['items'] ?? [];
 $jenisHidang = (($body['jenis_hidang'] ?? '') === 'takeaway') ? 'takeaway' : 'dine_in';
 
-if ($nomorMeja === '' || $token === '') {
-    jsonError('Invalid table access', 403);
-}
+$session = null;
+$table = null;
+$sessionId = null;
+$guestName = (string) ($body['nama_pelanggan'] ?? '');
 
-$table = findTableByAccess($nomorMeja, $token);
-if (!$table) {
-    jsonError('Invalid table access', 403);
+if ($sessionToken !== '') {
+    $session = findSessionByToken($sessionToken);
+    if (!$session || ($session['status'] ?? '') !== 'active') {
+        jsonError('Session expired', 403);
+    }
+    $table = sessionAsTableContext($session);
+    $sessionId = (int) $session['id'];
+    if ($guestName === '') {
+        $guestName = (string) ($session['nama_pelanggan'] ?? '');
+    }
+} elseif ($nomorMeja !== '' && $token !== '') {
+    $table = findTableByAccess($nomorMeja, $token);
+    if (!$table) {
+        jsonError('Invalid table access', 403);
+    }
+} else {
+    jsonError('Invalid access', 403);
 }
 
 $shopId = (int) $table['shop_id'];
@@ -37,19 +54,25 @@ $created = createShopOrder(
     $shop,
     is_array($items) ? $items : [],
     $jenisHidang,
-    (string) ($body['nama_pelanggan'] ?? ''),
+    $guestName,
     'qr',
-    false
+    false,
+    $sessionId
 );
 $orderId = $created['order_id'];
 $guestToken = (string) ($created['guest_token'] ?? '');
 $totals = $created['totals'];
-$redirect = baseUrl(
-    'public/confirmation.php?order=' . $orderId
-    . '&meja=' . urlencode($nomorMeja)
-    . '&token=' . urlencode($token)
-    . ($guestToken !== '' ? '&gt=' . urlencode($guestToken) : '')
-);
+
+if ($sessionToken !== '') {
+    $redirect = cafeSessionTrackUrl($sessionToken, $orderId, $guestToken);
+} else {
+    $redirect = baseUrl(
+        'public/confirmation.php?order=' . $orderId
+        . '&meja=' . urlencode($nomorMeja)
+        . '&token=' . urlencode($token)
+        . ($guestToken !== '' ? '&gt=' . urlencode($guestToken) : '')
+    );
+}
 
 jsonResponse([
     'ok' => true,

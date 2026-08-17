@@ -12,17 +12,42 @@ $lang = currentLang();
 $config = getConfig();
 
 $orderId = (int) ($_GET['order'] ?? 0);
+$sessionToken = trim((string) ($_GET['s'] ?? ''));
 $nomorMeja = trim((string) ($_GET['meja'] ?? ''));
 $token = trim((string) ($_GET['token'] ?? ''));
 $guestTokenParam = trim((string) ($_GET['gt'] ?? ''));
 
+$session = null;
 $table = null;
 $allOrders = [];
 $focusOrder = null;
 $brand = $config['app_name'] ?? 'TableTap';
 $selfPickup = false;
+$cafeMode = false;
 
-if ($nomorMeja !== '' && $token !== '') {
+if ($sessionToken !== '') {
+    $session = findSessionByToken($sessionToken);
+    if ($session && ($session['status'] ?? '') === 'active') {
+        $cafeMode = true;
+        $table = sessionAsTableContext($session);
+        $brand = shopBrand($table);
+        $selfPickup = shopFulfillment($table) === 'self_pickup';
+        $allOrders = fetchActiveSessionOrders($session, $lang);
+        if ($orderId <= 0 && $allOrders !== []) {
+            $orderId = (int) $allOrders[0]['order_id'];
+        }
+        foreach ($allOrders as $o) {
+            if ((int) ($o['order_id'] ?? 0) === $orderId) {
+                $focusOrder = $o;
+                break;
+            }
+        }
+        if ($focusOrder === null && $allOrders !== []) {
+            $focusOrder = $allOrders[0];
+            $orderId = (int) $focusOrder['order_id'];
+        }
+    }
+} elseif ($nomorMeja !== '' && $token !== '') {
     $table = findTableByAccess($nomorMeja, $token);
     if ($table) {
         $brand = shopBrand($table);
@@ -140,9 +165,18 @@ function trackStepClass(string $step, string $stage, array $order): string
     return $i < $now ? 'is-done' : '';
 }
 
-$pollUrl = $table
-    ? baseUrl('public/api/table_orders.php?meja=' . urlencode($nomorMeja) . '&token=' . urlencode($token) . '&focus=' . $orderId)
-    : '';
+$pollUrl = '';
+if ($cafeMode && $sessionToken !== '') {
+    $pollUrl = baseUrl('public/api/session_orders.php?s=' . urlencode($sessionToken) . '&focus=' . $orderId);
+} elseif ($table) {
+    $pollUrl = baseUrl('public/api/table_orders.php?meja=' . urlencode($nomorMeja) . '&token=' . urlencode($token) . '&focus=' . $orderId);
+}
+$orderAgainUrl = $cafeMode && $sessionToken !== ''
+    ? cafeSessionOrderUrl($sessionToken)
+    : ($table ? orderUrl($table['nomor_meja'], $table['token_akses']) : '');
+$trackSubtitle = $cafeMode
+    ? t('cafe_session_label', (string) ($session['nama_pelanggan'] ?? '—'))
+    : t('table') . ' ' . ($table['nomor_meja'] ?? '');
 ?>
 <!DOCTYPE html>
 <html lang="<?= e($lang === 'en' ? 'en' : 'ms') ?>">
@@ -157,10 +191,10 @@ $pollUrl = $table
 <?php if (!$focusOrder || !$table): ?>
   <div class="error-page">
     <h1><?= e($config['app_name']) ?></h1>
-    <p><?= e(t('invalid_table')) ?></p>
+    <p><?= e($sessionToken !== '' ? t('cafe_session_expired') : t('invalid_table')) ?></p>
   </div>
 <?php else: ?>
-  <div class="confirm-page tracking" id="track-app" data-fulfillment="<?= e($selfPickup ? 'self_pickup' : 'waiter') ?>" data-stage="<?= e($stage) ?>" data-focus-order="<?= (int) $orderId ?>" data-meja="<?= e($table['nomor_meja']) ?>" data-token="<?= e($table['token_akses']) ?>"<?= $selfPickup ? ' data-collect-url="' . e(baseUrl('public/api/collect_order.php')) . '"' : '' ?> data-poll-url="<?= e($pollUrl) ?>" data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>" data-lang="<?= e($lang) ?>" data-i18n="<?= e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) ?>">
+  <div class="confirm-page tracking" id="track-app" data-fulfillment="<?= e($selfPickup ? 'self_pickup' : 'waiter') ?>" data-stage="<?= e($stage) ?>" data-focus-order="<?= (int) $orderId ?>" data-meja="<?= e($table['nomor_meja']) ?>" data-token="<?= e($table['token_akses']) ?>" data-session="<?= e($cafeMode ? $sessionToken : '') ?>"<?= $selfPickup ? ' data-collect-url="' . e(baseUrl('public/api/collect_order.php')) . '"' : '' ?> data-poll-url="<?= e($pollUrl) ?>" data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>" data-lang="<?= e($lang) ?>" data-i18n="<?= e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) ?>">
     <div class="lang-toggle" style="position:absolute;top:16px;right:16px">
       <button type="button" data-set-lang="my" class="<?= $lang === 'my' ? 'active' : '' ?>"><?= e(t('lang_my')) ?></button>
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
@@ -190,7 +224,7 @@ $pollUrl = $table
     </ol>
 
     <h1 id="track-title"><?= e($trackTitle) ?></h1>
-    <p style="color:var(--ink-muted);margin:0"><?= e($brand) ?> · <?= e(t('table')) ?> <?= e($table['nomor_meja']) ?></p>
+    <p style="color:var(--ink-muted);margin:0"><?= e($brand) ?> · <?= e($trackSubtitle) ?></p>
     <p class="track-hint"><?= e($selfPickup ? t('keep_page_open') : t('keep_page_open_waiter')) ?></p>
 
     <h2 class="track-orders-heading" id="track-orders-heading"><?= e(t('your_orders')) ?><?= count($allOrders) > 1 ? ' (' . count($allOrders) . ')' : '' ?></h2>
@@ -238,7 +272,7 @@ $pollUrl = $table
       <?php endforeach; ?>
     </div>
 
-    <a class="btn btn-primary" href="<?= e(orderUrl($table['nomor_meja'], $table['token_akses'])) ?>">
+    <a class="btn btn-primary" href="<?= e($orderAgainUrl) ?>">
       <?= e(t('order_again')) ?>
     </a>
   </div>

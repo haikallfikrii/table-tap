@@ -51,4 +51,14 @@ return [
 
     // Google Search Console — paste content value from HTML tag verification method
     'google_site_verification' => '',
+
+    // Email OTP (cafe mode). Uses PHP mail() if smtp_host empty.
+    'mail_from' => 'noreply@tabletap.my',
+    // 'smtp_host' => 'smtp.hostinger.com',
+    // 'smtp_port' => 587,
+    // 'smtp_user' => 'noreply@yourdomain.com',
+    // 'smtp_pass' => 'YOUR_SMTP_PASSWORD',
+
+    // Hash pepper for contact/IP hashing (optional; falls back to cron_secret)
+    // 'security_pepper' => 'CHANGE_ME_RANDOM',
 ];

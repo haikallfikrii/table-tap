@@ -6,6 +6,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
+require_once dirname(__DIR__, 2) . '/includes/helpers.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 
 requireLogin(['owner']);
@@ -43,6 +44,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         if ($fulfillment === 'self_pickup' && !shopHasFeature($shop, 'self_pickup')) {
             $fulfillment = 'waiter';
         }
+        $orderingMode = (string) ($_POST['ordering_mode'] ?? 'table');
+        if (!in_array($orderingMode, ['table', 'cafe'], true)) {
+            $orderingMode = 'table';
+        }
+        $cafeVerify = (string) ($_POST['cafe_verify'] ?? 'email');
+        if (!in_array($cafeVerify, ['email', 'none'], true)) {
+            $cafeVerify = 'email';
+        }
+        $regenShopToken = isset($_POST['regen_shop_token']);
         if ($namaKedai === '') {
             throw new RuntimeException(t('shop_name') . ' required');
         }
@@ -62,6 +72,23 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $shopId,
         ]);
 
+        if (orderingModeColumnExists()) {
+            if ($orderingMode === 'cafe') {
+                enableCafeModeForShop($shopId, $cafeVerify);
+            } else {
+                disableCafeModeForShop($shopId);
+                if (orderingModeColumnExists()) {
+                    $pdo->prepare('UPDATE shops SET cafe_verify = ? WHERE id = ?')
+                        ->execute([$cafeVerify, $shopId]);
+                }
+            }
+            if ($regenShopToken && $orderingMode === 'cafe') {
+                $newToken = generateToken(24);
+                $pdo->prepare('UPDATE shops SET shop_token = ? WHERE id = ?')
+                    ->execute([$newToken, $shopId]);
+            }
+        }
+
         // refresh session brand
         startAppSession();
         $_SESSION['shop_name'] = $namaKedai;
@@ -74,6 +101,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $shop = getShopOrFail($shopId);
 $canSelfPickup = shopHasFeature($shop, 'self_pickup');
+$isCafeMode = shopIsCafeMode($shop);
+$cafeEntryUrl = '';
+if ($isCafeMode && orderingModeColumnExists()) {
+    $shopToken = ensureShopToken($shop);
+    $cafeEntryUrl = cafeEntryUrl((string) $shop['slug'], $shopToken);
+}
 $retentionLabel = $shop['retention_days'] === null
     ? t('retention_forever')
     : ((int) $shop['retention_days'] . ' ' . t('days'));
@@ -132,6 +165,46 @@ $retentionLabel = $shop['retention_days'] === null
         <span><strong><?= e(t('fulfillment_self')) ?></strong><br><span class="order-meta"><?= e(t('fulfillment_self_d')) ?></span></span>
       </label>
     </div>
+    <?php if (orderingModeColumnExists()): ?>
+    <h3 style="margin:22px 0 8px"><?= e(t('ordering_mode')) ?></h3>
+    <p class="order-meta" style="margin:0 0 12px"><?= e(t('ordering_mode_hint')) ?></p>
+    <div class="form-group">
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px">
+        <input type="radio" name="ordering_mode" value="table" <?= !$isCafeMode ? 'checked' : '' ?>>
+        <span><strong><?= e(t('ordering_table')) ?></strong><br><span class="order-meta"><?= e(t('ordering_table_d')) ?></span></span>
+      </label>
+      <label style="display:flex;gap:8px;align-items:flex-start">
+        <input type="radio" name="ordering_mode" value="cafe" <?= $isCafeMode ? 'checked' : '' ?>>
+        <span><strong><?= e(t('ordering_cafe')) ?></strong><br><span class="order-meta"><?= e(t('ordering_cafe_d')) ?></span></span>
+      </label>
+    </div>
+    <div class="form-group" id="cafe-verify-options">
+      <label><?= e(t('cafe_verify')) ?></label>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
+        <input type="radio" name="cafe_verify" value="email" <?= shopCafeVerify($shop) === 'email' ? 'checked' : '' ?>>
+        <span><strong><?= e(t('cafe_verify_email')) ?></strong><br><span class="order-meta"><?= e(t('cafe_verify_email_d')) ?></span></span>
+      </label>
+      <label style="display:flex;gap:8px;align-items:flex-start">
+        <input type="radio" name="cafe_verify" value="none" <?= shopCafeVerify($shop) === 'none' ? 'checked' : '' ?>>
+        <span><strong><?= e(t('cafe_verify_none')) ?></strong><br><span class="order-meta"><?= e(t('cafe_verify_none_d')) ?></span></span>
+      </label>
+    </div>
+    <?php if ($isCafeMode && $cafeEntryUrl !== ''): ?>
+    <div class="form-group" style="margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:var(--radius-sm)">
+      <strong><?= e(t('cafe_shop_qr')) ?></strong>
+      <p class="order-meta" style="margin:6px 0 12px"><?= e(t('cafe_shop_qr_hint')) ?></p>
+      <div style="text-align:center;margin:12px 0">
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&amp;data=<?= urlencode($cafeEntryUrl) ?>" alt="QR" width="220" height="220" style="border-radius:8px;border:1px solid var(--border)">
+      </div>
+      <label><?= e(t('cafe_entry_url')) ?></label>
+      <input type="text" readonly value="<?= e($cafeEntryUrl) ?>" onclick="this.select()" style="width:100%;margin-bottom:10px">
+      <label style="display:flex;gap:8px;align-items:center;margin-top:8px">
+        <input type="checkbox" name="regen_shop_token" value="1" onclick="return confirm('<?= e(t('cafe_regen_confirm')) ?>')">
+        <?= e(t('cafe_regen_token')) ?>
+      </label>
+    </div>
+    <?php endif; ?>
+    <?php endif; ?>
     <h3 style="margin:22px 0 8px"><?= e(t('sound_settings')) ?></h3>
     <p class="order-meta" style="margin:0 0 12px"><?= e(t('sound_settings_hint')) ?></p>
     <div class="form-group">

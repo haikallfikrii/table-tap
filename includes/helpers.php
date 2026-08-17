@@ -240,7 +240,8 @@ function createShopOrder(
     string $jenisHidang,
     string $guestName,
     string $sumber,
-    bool $optionalGuestName = false
+    bool $optionalGuestName = false,
+    ?int $sessionId = null
 ): array {
     if (!is_array($items) || $items === []) {
         jsonError('Cart is empty');
@@ -289,7 +290,11 @@ function createShopOrder(
     }
 
     assertCartLimits($normalized);
-    assertTableOrderRateLimit((int) $table['id'], $shopId);
+    if ($sessionId !== null && $sessionId > 0 && function_exists('assertSessionOrderRateLimit')) {
+        assertSessionOrderRateLimit($sessionId, $shopId);
+    } else {
+        assertTableOrderRateLimit((int) $table['id'], $shopId);
+    }
 
     $pdo = db();
     $placeholders = implode(',', array_fill(0, count($normalized), '?'));
@@ -333,11 +338,35 @@ function createShopOrder(
     $sumber = $sumber === 'staf' ? 'staf' : 'qr';
     $hasSumber = (bool) $pdo->query("SHOW COLUMNS FROM orders LIKE 'sumber_order'")->fetch();
     $hasGuestToken = orderGuestTokenColumnExists();
+    $hasSessionId = orderSessionColumnExists();
     $guestToken = $hasGuestToken ? generateOrderGuestToken() : null;
+    $useSession = $hasSessionId && $sessionId !== null && $sessionId > 0;
 
     try {
         $pdo->beginTransaction();
-        if ($hasSumber && $hasGuestToken) {
+        if ($useSession && $hasSumber && $hasGuestToken) {
+            $insOrder = $pdo->prepare(
+                'INSERT INTO orders
+                 (shop_id, table_id, session_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+            $insOrder->execute([
+                $shopId,
+                (int) $table['id'],
+                $sessionId,
+                appNow(),
+                'menunggu',
+                'belum_bayar',
+                $jenisHidang,
+                $guestName !== '' ? $guestName : null,
+                $guestToken,
+                $sumber,
+                $totals['subtotal'],
+                $totals['sst_rate'],
+                $totals['sst_jumlah'],
+                $totals['total'],
+            ]);
+        } elseif ($hasSumber && $hasGuestToken) {
             $insOrder = $pdo->prepare(
                 'INSERT INTO orders
                  (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
@@ -446,6 +475,10 @@ function createShopOrder(
         jsonError('Failed to save order', 500);
     }
 
+    if ($sessionId !== null && $sessionId > 0) {
+        touchSessionActivity($sessionId);
+    }
+
     return [
         'order_id' => $orderId,
         'totals' => $totals,
@@ -544,3 +577,4 @@ function trackStageFromItems(array $items): string
 }
 
 require_once __DIR__ . '/customer_orders.php';
+require_once __DIR__ . '/cafe_sessions.php';

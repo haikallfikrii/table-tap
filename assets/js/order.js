@@ -7,14 +7,17 @@
 
   const meja = root.dataset.meja;
   const token = root.dataset.token;
+  const sessionToken = root.dataset.session || '';
+  const sessionUrl = root.dataset.sessionUrl || '';
   const tableId = Number(root.dataset.tableId || 0);
   const submitUrl = root.dataset.submitUrl;
   const fulfillment = root.dataset.fulfillment || 'waiter';
   const staffMode = root.dataset.staff === '1';
   const staffFrom = root.dataset.from || 'waiter';
-  const cartStore = (staffMode ? 'tt_staff_cart_' : 'tt_cart_') + meja;
-  const serveStore = (staffMode ? 'tt_staff_serve_' : 'tt_serve_') + meja;
-  const nameStore = (staffMode ? 'tt_staff_name_' : 'tt_name_') + meja;
+  const cartKey = sessionToken || meja;
+  const cartStore = (staffMode ? 'tt_staff_cart_' : 'tt_cart_') + cartKey;
+  const serveStore = (staffMode ? 'tt_staff_serve_' : 'tt_serve_') + cartKey;
+  const nameStore = (staffMode ? 'tt_staff_name_' : 'tt_name_') + cartKey;
   const i18n = JSON.parse(root.dataset.i18n || '{}');
 
   const money = (n) => {
@@ -336,22 +339,27 @@
     }
 
     try {
+      const payload = {
+        jenis_hidang: serveType,
+        nama_pelanggan: guestName,
+        items: cart.map((i) => ({
+          menu_item_id: i.id,
+          qty: i.qty,
+          catatan: i.catatan || '',
+        })),
+      };
+      if (sessionToken) {
+        payload.session = sessionToken;
+      } else {
+        payload.meja = meja;
+        payload.token = token;
+        payload.table_id = tableId;
+        payload.from = staffFrom;
+      }
       const res = await fetch(submitUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          meja: meja,
-          token: token,
-          table_id: tableId,
-          from: staffFrom,
-          jenis_hidang: serveType,
-          nama_pelanggan: guestName,
-          items: cart.map((i) => ({
-            menu_item_id: i.id,
-            qty: i.qty,
-            catatan: i.catatan || '',
-          })),
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) {
@@ -411,6 +419,46 @@
     searchInput.addEventListener('input', applyMenuSearch);
     searchInput.addEventListener('search', applyMenuSearch);
   }
+
+  // Cafe mode — private order link + QR
+  const linkBtn = document.getElementById('btn-my-link');
+  const linkSheet = document.getElementById('link-sheet');
+  const linkOverlay = document.getElementById('link-overlay');
+  const linkUrlInput = document.getElementById('cafe-link-url');
+  const linkQrImg = document.getElementById('cafe-link-qr');
+  const copyLinkBtn = document.getElementById('btn-copy-link');
+
+  function openLinkSheet() {
+    if (!linkSheet || !sessionUrl) return;
+    if (linkQrImg) {
+      linkQrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(sessionUrl);
+    }
+    if (linkUrlInput) linkUrlInput.value = sessionUrl;
+    linkSheet.classList.add('open');
+    linkOverlay?.classList.add('open');
+  }
+
+  function closeLinkSheet() {
+    linkSheet?.classList.remove('open');
+    linkOverlay?.classList.remove('open');
+  }
+
+  linkBtn?.addEventListener('click', openLinkSheet);
+  document.getElementById('btn-close-link')?.addEventListener('click', closeLinkSheet);
+  linkOverlay?.addEventListener('click', closeLinkSheet);
+  copyLinkBtn?.addEventListener('click', async function () {
+    if (!sessionUrl) return;
+    try {
+      await navigator.clipboard.writeText(sessionUrl);
+      alert(i18n.cafe_link_copied || 'Link copied');
+    } catch (e) {
+      if (linkUrlInput) {
+        linkUrlInput.select();
+        document.execCommand('copy');
+        alert(i18n.cafe_link_copied || 'Link copied');
+      }
+    }
+  });
 
   refresh();
 })();
