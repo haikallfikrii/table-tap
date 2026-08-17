@@ -74,7 +74,7 @@ function fetchActiveCustomerOrders(array $table, string $lang): array
          FROM orders
          WHERE table_id = ? AND shop_id = ?
            AND status_bayar = 'belum_bayar'
-           AND status_order NOT IN ('selesai', 'dibatalkan')
+           AND status_order != 'dibatalkan'
          ORDER BY id DESC"
     );
     $stmt->execute([$tableId, $shopId]);
@@ -138,7 +138,7 @@ function customerOrderPayload(array $order, array $items, string $fulfillment, b
         'total_harga' => (float) $order['total_harga'],
         'total_formatted' => formatMoney((float) $order['total_harga']),
         'waktu_order' => (string) $order['waktu_order'],
-        'stage' => trackStageFromItems($items),
+        'stage' => customerOrderStage($order, $items, $fulfillment),
         'fulfillment' => $fulfillment,
         'pickup_alert' => $fulfillment !== 'self_pickup' || (int) ($order['pickup_alert'] ?? 1) === 1,
         'items' => $items,
@@ -147,6 +147,15 @@ function customerOrderPayload(array $order, array $items, string $fulfillment, b
         $payload['guest_token'] = (string) ($order['guest_token'] ?? '');
     }
     return $payload;
+}
+
+/** @param list<array<string, mixed>> $items */
+function customerOrderStage(array $order, array $items, string $fulfillment): string
+{
+    if (($order['status_order'] ?? '') === 'selesai') {
+        return 'done';
+    }
+    return trackStageFromItems($items, $fulfillment);
 }
 
 function findCustomerOrderForTable(array $table, int $orderId, string $lang): ?array
