@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/includes/helpers.php';
 require_once __DIR__ . '/includes/i18n.php';
+require_once __DIR__ . '/includes/seo.php';
+require_once __DIR__ . '/includes/blog.php';
 
 $lang = currentLang();
 $config = getConfig();
@@ -108,6 +110,7 @@ $navLinks = [
     '#demo'     => t('lp_nav_demo'),
     '#pricing'  => t('lp_nav_pricing'),
     '#faq'      => t('lp_nav_faq'),
+    blogUrl()   => t('lp_nav_blog'),
 ];
 
 $loginUrl = baseUrl('admin/login.php');
@@ -122,14 +125,20 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#e85d04">
-  <title><?= e($config['app_name']) ?> — <?= e(t('lp_badge')) ?></title>
-  <meta name="description" content="<?= e(t('lp_hero_sub')) ?>">
   <link rel="icon" href="<?= e($logo) ?>">
   <link rel="apple-touch-icon" href="<?= e($iconLarge) ?>">
-  <meta property="og:title" content="<?= e($config['app_name']) ?> — <?= e(t('lp_badge')) ?>">
-  <meta property="og:description" content="<?= e(t('lp_hero_sub')) ?>">
-  <meta property="og:image" content="<?= e($iconLarge) ?>">
-  <meta property="og:type" content="website">
+  <?php seoHead([
+      'title' => $config['app_name'] . ' — ' . t('lp_badge'),
+      'description' => t('lp_hero_sub'),
+      'path' => '',
+      'image' => $iconLarge,
+  ]); ?>
+  <?php
+    seoJsonLdOrganization($iconLarge);
+    seoJsonLdWebSite();
+    seoJsonLdSoftwareApp();
+    seoJsonLdFaq($faqs);
+  ?>
   <link rel="stylesheet" href="<?= e(assetUrl('css/landing.css')) ?>">
 </head>
 <body class="lp">
@@ -779,6 +788,37 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
     </div>
   </section>
 
+  <?php $blogPreview = array_slice(blogAllPosts(), 0, 3); ?>
+  <?php if ($blogPreview !== []): ?>
+  <!-- ================= BLOG ================= -->
+  <section class="sec" id="blog">
+    <div class="wrap">
+      <div class="sec-head center reveal">
+        <span class="kicker"><?= e(t('lp_nav_blog')) ?></span>
+        <h2><?= e(t('blog_section_title')) ?></h2>
+        <p><?= e(t('blog_section_sub')) ?></p>
+      </div>
+      <div class="lp-blog-grid">
+        <?php foreach ($blogPreview as $post): ?>
+          <?php
+            $slug = (string) ($post['slug'] ?? '');
+            $postTitle = blogField($post, 'title', $lang);
+            $excerpt = blogField($post, 'excerpt', $lang);
+          ?>
+          <article class="lp-blog-card reveal">
+            <h3><a href="<?= e(blogUrl($slug)) ?>"><?= e($postTitle) ?></a></h3>
+            <p><?= e($excerpt) ?></p>
+            <a class="lp-blog-link" href="<?= e(blogUrl($slug)) ?>"><?= e(t('blog_read_more')) ?> →</a>
+          </article>
+        <?php endforeach; ?>
+      </div>
+      <p class="center" style="margin-top:28px">
+        <a class="btn btn-outline" href="<?= e(blogUrl()) ?>"><?= e(t('blog_view_all')) ?></a>
+      </p>
+    </div>
+  </section>
+  <?php endif; ?>
+
   <!-- ================= FAQ ================= -->
   <section class="sec" id="faq">
     <div class="wrap">
@@ -836,6 +876,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
           <li><a href="#how"><?= e(t('lp_nav_how')) ?></a></li>
           <li><a href="#demo"><?= e(t('lp_nav_demo')) ?></a></li>
           <li><a href="#pricing"><?= e(t('lp_nav_pricing')) ?></a></li>
+          <li><a href="<?= e(blogUrl()) ?>"><?= e(t('lp_nav_blog')) ?></a></li>
         </ul>
       </div>
 
@@ -843,6 +884,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
         <h4><?= e(t('lp_footer_company')) ?></h4>
         <ul>
           <li><a href="#faq"><?= e(t('lp_nav_faq')) ?></a></li>
+          <li><a href="<?= e(blogUrl()) ?>"><?= e(t('lp_nav_blog')) ?></a></li>
           <li><a href="#pricing"><?= e(t('lp_pricing_kicker')) ?></a></li>
           <li><a href="<?= e($waStartUrl) ?>" target="_blank" rel="noopener noreferrer"><?= e(t('lp_cta_start')) ?></a></li>
         </ul>
