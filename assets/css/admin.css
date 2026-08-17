@@ -159,6 +159,22 @@ body.admin {
   max-width: min(100%, 168px);
 }
 
+.order-customer-email {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.order-customer-email a {
+  color: var(--info);
+  text-decoration: none;
+}
+
+.order-customer-email a:hover {
+  text-decoration: underline;
+}
+
 .table-num {
   font-size: clamp(1.8rem, 4vw, 2.4rem);
   font-weight: 800;

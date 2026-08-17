@@ -419,9 +419,15 @@
     });
     if (mode === 'pickup') {
       stopWaiterLoop();
+      stopCafeLoop();
       startPickupLoop();
+    } else if (mode === 'cafe') {
+      stopPickupLoop();
+      stopWaiterLoop();
+      startCafeLoop();
     } else {
       stopPickupLoop();
+      stopCafeLoop();
       startWaiterLoop();
     }
   }
@@ -438,13 +444,124 @@
         if (!entry.isIntersecting) {
           stopPickupLoop();
           stopWaiterLoop();
+          stopCafeLoop();
           return;
         }
-        if (casePlay.getAttribute('data-mode') === 'pickup') startPickupLoop();
+        var mode = casePlay.getAttribute('data-mode');
+        if (mode === 'pickup') startPickupLoop();
+        else if (mode === 'cafe') startCafeLoop();
         else startWaiterLoop();
       });
     }, { threshold: 0.25 });
     caseObs.observe(casePlay);
+  }
+
+  /* ---------- Cafe case loop ---------- */
+  var lpCafe = document.getElementById('lp-cafe-hero');
+  var lpCafeTitle = document.getElementById('lp-cafe-title');
+  var cafeTimer = null;
+  var cafeIdx = 0;
+  var cafeStages = ['scan', 'otp', 'track', 'receipt'];
+  var cafeTitles = cafeStages.map(function (s) {
+    var el = document.querySelector('[data-c-step="' + s + '"]');
+    return el ? el.textContent : s;
+  });
+
+  function setCafeStage(stage) {
+    if (!lpCafe) return;
+    lpCafe.setAttribute('data-stage', stage);
+    var i = cafeStages.indexOf(stage);
+    if (lpCafeTitle && cafeTitles[i]) lpCafeTitle.textContent = cafeTitles[i];
+    document.querySelectorAll('[data-c-step]').forEach(function (el) {
+      var step = el.getAttribute('data-c-step');
+      var si = cafeStages.indexOf(step);
+      el.classList.toggle('is-current', step === stage);
+      el.classList.toggle('is-done', si >= 0 && si < i);
+    });
+  }
+
+  function stopCafeLoop() {
+    if (cafeTimer) { clearInterval(cafeTimer); cafeTimer = null; }
+  }
+
+  function startCafeLoop() {
+    stopCafeLoop();
+    cafeIdx = 0;
+    setCafeStage(cafeStages[0]);
+    if (reduceMotion) return;
+    cafeTimer = setInterval(function () {
+      cafeIdx = (cafeIdx + 1) % cafeStages.length;
+      setCafeStage(cafeStages[cafeIdx]);
+    }, 1400);
+  }
+
+  /* ---------- All-in-one orbit ---------- */
+  var aioStage = document.getElementById('aio-stage');
+  var aioOrbit = aioStage && aioStage.querySelector('.aio-orbit');
+  var aioStatus = document.getElementById('aio-status');
+  var aioSats = aioOrbit ? aioOrbit.querySelectorAll('.aio-sat') : [];
+  var aioKeys = ['printer', 'pos', 'calc', 'paper'];
+  var aioIdx = 0;
+  var aioTimer = null;
+  var aioLabels = {};
+
+  aioSats.forEach(function (sat) {
+    var k = sat.getAttribute('data-aio');
+    var lab = sat.querySelector('.aio-label');
+    if (k && lab) aioLabels[k] = lab.textContent;
+  });
+
+  function setAioFocus(key) {
+    aioSats.forEach(function (sat) {
+      var k = sat.getAttribute('data-aio');
+      sat.classList.toggle('is-active', k === key);
+      sat.classList.toggle('is-out', k !== key);
+    });
+    if (aioStatus && aioLabels[key]) {
+      aioStatus.textContent = (document.documentElement.lang === 'en' ? 'No longer needed: ' : 'Tak perlu lagi: ') + aioLabels[key];
+    }
+  }
+
+  function startAioLoop() {
+    if (!aioOrbit || reduceMotion) return;
+    aioOrbit.classList.add('spinning');
+    aioTimer = setInterval(function () {
+      aioIdx = (aioIdx + 1) % aioKeys.length;
+      setAioFocus(aioKeys[aioIdx]);
+    }, 2200);
+    setAioFocus(aioKeys[0]);
+  }
+
+  function stopAioLoop() {
+    if (aioTimer) { clearInterval(aioTimer); aioTimer = null; }
+    if (aioOrbit) aioOrbit.classList.remove('spinning');
+  }
+
+  if (aioStage && aioSats.length) {
+    aioSats.forEach(function (sat) {
+      sat.addEventListener('click', function () {
+        var k = sat.getAttribute('data-aio');
+        if (!k) return;
+        aioIdx = aioKeys.indexOf(k);
+        if (aioTimer) clearInterval(aioTimer);
+        setAioFocus(k);
+        aioTimer = setInterval(function () {
+          aioIdx = (aioIdx + 1) % aioKeys.length;
+          setAioFocus(aioKeys[aioIdx]);
+        }, 2200);
+      });
+    });
+    if ('IntersectionObserver' in window) {
+      var aioObs = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) startAioLoop();
+          else stopAioLoop();
+        });
+      }, { threshold: 0.2 });
+      aioObs.observe(aioStage);
+    } else {
+      startAioLoop();
+    }
   }
 
   document.querySelectorAll('.card[data-feat]').forEach(function (card) {
