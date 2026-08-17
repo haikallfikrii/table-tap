@@ -17,7 +17,15 @@ return [
 
     // App
     'app_name' => 'TableTap',
-    'app_url' => 'https://tabletap.jomsite.com', // no trailing slash
+    // Fallback for cron/CLI. Browser links follow the current host (see allowed_hosts).
+    'app_url' => 'https://tabletap.my', // no trailing slash
+    'allowed_hosts' => [
+        'tabletap.my',
+        'www.tabletap.my',
+        'tabletap.jomsite.com',
+        'localhost',
+        '127.0.0.1',
+    ],
     'timezone' => 'Asia/Kuala_Lumpur',
     'currency' => 'RM',
     'currency_decimals' => 2,
