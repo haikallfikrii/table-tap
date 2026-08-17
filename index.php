@@ -465,11 +465,9 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       </div>
 
       <div class="case-switch reveal case-switch-3" role="tablist" aria-label="<?= e(t('lp_nav_cases')) ?>">
-        <div class="case-switch-track">
-          <button type="button" class="on" data-case="waiter" role="tab" aria-selected="true"><?= e(t('lp_case_waiter')) ?></button>
-          <button type="button" data-case="cafe" role="tab" aria-selected="false"><?= e(t('lp_case_cafe')) ?></button>
-          <button type="button" data-case="pickup" role="tab" aria-selected="false"><?= e(t('lp_case_pickup')) ?></button>
-        </div>
+        <button type="button" class="on" data-case="waiter" role="tab" aria-selected="true"><?= e(t('lp_case_waiter')) ?></button>
+        <button type="button" data-case="cafe" role="tab" aria-selected="false"><?= e(t('lp_case_cafe')) ?></button>
+        <button type="button" data-case="pickup" role="tab" aria-selected="false"><?= e(t('lp_case_pickup')) ?></button>
       </div>
 
       <div class="case-play" id="case-play" data-mode="waiter">
