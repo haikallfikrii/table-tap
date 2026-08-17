@@ -375,14 +375,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
         <p><?= e(t('lp_allinone_sub')) ?></p>
       </div>
 
-      <div class="aio-stage reveal" id="aio-stage"
-           data-aio-active="<?= e(t('lp_aio_active')) ?>"
-           data-aio-strike="<?= e(t('lp_aio_strike_msg')) ?>">
-        <div class="aio-visual" style="--aio-count:<?= (int) $aioCount ?>">
-          <div class="aio-ring" aria-hidden="true"></div>
-          <div class="aio-glow" aria-hidden="true"></div>
-          <div class="aio-orbit" aria-hidden="true">
-          <?php
+      <?php
           $aioItems = [
               ['printer', t('lp_aio_printer')],
               ['pos', t('lp_aio_pos')],
@@ -394,6 +387,15 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
               ['whatsapp', t('lp_aio_whatsapp')],
           ];
           $aioCount = count($aioItems);
+      ?>
+      <div class="aio-stage reveal" id="aio-stage"
+           data-aio-active="<?= e(t('lp_aio_active')) ?>"
+           data-aio-strike="<?= e(t('lp_aio_strike_msg')) ?>">
+        <div class="aio-visual" style="--aio-count:<?= (int) $aioCount ?>">
+          <div class="aio-ring" aria-hidden="true"></div>
+          <div class="aio-glow" aria-hidden="true"></div>
+          <div class="aio-orbit" aria-hidden="true">
+          <?php
           foreach ($aioItems as $aioIdx => [$aioKey, $aioLabel]):
               $aioAngle = (($aioIdx * 360) / $aioCount) - 90;
           ?>
