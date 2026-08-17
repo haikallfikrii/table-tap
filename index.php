@@ -377,28 +377,34 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
 
       <div class="aio-stage reveal" id="aio-stage" aria-hidden="true">
         <div class="aio-visual">
+          <div class="aio-ring" aria-hidden="true"></div>
           <div class="aio-glow" aria-hidden="true"></div>
           <div class="aio-hub">
             <img src="<?= e($logo) ?>" alt="" width="48" height="48">
             <strong><?= e(t('lp_aio_hub')) ?></strong>
             <small><?= e(t('lp_aio_hub_sub')) ?></small>
           </div>
-          <button type="button" class="aio-chip aio-chip-printer" data-aio="printer" data-track="printer">
-            <span class="aio-ico aio-ico-printer"></span>
-            <span class="aio-label"><?= e(t('lp_aio_printer')) ?></span>
-          </button>
-          <button type="button" class="aio-chip" data-aio="pos" data-track="tools" data-slot="0">
-            <span class="aio-ico aio-ico-pos"></span>
-            <span class="aio-label"><?= e(t('lp_aio_pos')) ?></span>
-          </button>
-          <button type="button" class="aio-chip" data-aio="calc" data-track="tools" data-slot="1">
-            <span class="aio-ico aio-ico-calc"></span>
-            <span class="aio-label"><?= e(t('lp_aio_calc')) ?></span>
-          </button>
-          <button type="button" class="aio-chip" data-aio="paper" data-track="tools" data-slot="2">
-            <span class="aio-ico aio-ico-paper"></span>
-            <span class="aio-label"><?= e(t('lp_aio_paper')) ?></span>
-          </button>
+          <?php
+          $aioItems = [
+              ['printer', t('lp_aio_printer'), 0],
+              ['pos', t('lp_aio_pos'), 1],
+              ['calc', t('lp_aio_calc'), 2],
+              ['paper', t('lp_aio_paper'), 3],
+          ];
+          foreach ($aioItems as [$aioKey, $aioLabel, $aioIdx]):
+          ?>
+          <div class="aio-sat" data-aio="<?= e($aioKey) ?>" style="--i:<?= (int) $aioIdx ?>">
+            <div class="aio-sat-spin">
+              <div class="aio-chip-wrap">
+              <button type="button" class="aio-chip" data-aio="<?= e($aioKey) ?>" aria-label="<?= e($aioLabel) ?>">
+                <span class="aio-ico aio-ico-<?= e($aioKey) ?>"></span>
+                <span class="aio-label"><?= e($aioLabel) ?></span>
+                <span class="aio-strike-line" aria-hidden="true"></span>
+              </button>
+              </div>
+            </div>
+          </div>
+          <?php endforeach; ?>
         </div>
         <p class="aio-status" id="aio-status"><?= e(t('lp_aio_active')) ?></p>
         <div class="aio-pills">
