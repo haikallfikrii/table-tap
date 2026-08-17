@@ -53,7 +53,7 @@ return [
     'order_latest'      => 'Terbaru',
     'order_earlier'     => 'Sebelum ini',
     'active_orders_banner' => '%d pesanan aktif — lihat status',
-    'order_rate_limited' => 'Terlalu cepat. Tunggu sebentar sebelum hantar pesanan lagi.',
+    'order_rate_limited' => 'Terlalu cepat. Tunggu ~30 saat sebelum hantar pesanan lagi.',
     'order_unpaid_limit' => 'Terlalu banyak pesanan belum bayar di meja ini. Sila bayar di kaunter dahulu.',
     'cart_qty_too_high' => 'Kuantiti terlalu banyak untuk satu item.',
     'cart_too_many_items' => 'Terlalu banyak jenis menu dalam satu pesanan.',
