@@ -74,7 +74,7 @@ function assertOtpSendRateLimit(int $shopId, string $destinationHash): void
     );
     $emailStmt->execute([$shopId, $destinationHash]);
     if ((int) $emailStmt->fetchColumn() >= 5) {
-        jsonError(t('cafe_otp_rate_email'), 429);
+        jsonError(t('cafe_otp_blocked'), 429);
     }
 
     $ipStmt = $pdo->prepare(
@@ -84,7 +84,7 @@ function assertOtpSendRateLimit(int $shopId, string $destinationHash): void
     );
     $ipStmt->execute([$shopId, $ipHash]);
     if ((int) $ipStmt->fetchColumn() >= 20) {
-        jsonError(t('cafe_otp_rate_ip'), 429);
+        jsonError(t('cafe_otp_blocked'), 429);
     }
 }
 

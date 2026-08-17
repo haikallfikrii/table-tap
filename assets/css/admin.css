@@ -511,3 +511,139 @@ a.ops-card.is-alert {
     overflow-x: auto;
   }
 }
+
+/* Settings — option cards */
+.settings-panel { max-width: 640px; }
+.settings-form { display: flex; flex-direction: column; gap: 8px; }
+.settings-block { margin-bottom: 12px; }
+.settings-block-label { display: block; font-weight: 600; margin-bottom: 6px; }
+.settings-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; }
+.settings-check { display: flex; gap: 8px; align-items: center; cursor: pointer; }
+.settings-fieldset {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px 18px;
+  margin: 16px 0 0;
+  background: var(--bg);
+}
+.settings-fieldset legend {
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0 6px;
+}
+.settings-fieldset-desc {
+  margin: 0 0 12px;
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.settings-upgrade-note {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+.settings-link-note {
+  margin: 12px 0 0;
+  font-size: 0.9rem;
+}
+.settings-link-note a { color: var(--accent); font-weight: 600; }
+.settings-save { margin-top: 20px; align-self: flex-start; }
+
+.option-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: var(--bg-elevated);
+}
+.option-card:has(input:checked) {
+  border-color: var(--accent);
+  background: rgba(232, 93, 4, 0.06);
+}
+.option-card.is-disabled { opacity: 0.55; pointer-events: none; }
+.option-card input {
+  margin-top: 4px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.option-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.option-card-body strong { font-size: 0.95rem; }
+.option-card-body span {
+  color: var(--ink-muted);
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+/* QR cards (tables page) */
+.tables-section { margin-bottom: 28px; }
+.section-title {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+}
+.section-desc {
+  margin: 0 0 14px;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+  max-width: 560px;
+}
+.qr-card { display: flex; flex-direction: column; }
+.qr-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.qr-card-title { margin: 0; font-size: 1.05rem; }
+.qr-card-hint { margin: 0 0 8px; }
+.qr-card-visual {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin: 8px 0 12px;
+}
+.qr-url-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+.qr-url-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.78rem;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+.qr-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.qr-inline-form { display: inline; }
+.inline-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}

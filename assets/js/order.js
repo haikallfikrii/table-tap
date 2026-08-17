@@ -9,12 +9,18 @@
   const token = root.dataset.token;
   const sessionToken = root.dataset.session || '';
   const sessionUrl = root.dataset.sessionUrl || '';
+  const cafeBrowse = root.dataset.cafeBrowse === '1';
+  const shopSlug = root.dataset.shop || '';
+  const shopToken = root.dataset.shopToken || '';
+  const cafeVerify = root.dataset.cafeVerify || 'email';
+  const checkoutUrl = root.dataset.checkoutUrl || '';
+  const sendOtpUrl = root.dataset.sendOtpUrl || '';
   const tableId = Number(root.dataset.tableId || 0);
   const submitUrl = root.dataset.submitUrl;
   const fulfillment = root.dataset.fulfillment || 'waiter';
   const staffMode = root.dataset.staff === '1';
   const staffFrom = root.dataset.from || 'waiter';
-  const cartKey = sessionToken || meja;
+  const cartKey = sessionToken || (cafeBrowse ? 'shop_' + shopSlug : meja);
   const cartStore = (staffMode ? 'tt_staff_cart_' : 'tt_cart_') + cartKey;
   const serveStore = (staffMode ? 'tt_staff_serve_' : 'tt_serve_') + cartKey;
   const nameStore = (staffMode ? 'tt_staff_name_' : 'tt_name_') + cartKey;
@@ -326,18 +332,25 @@
     let guestName = '';
     const nameInput = document.getElementById('guest-name');
     if (nameInput) guestName = (nameInput.value || '').trim();
-    if (fulfillment === 'self_pickup' && guestName.length < 2) {
+    if (fulfillment === 'self_pickup' && !cafeBrowse && guestName.length < 2) {
       alert(i18n.guest_name_required || 'Enter your name');
       if (nameInput) nameInput.focus();
       return;
     }
+    if (cafeBrowse) {
+      openCheckoutSheet();
+      return;
+    }
+    await submitOrder(guestName);
+  });
+
+  async function submitOrder(guestName) {
     if (!staffMode && window.TableTapSound) TableTapSound.unlock();
     const btn = document.getElementById('btn-submit-order');
     if (btn) {
       btn.disabled = true;
       btn.textContent = i18n.submitting || 'Submitting...';
     }
-
     try {
       const payload = {
         jenis_hidang: serveType,
@@ -362,14 +375,8 @@
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok || !data.ok) {
-        throw new Error(data.error || i18n.order_failed);
-      }
-      try {
-        sessionStorage.removeItem(cartStore);
-        sessionStorage.removeItem(serveStore);
-        sessionStorage.removeItem(nameStore);
-      } catch (e) { /* ignore */ }
+      if (!res.ok || !data.ok) throw new Error(data.error || i18n.order_failed);
+      clearCartStorage();
       window.location.href = data.redirect;
     } catch (err) {
       alert(err.message || i18n.order_failed);
@@ -377,6 +384,138 @@
         btn.disabled = false;
         btn.textContent = i18n.submit_order || 'Submit';
       }
+    }
+  }
+
+  function clearCartStorage() {
+    try {
+      sessionStorage.removeItem(cartStore);
+      sessionStorage.removeItem(serveStore);
+      sessionStorage.removeItem(nameStore);
+    } catch (e) { /* ignore */ }
+  }
+
+  const checkoutSheet = document.getElementById('checkout-sheet');
+  const checkoutOverlay = document.getElementById('checkout-overlay');
+  const checkoutEmail = document.getElementById('checkout-email');
+  const checkoutName = document.getElementById('checkout-name');
+  const checkoutOtp = document.getElementById('checkout-otp');
+  const checkoutStepDetails = document.getElementById('checkout-step-details');
+  const checkoutStepOtp = document.getElementById('checkout-step-otp');
+  const checkoutOtpSent = document.getElementById('checkout-otp-sent');
+
+  function openCheckoutSheet() {
+    document.getElementById('cart-sheet')?.classList.remove('open');
+    document.getElementById('sheet-overlay')?.classList.remove('open');
+    checkoutSheet?.classList.add('open');
+    checkoutOverlay?.classList.add('open');
+    if (checkoutStepDetails) checkoutStepDetails.hidden = false;
+    if (checkoutStepOtp) checkoutStepOtp.hidden = true;
+    if (checkoutOtp) checkoutOtp.value = '';
+    (checkoutName || checkoutEmail)?.focus();
+  }
+
+  function closeCheckoutSheet() {
+    checkoutSheet?.classList.remove('open');
+    checkoutOverlay?.classList.remove('open');
+  }
+
+  document.getElementById('btn-close-checkout')?.addEventListener('click', closeCheckoutSheet);
+  checkoutOverlay?.addEventListener('click', closeCheckoutSheet);
+
+  function validEmail(v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  }
+
+  async function runCafeCheckout(code) {
+    const res = await fetch(checkoutUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        shop: shopSlug,
+        token: shopToken,
+        nama_pelanggan: (checkoutName?.value || '').trim(),
+        email: (checkoutEmail?.value || '').trim(),
+        code: code || '',
+        jenis_hidang: serveType,
+        items: cart.map((i) => ({
+          menu_item_id: i.id,
+          qty: i.qty,
+          catatan: i.catatan || '',
+        })),
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.ok) throw new Error(data.error || i18n.order_failed);
+    clearCartStorage();
+    window.location.href = data.redirect;
+  }
+
+  document.getElementById('btn-checkout-send')?.addEventListener('click', async function () {
+    const name = (checkoutName?.value || '').trim();
+    const email = (checkoutEmail?.value || '').trim();
+    if (fulfillment === 'self_pickup' && name.length < 2) {
+      alert(i18n.guest_name_required || 'Enter name');
+      checkoutName?.focus();
+      return;
+    }
+    if (cafeVerify === 'email') {
+      if (!validEmail(email)) {
+        alert(i18n.cafe_email_invalid || 'Invalid email');
+        checkoutEmail?.focus();
+        return;
+      }
+      const btn = document.getElementById('btn-checkout-send');
+      if (btn) { btn.disabled = true; btn.textContent = i18n.cafe_sending || 'Sending...'; }
+      try {
+        const res = await fetch(sendOtpUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            shop: shopSlug,
+            token: shopToken,
+            email: email,
+            nama_pelanggan: name || email.split('@')[0],
+            lang: document.documentElement.lang === 'en' ? 'en' : 'my',
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || i18n.order_failed);
+        if (checkoutOtpSent) checkoutOtpSent.textContent = data.email_masked || email;
+        if (checkoutStepDetails) checkoutStepDetails.hidden = true;
+        if (checkoutStepOtp) checkoutStepOtp.hidden = false;
+        checkoutOtp?.focus();
+      } catch (err) {
+        alert(err.message || i18n.order_failed);
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = i18n.cafe_send_code || 'Send code'; }
+      }
+      return;
+    }
+    const btn = document.getElementById('btn-checkout-send');
+    if (btn) { btn.disabled = true; btn.textContent = i18n.submitting || 'Submitting...'; }
+    try {
+      await runCafeCheckout('');
+    } catch (err) {
+      alert(err.message || i18n.order_failed);
+      if (btn) { btn.disabled = false; btn.textContent = i18n.cafe_confirm_order || 'Confirm'; }
+    }
+  });
+
+  document.getElementById('btn-checkout-verify')?.addEventListener('click', async function () {
+    const code = (checkoutOtp?.value || '').trim();
+    if (code.length !== 6) {
+      alert(i18n.cafe_otp_required || 'Enter code');
+      checkoutOtp?.focus();
+      return;
+    }
+    const btn = document.getElementById('btn-checkout-verify');
+    if (btn) { btn.disabled = true; btn.textContent = i18n.submitting || 'Submitting...'; }
+    try {
+      await runCafeCheckout(code);
+    } catch (err) {
+      alert(err.message || i18n.order_failed);
+      if (btn) { btn.disabled = false; btn.textContent = i18n.cafe_confirm_order || 'Confirm'; }
     }
   });
 

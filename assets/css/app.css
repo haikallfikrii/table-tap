@@ -1368,3 +1368,34 @@ a {
   flex-wrap: wrap;
   gap: 8px;
 }
+
+.cafe-checkout-sheet .form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.cafe-checkout-sheet input[type="text"],
+.cafe-checkout-sheet input[type="email"] {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.cafe-spam-note {
+  margin: 8px 0 0;
+  font-size: 0.82rem;
+  color: var(--ink-muted);
+  padding: 8px 10px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--accent);
+}
+
+.customer-app.cafe-mode .brand-table {
+  font-size: 0.85rem;
+}

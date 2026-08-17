@@ -1,6 +1,9 @@
 <?php
 /**
- * Customer order page — table QR: ?meja=5&token=xxx | cafe session: ?s=session_token
+ * Customer order page
+ * Table: ?meja=5&token=xxx
+ * Cafe session: ?s=session_token
+ * Cafe browse: ?shop=slug&token=shop_token
  */
 
 declare(strict_types=1);
@@ -12,18 +15,31 @@ $lang = currentLang();
 $config = getConfig();
 
 $sessionToken = trim((string) ($_GET['s'] ?? ''));
+$shopSlug = trim((string) ($_GET['shop'] ?? ''));
+$shopToken = trim((string) ($_GET['token'] ?? ''));
 $nomorMeja = trim((string) ($_GET['meja'] ?? ''));
 $token = trim((string) ($_GET['token'] ?? ''));
 
 $session = null;
 $table = null;
 $cafeMode = false;
+$cafeBrowseMode = false;
+$cafeVerify = 'email';
 
 if ($sessionToken !== '') {
     $session = findSessionByToken($sessionToken);
     if ($session && ($session['status'] ?? '') === 'active') {
         $cafeMode = true;
         $table = sessionAsTableContext($session);
+        $cafeVerify = shopCafeVerify($session);
+    }
+} elseif ($shopSlug !== '' && $shopToken !== '' && $nomorMeja === '') {
+    $shopRow = findShopByAccess($shopSlug, $shopToken);
+    if ($shopRow) {
+        $cafeBrowseMode = true;
+        $cafeMode = true;
+        $table = shopAsBrowseContext($shopRow);
+        $cafeVerify = shopCafeVerify($shopRow);
     }
 } elseif ($nomorMeja !== '' && $token !== '') {
     $table = findTableByAccess($nomorMeja, $token);
@@ -39,8 +55,10 @@ $staffMode = false;
 $staffBackUrl = '';
 $staffFrom = '';
 $submitUrl = baseUrl('public/api/submit_order.php');
+$checkoutUrl = baseUrl('public/api/cafe_checkout.php');
+$sendOtpUrl = baseUrl('public/api/cafe_send_otp.php');
 
-if ($cafeMode && $session) {
+if ($cafeMode && $session && !$cafeBrowseMode) {
     $activeOrders = fetchActiveSessionOrders($session, $lang);
     $trackOrdersUrl = cafeSessionTrackUrl(
         $sessionToken,
@@ -48,6 +66,14 @@ if ($cafeMode && $session) {
     );
     $sessionOrderUrl = cafeSessionOrderUrl($sessionToken);
     $prefillGuestName = (string) ($session['nama_pelanggan'] ?? '');
+    $shopTokenParam = '';
+} elseif ($cafeBrowseMode) {
+    $activeOrders = [];
+    $trackOrdersUrl = '';
+    $sessionOrderUrl = '';
+    $prefillGuestName = '';
+    $sessionToken = '';
+    $shopTokenParam = $shopToken;
 } else {
     $cafeMode = false;
     $sessionToken = '';
@@ -59,6 +85,7 @@ if ($cafeMode && $session) {
     );
     $sessionOrderUrl = '';
     $prefillGuestName = '';
+    $shopTokenParam = '';
 }
 
 $i18nJs = [
@@ -80,6 +107,20 @@ $i18nJs = [
     'menu_search_ph' => t('menu_search_ph'),
     'menu_search_empty' => t('menu_search_empty'),
     'cafe_link_copied' => t('cafe_link_copied'),
+    'cafe_checkout_title' => t('cafe_checkout_title'),
+    'cafe_checkout_hint' => t('cafe_checkout_hint'),
+    'cafe_email' => t('cafe_email'),
+    'cafe_email_ph' => t('cafe_email_ph'),
+    'cafe_send_code' => t('cafe_send_code'),
+    'cafe_otp_label' => t('cafe_otp_label'),
+    'cafe_verify_btn' => t('cafe_verify_btn'),
+    'cafe_confirm_order' => t('cafe_confirm_order'),
+    'cafe_email_invalid' => t('cafe_email_invalid'),
+    'cafe_otp_required' => t('cafe_otp_required'),
+    'cafe_sending' => t('cafe_sending'),
+    'cafe_spam_note' => t('cafe_spam_note'),
+    'guest_name' => t('guest_name'),
+    'guest_name_ph' => t('guest_name_ph'),
 ];
 
 if (!$table):
@@ -100,7 +141,7 @@ if (!$table):
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
     </div>
     <h1><?= e($config['app_name']) ?></h1>
-    <p><?= e($cafeMode || $sessionToken !== '' ? t('cafe_session_expired') : t('invalid_table')) ?></p>
+    <p><?= e($sessionToken !== '' ? t('cafe_session_expired') : t('invalid_table')) ?></p>
   </div>
   <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
 </body>
