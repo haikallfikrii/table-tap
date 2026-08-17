@@ -72,6 +72,7 @@
     if (!tocAside || !tocPanel) return;
 
     if (window.innerWidth < 960) {
+      tocPanel.classList.remove('is-fixed');
       tocPanel.style.cssText = '';
       tocAside.classList.remove('is-at-bottom');
       tocAside.style.minHeight = '';
@@ -83,22 +84,27 @@
     var layoutBottom = singleLayout
       ? singleLayout.getBoundingClientRect().bottom
       : asideRect.bottom;
-
-    tocPanel.style.position = 'fixed';
-    tocPanel.style.top = navOffset + 'px';
-    tocPanel.style.left = asideRect.left + 'px';
-    tocPanel.style.width = asideRect.width + 'px';
-
     var pinBottom = layoutBottom - panelH - 16 < navOffset;
+    var shouldPin = asideRect.top <= navOffset && !pinBottom;
+
     tocAside.classList.toggle('is-at-bottom', pinBottom);
-    tocAside.style.minHeight = pinBottom ? panelH + 'px' : '';
+    tocPanel.classList.toggle('is-fixed', shouldPin);
 
     if (pinBottom) {
-      tocPanel.style.position = '';
-      tocPanel.style.top = '';
-      tocPanel.style.left = '';
-      tocPanel.style.width = '';
+      tocPanel.style.cssText = '';
+      tocAside.style.minHeight = panelH + 'px';
+      return;
     }
+
+    if (shouldPin) {
+      tocPanel.style.left = asideRect.left + 'px';
+      tocPanel.style.width = asideRect.width + 'px';
+      tocAside.style.minHeight = panelH + 'px';
+      return;
+    }
+
+    tocPanel.style.cssText = '';
+    tocAside.style.minHeight = '';
   }
 
   if (tocPanel) {
