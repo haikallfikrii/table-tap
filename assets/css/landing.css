@@ -983,7 +983,7 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 .aio-visual {
   --aio-orbit-r: 186px;
   --aio-hub-top: 56px;
-  --aio-cycle: 24s;
+  --aio-item-cycle: 48s;
   --aio-count: 8;
   position: relative;
   width: min(100%, 420px);
@@ -1022,10 +1022,6 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: absolute;
   inset: 0;
   z-index: 10;
-  animation: aio-orbit-spin var(--aio-cycle) linear infinite;
-  animation-play-state: paused;
-  will-change: transform;
-  transform-origin: 50% 50%;
 }
 
 .aio-hub {
@@ -1071,38 +1067,24 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   height: 0;
   transform: rotate(-90deg);
   pointer-events: none;
-  animation: aio-sat-i0 var(--aio-cycle) cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+  animation: aio-spinner-travel var(--aio-item-cycle) linear infinite;
+  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
   animation-play-state: paused;
   will-change: transform;
 }
 
-.aio-sat[data-i="1"] { animation-name: aio-sat-i1; }
-.aio-sat[data-i="2"] { animation-name: aio-sat-i2; }
-.aio-sat[data-i="3"] { animation-name: aio-sat-i3; }
-.aio-sat[data-i="4"] { animation-name: aio-sat-i4; }
-.aio-sat[data-i="5"] { animation-name: aio-sat-i5; }
-.aio-sat[data-i="6"] { animation-name: aio-sat-i6; }
-.aio-sat[data-i="7"] { animation-name: aio-sat-i7; }
-
 .aio-sat-arm {
-  animation: aio-radial-i0 var(--aio-cycle) cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+  animation: aio-spinner-radial var(--aio-item-cycle) ease-in-out infinite;
+  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
   animation-play-state: paused;
   will-change: transform, opacity;
 }
 
-.aio-sat[data-i="1"] .aio-sat-arm { animation-name: aio-radial-i1; }
-.aio-sat[data-i="2"] .aio-sat-arm { animation-name: aio-radial-i2; }
-.aio-sat[data-i="3"] .aio-sat-arm { animation-name: aio-radial-i3; }
-.aio-sat[data-i="4"] .aio-sat-arm { animation-name: aio-radial-i4; }
-.aio-sat[data-i="5"] .aio-sat-arm { animation-name: aio-radial-i5; }
-.aio-sat[data-i="6"] .aio-sat-arm { animation-name: aio-radial-i6; }
-.aio-sat[data-i="7"] .aio-sat-arm { animation-name: aio-radial-i7; }
-
 .aio-chip-wrap {
-  animation: aio-chip-upright var(--aio-cycle) linear infinite;
+  animation: aio-spinner-upright var(--aio-item-cycle) linear infinite;
+  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
   animation-play-state: paused;
   will-change: transform;
-  transform-origin: 0 0;
 }
 
 .aio-chip {
@@ -1121,7 +1103,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   cursor: default;
   transform: translate(-50%, -50%);
   will-change: filter, border-color;
-  animation: aio-chip-strike var(--aio-cycle) ease-in-out infinite;
+  animation: aio-chip-strike var(--aio-item-cycle) ease-in-out infinite;
+  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
   animation-play-state: paused;
 }
 
@@ -1136,7 +1119,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   border-radius: 1px;
   transform: scaleX(0);
   transform-origin: left center;
-  animation: aio-strike-draw var(--aio-cycle) ease-in-out infinite;
+  animation: aio-strike-draw var(--aio-item-cycle) ease-in-out infinite;
+  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
   animation-play-state: paused;
   pointer-events: none;
 }
@@ -1152,7 +1136,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   border-radius: 1px;
   transform: rotate(-52deg) scaleX(0);
   transform-origin: left center;
-  animation: aio-strike-draw-alt var(--aio-cycle) ease-in-out infinite;
+  animation: aio-strike-draw-alt var(--aio-item-cycle) ease-in-out infinite;
+  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
   animation-play-state: paused;
 }
 
@@ -1174,7 +1159,6 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   color: var(--danger);
 }
 
-.aio-visual.is-running .aio-orbit,
 .aio-visual.is-running .aio-sat,
 .aio-visual.is-running .aio-sat-arm,
 .aio-visual.is-running .aio-chip-wrap,
@@ -1192,137 +1176,77 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: relative;
 }
 
-/* Hub top → ring path (matches dashed line) → 2 laps → strike lap 2 → return one-by-one */
-@keyframes aio-orbit-spin {
-  0%, 8% { transform: rotate(0deg); }
-  42% { transform: rotate(360deg); }
-  77% { transform: rotate(720deg); }
-  100% { transform: rotate(720deg); }
-}
-
-@keyframes aio-chip-upright {
-  0%, 4% { transform: rotate(90deg); }
-  8% { transform: rotate(calc(-1 * var(--angle))); }
-  42% { transform: rotate(calc(-1 * var(--angle) - 360deg)); }
-  77% { transform: rotate(calc(-1 * var(--angle) - 720deg)); }
-  78%, 100% { transform: rotate(90deg); }
-}
-
-@keyframes aio-sat-i0 {
-  0%, 4% { transform: rotate(-90deg); }
-  8%, 77% { transform: rotate(var(--angle)); }
-  78%, 100% { transform: rotate(-90deg); }
-}
-@keyframes aio-sat-i1 {
-  0%, 4% { transform: rotate(-90deg); }
-  8%, 79% { transform: rotate(var(--angle)); }
-  80%, 100% { transform: rotate(-90deg); }
-}
-@keyframes aio-sat-i2 {
-  0%, 4% { transform: rotate(-90deg); }
-  8%, 81% { transform: rotate(var(--angle)); }
-  82%, 100% { transform: rotate(-90deg); }
-}
-@keyframes aio-sat-i3 {
-  0%, 4% { transform: rotate(-90deg); }
-  8%, 83% { transform: rotate(var(--angle)); }
-  84%, 100% { transform: rotate(-90deg); }
-}
-@keyframes aio-sat-i4 {
-  0%, 4% { transform: rotate(-90deg); }
-  8%, 85% { transform: rotate(var(--angle)); }
-  86%, 100% { transform: rotate(-90deg); }
-}
-@keyframes aio-sat-i5 {
-  0%, 4% { transform: rotate(-90deg); }
-  8%, 87% { transform: rotate(var(--angle)); }
+/* Spinner: one-by-one from hub top → 2 slow laps on dashed ring → back in through top */
+@keyframes aio-spinner-travel {
+  0%, 2% { transform: rotate(-90deg); }
+  3%, 5% { transform: rotate(-90deg); }
+  9%, 10% { transform: rotate(-90deg); }
+  44% { transform: rotate(270deg); }
+  78% { transform: rotate(630deg); }
+  82%, 86% { transform: rotate(-90deg); }
   88%, 100% { transform: rotate(-90deg); }
 }
-@keyframes aio-sat-i6 {
-  0%, 4% { transform: rotate(-90deg); }
-  8%, 89% { transform: rotate(var(--angle)); }
-  90%, 100% { transform: rotate(-90deg); }
-}
-@keyframes aio-sat-i7 {
-  0%, 4% { transform: rotate(-90deg); }
-  8%, 91% { transform: rotate(var(--angle)); }
-  92%, 100% { transform: rotate(-90deg); }
+
+@keyframes aio-spinner-upright {
+  0%, 2% { transform: rotate(90deg); }
+  3%, 10% { transform: rotate(90deg); }
+  44% { transform: rotate(-270deg); }
+  78% { transform: rotate(-630deg); }
+  82%, 100% { transform: rotate(90deg); }
 }
 
-@keyframes aio-radial-i0 {
-  0%, 3% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.12); opacity: 0; }
-  5%, 7% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.55); opacity: 0.7; }
-  8%, 76% { transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1); opacity: 1; }
-  78%, 100% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.1); opacity: 0; }
-}
-@keyframes aio-radial-i1 {
-  0%, 3% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.12); opacity: 0; }
-  5%, 7% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.55); opacity: 0.7; }
-  8%, 78% { transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1); opacity: 1; }
-  80%, 100% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.1); opacity: 0; }
-}
-@keyframes aio-radial-i2 {
-  0%, 3% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.12); opacity: 0; }
-  5%, 7% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.55); opacity: 0.7; }
-  8%, 80% { transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1); opacity: 1; }
-  82%, 100% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.1); opacity: 0; }
-}
-@keyframes aio-radial-i3 {
-  0%, 3% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.12); opacity: 0; }
-  5%, 7% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.55); opacity: 0.7; }
-  8%, 82% { transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1); opacity: 1; }
-  84%, 100% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.1); opacity: 0; }
-}
-@keyframes aio-radial-i4 {
-  0%, 3% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.12); opacity: 0; }
-  5%, 7% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.55); opacity: 0.7; }
-  8%, 84% { transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1); opacity: 1; }
-  86%, 100% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.1); opacity: 0; }
-}
-@keyframes aio-radial-i5 {
-  0%, 3% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.12); opacity: 0; }
-  5%, 7% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.55); opacity: 0.7; }
-  8%, 86% { transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1); opacity: 1; }
-  88%, 100% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.1); opacity: 0; }
-}
-@keyframes aio-radial-i6 {
-  0%, 3% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.12); opacity: 0; }
-  5%, 7% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.55); opacity: 0.7; }
-  8%, 88% { transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1); opacity: 1; }
-  90%, 100% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.1); opacity: 0; }
-}
-@keyframes aio-radial-i7 {
-  0%, 3% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.12); opacity: 0; }
-  5%, 7% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.55); opacity: 0.7; }
-  8%, 90% { transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1); opacity: 1; }
-  92%, 100% { transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.1); opacity: 0; }
+@keyframes aio-spinner-radial {
+  0%, 2% {
+    transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.08);
+    opacity: 0;
+  }
+  4%, 6% {
+    transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.62);
+    opacity: 0.75;
+  }
+  9%, 10% {
+    transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1);
+    opacity: 1;
+  }
+  76%, 78% {
+    transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1);
+    opacity: 1;
+  }
+  82%, 85% {
+    transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.45);
+    opacity: 0.45;
+  }
+  87%, 100% {
+    transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.08);
+    opacity: 0;
+  }
 }
 
 @keyframes aio-chip-strike {
-  0%, 41%, 78%, 100% {
+  0%, 43%, 81%, 100% {
     filter: grayscale(0);
     border-color: var(--line);
   }
-  43%, 76% {
+  45%, 78% {
     filter: grayscale(0.55);
     border-color: rgba(220, 53, 69, 0.45);
   }
 }
 
 @keyframes aio-strike-draw {
-  0%, 41%, 78%, 100% { transform: scaleX(0); opacity: 0; }
-  43% { transform: scaleX(0); opacity: 1; }
-  45%, 74% { transform: scaleX(1); opacity: 1; }
-  77% { transform: scaleX(1); opacity: 0.35; }
-  78% { transform: scaleX(0); opacity: 0; }
+  0%, 43%, 81%, 100% { transform: scaleX(0); opacity: 0; }
+  45% { transform: scaleX(0); opacity: 1; }
+  47%, 76% { transform: scaleX(1); opacity: 1; }
+  79% { transform: scaleX(1); opacity: 0.35; }
+  81% { transform: scaleX(0); opacity: 0; }
 }
 
 @keyframes aio-strike-draw-alt {
-  0%, 41%, 78%, 100% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
-  43% { transform: rotate(-52deg) scaleX(0); opacity: 1; }
-  45%, 74% { transform: rotate(-52deg) scaleX(1); opacity: 1; }
-  77% { transform: rotate(-52deg) scaleX(1); opacity: 0.35; }
-  78% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
+  0%, 43%, 81%, 100% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
+  45% { transform: rotate(-52deg) scaleX(0); opacity: 1; }
+  47%, 76% { transform: rotate(-52deg) scaleX(1); opacity: 1; }
+  79% { transform: rotate(-52deg) scaleX(1); opacity: 0.35; }
+  81% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
 }
 
 @keyframes aio-glow-pulse {
@@ -3153,20 +3077,18 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .ps-send { animation: none !important; }
   .aio-chip.is-peek { animation: none !important; opacity: 1; transform: translate(-50%, calc(-50% - 80px)) scale(1); }
   .aio-chip-printer.is-peek { transform: translate(calc(-50% - 100px), -50%) scale(1); }
-  .aio-orbit,
   .aio-sat,
   .aio-sat-arm,
   .aio-chip-wrap,
   .aio-chip,
   .aio-strike-line,
   .aio-strike-line::after { animation: none !important; }
-  .aio-orbit { transform: none; }
-  .aio-sat { transform: rotate(var(--angle)); }
+  .aio-sat { transform: rotate(-90deg); }
   .aio-sat-arm {
     transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1);
     opacity: 1;
   }
-  .aio-chip-wrap { transform: rotate(calc(-1 * var(--angle))); }
+  .aio-chip-wrap { transform: rotate(90deg); }
   .aio-chip { transform: translate(-50%, -50%); }
   .aio-strike-line,
   .aio-strike-line::after {
