@@ -201,7 +201,7 @@
     busy = true;
     try {
       const url = pollUrl + '?since_id=' + encodeURIComponent(String(sinceId)) + '&lang=' + encodeURIComponent(lang);
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' }, credentials: 'same-origin' });
+      const res = await TableTapLive.fetch(url);
       if (res.status === 401) {
         window.location.href = '../login.php';
         return;
@@ -303,6 +303,5 @@
     }
   });
 
-  poll();
-  setInterval(poll, interval);
+  TableTapLive.loop(poll, interval, { keepAwake: true });
 })();

@@ -266,7 +266,7 @@
     busy = true;
     try {
       const url = pollUrl + (pollUrl.indexOf('?') >= 0 ? '&' : '?') + 'lang=' + encodeURIComponent(lang);
-      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      const res = await TableTapLive.fetch(url);
       const data = await res.json();
       if (!data.ok) return;
 
@@ -342,6 +342,5 @@
     }
   });
 
-  poll();
-  setInterval(poll, interval);
+  TableTapLive.loop(poll, interval);
 })();

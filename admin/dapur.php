@@ -21,6 +21,7 @@ $kategori = 'makanan';
 
 $adminScripts = [
     assetUrl('js/sound.js'),
+    assetUrl('js/live-poll.js'),
     assetUrl('js/kitchen.js'),
 ];
 

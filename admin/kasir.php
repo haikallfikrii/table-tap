@@ -17,6 +17,7 @@ $pageTitle = t('kasir_title');
 $showSound = true;
 $adminScripts = [
     assetUrl('js/sound.js'),
+    assetUrl('js/live-poll.js'),
     assetUrl('js/kasir.js'),
 ];
 

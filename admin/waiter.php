@@ -18,6 +18,7 @@ $showSound = true;
 
 $adminScripts = [
     assetUrl('js/sound.js'),
+    assetUrl('js/live-poll.js'),
     assetUrl('js/waiter.js'),
 ];
 

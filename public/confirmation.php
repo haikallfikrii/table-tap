@@ -293,6 +293,7 @@ $trackSubtitle = $cafeMode
 <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
 <?php if ($focusOrder && $table): ?>
 <script src="<?= e(assetUrl('js/sound.js')) ?>"></script>
+<script src="<?= e(assetUrl('js/live-poll.js')) ?>"></script>
 <script src="<?= e(assetUrl('js/track.js')) ?>"></script>
 <?php endif; ?>
 </body>
