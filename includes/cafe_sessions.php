@@ -54,6 +54,20 @@ function orderSessionColumnExists(): bool
     return $exists;
 }
 
+function sessionContactEmailColumnExists(): bool
+{
+    static $exists = null;
+    if ($exists !== null) {
+        return $exists;
+    }
+    try {
+        $exists = (bool) db()->query("SHOW COLUMNS FROM customer_sessions LIKE 'contact_email'")->fetch();
+    } catch (Throwable $e) {
+        $exists = false;
+    }
+    return $exists;
+}
+
 function shopOrderingMode(?array $shop): string
 {
     if (!$shop || !orderingModeColumnExists()) {
@@ -252,7 +266,8 @@ function createCustomerSession(
     array $shop,
     string $namaPelanggan,
     ?string $contactHash = null,
-    bool $verified = true
+    bool $verified = true,
+    ?string $contactEmail = null
 ): array {
     if (!customerSessionsTableExists()) {
         jsonError('Cafe mode unavailable', 503);
@@ -274,21 +289,43 @@ function createCustomerSession(
     $expiresAt = date('Y-m-d H:i:s', time() + ($hours * 3600));
     $verifiedAt = $verified ? appNow() : null;
     $status = $verified ? 'active' : 'pending';
+    $storedEmail = null;
+    if ($contactEmail !== null && $contactEmail !== '') {
+        $storedEmail = normalizeEmail($contactEmail);
+    }
 
-    db()->prepare(
-        'INSERT INTO customer_sessions
-         (shop_id, session_token, table_id, nama_pelanggan, contact_hash, verified_at, expires_at, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-    )->execute([
-        $shopId,
-        $sessionToken,
-        (int) $table['id'],
-        $namaPelanggan,
-        $contactHash,
-        $verifiedAt,
-        $expiresAt,
-        $status,
-    ]);
+    if (sessionContactEmailColumnExists()) {
+        db()->prepare(
+            'INSERT INTO customer_sessions
+             (shop_id, session_token, table_id, nama_pelanggan, contact_hash, contact_email, verified_at, expires_at, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        )->execute([
+            $shopId,
+            $sessionToken,
+            (int) $table['id'],
+            $namaPelanggan,
+            $contactHash,
+            $storedEmail,
+            $verifiedAt,
+            $expiresAt,
+            $status,
+        ]);
+    } else {
+        db()->prepare(
+            'INSERT INTO customer_sessions
+             (shop_id, session_token, table_id, nama_pelanggan, contact_hash, verified_at, expires_at, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        )->execute([
+            $shopId,
+            $sessionToken,
+            (int) $table['id'],
+            $namaPelanggan,
+            $contactHash,
+            $verifiedAt,
+            $expiresAt,
+            $status,
+        ]);
+    }
 
     return [
         'session_token' => $sessionToken,

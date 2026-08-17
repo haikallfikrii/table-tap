@@ -32,6 +32,7 @@ if (!$shop) {
 $verifyMode = shopCafeVerify($shop);
 $selfPickup = shopFulfillment($shop) === 'self_pickup';
 $contactHash = null;
+$normalizedEmail = null;
 
 if ($verifyMode === 'email') {
     if ($code === '') {
@@ -41,10 +42,11 @@ if ($verifyMode === 'email') {
     if ($contactHash === null) {
         jsonError(t('cafe_otp_invalid'), 400);
     }
+    $normalizedEmail = normalizeEmail($email);
 } elseif ($email !== '') {
-    $normalized = normalizeEmail($email);
-    if ($normalized !== null) {
-        $contactHash = hashContact($normalized);
+    $normalizedEmail = normalizeEmail($email);
+    if ($normalizedEmail !== null) {
+        $contactHash = hashContact($normalizedEmail);
     }
 }
 
@@ -61,7 +63,7 @@ if (!$selfPickup && !isValidCustomerName($nama)) {
     }
 }
 
-$session = createCustomerSession($shop, $nama, $contactHash, true);
+$session = createCustomerSession($shop, $nama, $contactHash, true, $normalizedEmail);
 $table = shopAsBrowseContext($shop);
 
 $created = createShopOrder(
@@ -72,7 +74,8 @@ $created = createShopOrder(
     $nama,
     'qr',
     false,
-    (int) $session['session_id']
+    (int) $session['session_id'],
+    $normalizedEmail
 );
 
 $orderId = $created['order_id'];

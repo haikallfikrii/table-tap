@@ -57,7 +57,10 @@ $created = createShopOrder(
     $guestName,
     'qr',
     false,
-    $sessionId
+    $sessionId,
+    ($session !== null && trim((string) ($session['contact_email'] ?? '')) !== '')
+        ? (string) $session['contact_email']
+        : null
 );
 $orderId = $created['order_id'];
 $guestToken = (string) ($created['guest_token'] ?? '');

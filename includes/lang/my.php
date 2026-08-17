@@ -138,6 +138,18 @@ return [
     'no_orders'         => 'Tiada pesanan aktif',
     'table_n'           => 'Meja %s',
 
+    // Resit
+    'receipt'           => 'Resit',
+    'print_receipt'     => 'Cetak resit',
+    'send_receipt'      => 'Hantar e-resit',
+    'receipt_send_confirm' => 'Hantar e-resit ke pelanggan?',
+    'receipt_email_prompt' => 'E-mel pelanggan untuk e-resit:',
+    'receipt_sent'      => 'E-resit dihantar',
+    'receipt_not_found' => 'Pesanan tidak dijumpai.',
+    'receipt_not_paid'  => 'Resit hanya untuk pesanan yang sudah dibayar.',
+    'receipt_no_email'  => 'Tiada e-mel pelanggan.',
+    'receipt_send_failed' => 'Gagal hantar e-resit. Semak tetapan SMTP.',
+
     // Kitchen / drinks
     'dapur_title'       => 'Dashboard Dapur',
     'minuman_title'     => 'Dashboard Minuman',

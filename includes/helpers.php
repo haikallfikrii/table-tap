@@ -21,6 +21,36 @@ function formatMoney(float|string $amount): string
     return $symbol . ' ' . number_format((float) $amount, $decimals, '.', ',');
 }
 
+function orderCustomerEmailColumnExists(): bool
+{
+    static $exists = null;
+    if ($exists !== null) {
+        return $exists;
+    }
+    try {
+        $exists = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'customer_email'")->fetch();
+    } catch (Throwable $e) {
+        $exists = false;
+    }
+    return $exists;
+}
+
+function saveOrderCustomerEmail(int $orderId, ?string $email): void
+{
+    if (!orderCustomerEmailColumnExists()) {
+        return;
+    }
+    $email = strtolower(trim((string) $email));
+    if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return;
+    }
+    if (strlen($email) > 255) {
+        return;
+    }
+    db()->prepare('UPDATE orders SET customer_email = ? WHERE id = ? LIMIT 1')
+        ->execute([$email, $orderId]);
+}
+
 function generateToken(int $bytes = 32): string
 {
     return bin2hex(random_bytes($bytes));
@@ -241,7 +271,8 @@ function createShopOrder(
     string $guestName,
     string $sumber,
     bool $optionalGuestName = false,
-    ?int $sessionId = null
+    ?int $sessionId = null,
+    ?string $customerEmail = null
 ): array {
     if (!is_array($items) || $items === []) {
         jsonError('Cart is empty');
@@ -448,6 +479,10 @@ function createShopOrder(
             ]);
         }
         $orderId = (int) $pdo->lastInsertId();
+
+        if ($customerEmail !== null && $customerEmail !== '') {
+            saveOrderCustomerEmail($orderId, $customerEmail);
+        }
 
         $insItem = $pdo->prepare(
             'INSERT INTO order_items

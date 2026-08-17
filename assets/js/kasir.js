@@ -8,6 +8,8 @@
   const pollUrl = root.dataset.pollUrl;
   const paidUrl = root.dataset.paidUrl;
   const pickupUrl = root.dataset.pickupUrl;
+  const receiptUrlBase = root.dataset.receiptUrl || '';
+  const sendReceiptUrl = root.dataset.sendReceiptUrl || '';
   const interval = Number(root.dataset.interval) || 3000;
   const lang = root.dataset.lang || 'my';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
@@ -33,6 +35,35 @@
 
   function statusLabel(key) {
     return i18n['status_' + key] || key;
+  }
+
+  function openReceipt(orderId, autoPrint) {
+    if (!receiptUrlBase) return;
+    const url = receiptUrlBase + '?order=' + encodeURIComponent(String(orderId)) + (autoPrint ? '&print=1' : '');
+    window.open(url, 'receipt_' + orderId, 'width=420,height=720');
+  }
+
+  async function sendReceipt(orderId, email) {
+    if (!sendReceiptUrl) return { ok: false };
+    const res = await fetch(sendReceiptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ order_id: orderId, email: email || '' }),
+    });
+    return res.json();
+  }
+
+  function receiptButtons(order) {
+    if (order.status_bayar !== 'lunas') return '';
+    let html =
+      '<button type="button" class="btn btn-secondary btn-sm" data-print-receipt="' + order.id + '">' +
+        esc(i18n.print_receipt || 'Print receipt') + '</button>';
+    html +=
+      '<button type="button" class="btn btn-secondary btn-sm" data-send-receipt="' + order.id + '"' +
+        (order.has_customer_email ? ' data-has-email="1"' : '') + '>' +
+        esc(i18n.send_receipt || 'E-receipt') + '</button>';
+    return html;
   }
 
   function tableTitle(num) {
@@ -77,8 +108,9 @@
         }).join('');
 
         const paidBtn = unpaid
-          ? '<button type="button" class="btn btn-success btn-sm" data-mark-paid="' + o.id + '">' +
-              esc(i18n.mark_paid || 'Mark paid') + '</button>'
+          ? '<button type="button" class="btn btn-success btn-sm" data-mark-paid="' + o.id + '"' +
+              (o.has_customer_email ? ' data-has-email="1" data-email-masked="' + esc(o.customer_email_masked || '') + '"' : '') +
+            '>' + esc(i18n.mark_paid || 'Mark paid') + '</button>'
           : '<span class="badge badge-lunas">' + esc(i18n.paid || 'Paid') + '</span>';
 
         let pickupBtns = '';
@@ -123,6 +155,7 @@
               '<div><div class="order-total">' + money(o.total_harga) + '</div>' + sstLine + '</div>' +
               '<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">' +
                 paidBtn + pickupBtns +
+                (!unpaid ? '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">' + receiptButtons(o) + '</div>' : '') +
               '</div>' +
             '</div>' +
           '</article>'
@@ -166,6 +199,34 @@
   }
 
   root.addEventListener('click', async (e) => {
+    const printBtn = e.target.closest('[data-print-receipt]');
+    if (printBtn) {
+      const orderId = Number(printBtn.getAttribute('data-print-receipt'));
+      if (orderId) openReceipt(orderId, true);
+      return;
+    }
+
+    const ereceiptBtn = e.target.closest('[data-send-receipt]');
+    if (ereceiptBtn && sendReceiptUrl) {
+      const orderId = Number(ereceiptBtn.getAttribute('data-send-receipt'));
+      if (!orderId) return;
+      let email = '';
+      if (ereceiptBtn.getAttribute('data-has-email') !== '1') {
+        email = window.prompt(i18n.receipt_email_prompt || 'Customer email for e-receipt:') || '';
+        if (!email.trim()) return;
+      }
+      ereceiptBtn.disabled = true;
+      try {
+        const data = await sendReceipt(orderId, email.trim());
+        if (!data.ok) throw new Error(data.error || 'Failed');
+        alert((i18n.receipt_sent || 'E-receipt sent') + (data.email_masked ? ' → ' + data.email_masked : ''));
+      } catch (err) {
+        alert(err.message || 'Error');
+        ereceiptBtn.disabled = false;
+      }
+      return;
+    }
+
     const pickupBtn = e.target.closest('[data-pickup][data-order]');
     if (pickupBtn && pickupUrl) {
       const orderId = Number(pickupBtn.getAttribute('data-order'));
@@ -192,16 +253,33 @@
     if (!btn) return;
     const orderId = Number(btn.getAttribute('data-mark-paid'));
     if (!orderId) return;
+
+    let sendReceiptFlag = false;
+    if (btn.getAttribute('data-has-email') === '1') {
+      const masked = btn.getAttribute('data-email-masked') || '';
+      sendReceiptFlag = window.confirm(
+        (i18n.receipt_send_confirm || 'Send e-receipt?') + (masked ? '\n' + masked : '')
+      );
+    }
+
     btn.disabled = true;
     try {
       const res = await fetch(paidUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ order_id: orderId }),
+        body: JSON.stringify({ order_id: orderId, send_receipt: sendReceiptFlag }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Failed');
+      if (data.receipt_url) {
+        openReceipt(orderId, true);
+      }
+      if (data.email_sent && data.email_masked) {
+        alert((i18n.receipt_sent || 'E-receipt sent') + ' → ' + data.email_masked);
+      } else if (data.email_error === 'send_failed') {
+        alert(i18n.receipt_send_failed || 'Failed to send e-receipt');
+      }
       await poll();
     } catch (err) {
       alert(err.message || 'Error');
