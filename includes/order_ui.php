@@ -3,16 +3,24 @@
 $staffMode = $staffMode ?? false;
 $staffBackUrl = $staffBackUrl ?? '';
 $submitUrl = $submitUrl ?? baseUrl('public/api/submit_order.php');
-$showGuestName = ($selfPickup || $staffMode) && empty($cafeMode);
+$cafeBrowseMode = $cafeBrowseMode ?? false;
+$cafeVerify = $cafeVerify ?? 'email';
+$shopSlug = $shopSlug ?? '';
+$shopTokenParam = $shopToken ?? '';
+$checkoutUrl = $checkoutUrl ?? '';
+$sendOtpUrl = $sendOtpUrl ?? '';
+$showGuestName = ($selfPickup || $staffMode) && !$cafeBrowseMode && empty($sessionToken);
 $cafeMode = $cafeMode ?? false;
 $sessionToken = $sessionToken ?? '';
 $sessionOrderUrl = $sessionOrderUrl ?? '';
 $prefillGuestName = $prefillGuestName ?? '';
 $activeOrders = $activeOrders ?? [];
 $trackOrdersUrl = $trackOrdersUrl ?? '';
-$pageSubtitle = $cafeMode
-    ? t('cafe_session_label', (string) ($prefillGuestName ?: '—'))
-    : t('table') . ' ' . $table['nomor_meja'] . ($staffMode ? ' · ' . t('staff_order') : '');
+$pageSubtitle = $cafeBrowseMode
+    ? t('cafe_browse_sub')
+    : ($cafeMode && $sessionToken !== ''
+        ? t('cafe_session_label', (string) ($prefillGuestName ?: '—'))
+        : ($cafeMode ? t('cafe_order_title') : t('table') . ' ' . $table['nomor_meja'] . ($staffMode ? ' · ' . t('staff_order') : '')));
 ?>
 <!DOCTYPE html>
 <html lang="<?= e($lang === 'en' ? 'en' : 'ms') ?>">
@@ -35,8 +43,14 @@ $pageSubtitle = $cafeMode
   class="customer-app<?= $staffMode ? ' staff-mode' : '' ?><?= $cafeMode ? ' cafe-mode' : '' ?>"
   data-meja="<?= e($table['nomor_meja']) ?>"
   data-token="<?= e($staffMode || $cafeMode ? '' : $table['token_akses']) ?>"
-  data-session="<?= e($cafeMode ? $sessionToken : '') ?>"
-  data-session-url="<?= e($cafeMode ? $sessionOrderUrl : '') ?>"
+  data-session="<?= e($sessionToken) ?>"
+  data-session-url="<?= e($sessionOrderUrl) ?>"
+  data-cafe-browse="<?= $cafeBrowseMode ? '1' : '0' ?>"
+  data-shop="<?= e($shopSlug) ?>"
+  data-shop-token="<?= e($shopTokenParam) ?>"
+  data-cafe-verify="<?= e($cafeVerify) ?>"
+  data-checkout-url="<?= e($checkoutUrl) ?>"
+  data-send-otp-url="<?= e($sendOtpUrl) ?>"
   data-table-id="<?= (int) $table['id'] ?>"
   data-submit-url="<?= e($submitUrl) ?>"
   data-fulfillment="<?= e($selfPickup ? 'self_pickup' : 'waiter') ?>"
@@ -50,7 +64,7 @@ $pageSubtitle = $cafeMode
       <span class="brand-table"><?= e($pageSubtitle) ?></span>
     </div>
     <div class="header-actions">
-      <?php if ($cafeMode && !$staffMode): ?>
+      <?php if ($cafeMode && !$staffMode && $sessionToken !== ''): ?>
       <button type="button" class="btn btn-ghost btn-sm cafe-link-btn" id="btn-my-link" title="<?= e(t('cafe_my_link')) ?>"><?= e(t('cafe_my_link')) ?></button>
       <?php endif; ?>
       <div class="lang-toggle">
@@ -185,7 +199,43 @@ $pageSubtitle = $cafeMode
   </div>
 </aside>
 
-<?php if ($cafeMode && !$staffMode): ?>
+<?php if ($cafeBrowseMode): ?>
+<div class="sheet-overlay" id="checkout-overlay"></div>
+<aside class="cart-sheet cafe-checkout-sheet" id="checkout-sheet" aria-label="<?= e(t('cafe_checkout_title')) ?>">
+  <div class="cart-sheet-header">
+    <h2><?= e(t('cafe_checkout_title')) ?></h2>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-close-checkout"><?= e(t('close')) ?></button>
+  </div>
+  <div class="cart-sheet-body">
+    <p class="order-meta"><?= e(t('cafe_checkout_hint')) ?></p>
+    <div class="form-group" id="checkout-step-details">
+      <?php if ($selfPickup): ?>
+      <label for="checkout-name"><?= e(t('guest_name')) ?></label>
+      <input type="text" id="checkout-name" maxlength="40" autocomplete="name" placeholder="<?= e(t('guest_name_ph')) ?>">
+      <?php endif; ?>
+      <?php if ($cafeVerify === 'email'): ?>
+      <label for="checkout-email" style="margin-top:12px"><?= e(t('cafe_email')) ?></label>
+      <input type="email" id="checkout-email" maxlength="255" autocomplete="email" placeholder="<?= e(t('cafe_email_ph')) ?>">
+      <p class="order-meta cafe-spam-note"><?= e(t('cafe_spam_note')) ?></p>
+      <?php elseif (!$selfPickup): ?>
+      <label for="checkout-name"><?= e(t('guest_name')) ?> <span class="order-meta">(<?= e(t('optional')) ?>)</span></label>
+      <input type="text" id="checkout-name" maxlength="40" autocomplete="name" placeholder="<?= e(t('guest_name_ph')) ?>">
+      <?php endif; ?>
+      <button type="button" class="btn btn-primary" id="btn-checkout-send" style="width:100%;margin-top:16px">
+        <?= e($cafeVerify === 'email' ? t('cafe_send_code') : t('cafe_confirm_order')) ?>
+      </button>
+    </div>
+    <div id="checkout-step-otp" hidden>
+      <p class="order-meta" id="checkout-otp-sent"></p>
+      <label for="checkout-otp"><?= e(t('cafe_otp_label')) ?></label>
+      <input type="text" id="checkout-otp" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="000000">
+      <button type="button" class="btn btn-primary" id="btn-checkout-verify" style="width:100%;margin-top:16px"><?= e(t('cafe_confirm_order')) ?></button>
+    </div>
+  </div>
+</aside>
+<?php endif; ?>
+
+<?php if ($cafeMode && !$cafeBrowseMode && !$staffMode && $sessionToken !== ''): ?>
 <div class="sheet-overlay" id="link-overlay"></div>
 <aside class="cart-sheet cafe-link-sheet" id="link-sheet" aria-label="<?= e(t('cafe_my_link')) ?>">
   <div class="cart-sheet-header">

@@ -82,6 +82,12 @@ function cafeEntryUrl(string $slug, string $shopToken): string
     return baseUrl('public/cafe.php?shop=' . urlencode($slug) . '&token=' . urlencode($shopToken));
 }
 
+/** Direct menu browse URL (cafe.php redirects here). */
+function cafeBrowseOrderUrl(string $slug, string $shopToken): string
+{
+    return baseUrl('public/order.php?shop=' . urlencode($slug) . '&token=' . urlencode($shopToken));
+}
+
 function cafeSessionOrderUrl(string $sessionToken): string
 {
     return baseUrl('public/order.php?s=' . urlencode($sessionToken));
@@ -342,6 +348,28 @@ function fetchActiveSessionOrders(array $session, string $lang): array
     return $orders;
 }
 
+/** Table-like row for cafe browse (shop QR → menu without session yet). */
+function shopAsBrowseContext(array $shop): array
+{
+    $table = ensureCafeTable((int) $shop['id']);
+    return [
+        'id' => (int) $table['id'],
+        'shop_id' => (int) $shop['id'],
+        'nomor_meja' => CAFE_TABLE_NUMBER,
+        'token_akses' => (string) ($table['token_akses'] ?? ''),
+        'nama_kedai' => (string) ($shop['nama_kedai'] ?? ''),
+        'slug' => (string) ($shop['slug'] ?? ''),
+        'shop_status' => (string) ($shop['status'] ?? 'aktif'),
+        'sst_enabled' => (int) ($shop['sst_enabled'] ?? 0),
+        'sst_rate' => (float) ($shop['sst_rate'] ?? 0),
+        'package_id' => (int) ($shop['package_id'] ?? 0),
+        'fulfillment_mode' => (string) ($shop['fulfillment_mode'] ?? 'waiter'),
+        'ordering_mode' => 'cafe',
+        'cafe_verify' => (string) ($shop['cafe_verify'] ?? 'email'),
+        'package_kod' => (string) ($shop['package_kod'] ?? ''),
+    ];
+}
+
 /** Build table-like context from session for shared order UI. */
 function sessionAsTableContext(array $session): array
 {
@@ -358,6 +386,7 @@ function sessionAsTableContext(array $session): array
         'package_id' => (int) ($session['package_id'] ?? 0),
         'fulfillment_mode' => (string) ($session['fulfillment_mode'] ?? 'waiter'),
         'ordering_mode' => 'cafe',
+        'cafe_verify' => (string) ($session['cafe_verify'] ?? 'email'),
         'package_kod' => (string) ($session['package_kod'] ?? ''),
     ];
 }

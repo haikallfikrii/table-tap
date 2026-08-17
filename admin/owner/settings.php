@@ -88,8 +88,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     ->execute([$newToken, $shopId]);
             }
         }
-
-        // refresh session brand
         startAppSession();
         $_SESSION['shop_name'] = $namaKedai;
 
@@ -132,81 +130,102 @@ $retentionLabel = $shop['retention_days'] === null
   </div>
 </div>
 
-<div class="order-card">
+<div class="order-card settings-panel">
   <h2 style="margin-top:0"><?= e(t('shop_settings')) ?></h2>
-  <form method="post" style="max-width:480px">
-    <div class="form-group">
-      <label><?= e(t('shop_name')) ?></label>
+  <form method="post" class="settings-form">
+    <div class="settings-block">
+      <label class="settings-block-label"><?= e(t('shop_name')) ?></label>
       <input name="nama_kedai" required value="<?= e($shop['nama_kedai']) ?>">
-      <p class="order-meta" style="margin:6px 0 0"><?= e(t('shop_name_hint')) ?></p>
+      <p class="order-meta"><?= e(t('shop_name_hint')) ?></p>
     </div>
-    <div class="form-group">
-      <label style="display:flex;gap:8px;align-items:center">
-        <input type="checkbox" name="sst_enabled" value="1" <?= (int) $shop['sst_enabled'] ? 'checked' : '' ?>>
-        <?= e(t('sst_enable')) ?>
-      </label>
-    </div>
-    <div class="form-group">
-      <label><?= e(t('sst_rate')) ?> (%)</label>
-      <input type="number" step="0.01" min="0" max="100" name="sst_rate" value="<?= e(number_format((float) $shop['sst_rate'], 2, '.', '')) ?>">
-    </div>
-    <h3 style="margin:22px 0 8px"><?= e(t('fulfillment')) ?></h3>
-    <p class="order-meta" style="margin:0 0 12px"><?= e(t('fulfillment_hint')) ?></p>
-    <?php if (!$canSelfPickup): ?>
-      <p class="order-meta" style="margin:0 0 12px;color:var(--accent)"><?= e(t('fulfillment_upgrade')) ?></p>
-    <?php endif; ?>
-    <div class="form-group">
-      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px">
-        <input type="radio" name="fulfillment_mode" value="waiter" <?= shopFulfillment($shop) === 'waiter' ? 'checked' : '' ?>>
-        <span><strong><?= e(t('fulfillment_waiter')) ?></strong><br><span class="order-meta"><?= e(t('fulfillment_waiter_d')) ?></span></span>
-      </label>
-      <label style="display:flex;gap:8px;align-items:flex-start<?= $canSelfPickup ? '' : ';opacity:.55' ?>">
-        <input type="radio" name="fulfillment_mode" value="self_pickup" <?= shopFulfillment($shop) === 'self_pickup' ? 'checked' : '' ?> <?= $canSelfPickup ? '' : 'disabled' ?>>
-        <span><strong><?= e(t('fulfillment_self')) ?></strong><br><span class="order-meta"><?= e(t('fulfillment_self_d')) ?></span></span>
-      </label>
-    </div>
-    <?php if (orderingModeColumnExists()): ?>
-    <h3 style="margin:22px 0 8px"><?= e(t('ordering_mode')) ?></h3>
-    <p class="order-meta" style="margin:0 0 12px"><?= e(t('ordering_mode_hint')) ?></p>
-    <div class="form-group">
-      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:10px">
-        <input type="radio" name="ordering_mode" value="table" <?= !$isCafeMode ? 'checked' : '' ?>>
-        <span><strong><?= e(t('ordering_table')) ?></strong><br><span class="order-meta"><?= e(t('ordering_table_d')) ?></span></span>
-      </label>
-      <label style="display:flex;gap:8px;align-items:flex-start">
-        <input type="radio" name="ordering_mode" value="cafe" <?= $isCafeMode ? 'checked' : '' ?>>
-        <span><strong><?= e(t('ordering_cafe')) ?></strong><br><span class="order-meta"><?= e(t('ordering_cafe_d')) ?></span></span>
-      </label>
-    </div>
-    <div class="form-group" id="cafe-verify-options">
-      <label><?= e(t('cafe_verify')) ?></label>
-      <label style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px">
-        <input type="radio" name="cafe_verify" value="email" <?= shopCafeVerify($shop) === 'email' ? 'checked' : '' ?>>
-        <span><strong><?= e(t('cafe_verify_email')) ?></strong><br><span class="order-meta"><?= e(t('cafe_verify_email_d')) ?></span></span>
-      </label>
-      <label style="display:flex;gap:8px;align-items:flex-start">
-        <input type="radio" name="cafe_verify" value="none" <?= shopCafeVerify($shop) === 'none' ? 'checked' : '' ?>>
-        <span><strong><?= e(t('cafe_verify_none')) ?></strong><br><span class="order-meta"><?= e(t('cafe_verify_none_d')) ?></span></span>
-      </label>
-    </div>
-    <?php if ($isCafeMode && $cafeEntryUrl !== ''): ?>
-    <div class="form-group" style="margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:var(--radius-sm)">
-      <strong><?= e(t('cafe_shop_qr')) ?></strong>
-      <p class="order-meta" style="margin:6px 0 12px"><?= e(t('cafe_shop_qr_hint')) ?></p>
-      <div style="text-align:center;margin:12px 0">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&amp;data=<?= urlencode($cafeEntryUrl) ?>" alt="QR" width="220" height="220" style="border-radius:8px;border:1px solid var(--border)">
+
+    <div class="settings-row">
+      <div class="settings-block">
+        <label class="settings-check">
+          <input type="checkbox" name="sst_enabled" value="1" <?= (int) $shop['sst_enabled'] ? 'checked' : '' ?>>
+          <span><?= e(t('sst_enable')) ?></span>
+        </label>
       </div>
-      <label><?= e(t('cafe_entry_url')) ?></label>
-      <input type="text" readonly value="<?= e($cafeEntryUrl) ?>" onclick="this.select()" style="width:100%;margin-bottom:10px">
-      <label style="display:flex;gap:8px;align-items:center;margin-top:8px">
-        <input type="checkbox" name="regen_shop_token" value="1" onclick="return confirm('<?= e(t('cafe_regen_confirm')) ?>')">
-        <?= e(t('cafe_regen_token')) ?>
-      </label>
+      <div class="settings-block" style="max-width:140px">
+        <label><?= e(t('sst_rate')) ?> (%)</label>
+        <input type="number" step="0.01" min="0" max="100" name="sst_rate" value="<?= e(number_format((float) $shop['sst_rate'], 2, '.', '')) ?>">
+      </div>
     </div>
+
+    <fieldset class="settings-fieldset">
+      <legend><?= e(t('fulfillment')) ?></legend>
+      <p class="settings-fieldset-desc"><?= e(t('fulfillment_hint_short')) ?></p>
+      <?php if (!$canSelfPickup): ?>
+        <p class="settings-upgrade-note"><?= e(t('fulfillment_upgrade')) ?></p>
+      <?php endif; ?>
+      <div class="option-cards">
+        <label class="option-card">
+          <input type="radio" name="fulfillment_mode" value="waiter" <?= shopFulfillment($shop) === 'waiter' ? 'checked' : '' ?>>
+          <span class="option-card-body">
+            <strong><?= e(t('fulfillment_waiter')) ?></strong>
+            <span><?= e(t('fulfillment_waiter_short')) ?></span>
+          </span>
+        </label>
+        <label class="option-card<?= $canSelfPickup ? '' : ' is-disabled' ?>">
+          <input type="radio" name="fulfillment_mode" value="self_pickup" <?= shopFulfillment($shop) === 'self_pickup' ? 'checked' : '' ?> <?= $canSelfPickup ? '' : 'disabled' ?>>
+          <span class="option-card-body">
+            <strong><?= e(t('fulfillment_self')) ?></strong>
+            <span><?= e(t('fulfillment_self_short')) ?></span>
+          </span>
+        </label>
+      </div>
+    </fieldset>
+
+    <?php if (orderingModeColumnExists()): ?>
+    <fieldset class="settings-fieldset">
+      <legend><?= e(t('ordering_mode')) ?></legend>
+      <p class="settings-fieldset-desc"><?= e(t('ordering_mode_hint_short')) ?></p>
+      <div class="option-cards">
+        <label class="option-card">
+          <input type="radio" name="ordering_mode" value="table" <?= !$isCafeMode ? 'checked' : '' ?>>
+          <span class="option-card-body">
+            <strong><?= e(t('ordering_table')) ?></strong>
+            <span><?= e(t('ordering_table_short')) ?></span>
+          </span>
+        </label>
+        <label class="option-card">
+          <input type="radio" name="ordering_mode" value="cafe" <?= $isCafeMode ? 'checked' : '' ?>>
+          <span class="option-card-body">
+            <strong><?= e(t('ordering_cafe')) ?></strong>
+            <span><?= e(t('ordering_cafe_short')) ?></span>
+          </span>
+        </label>
+      </div>
+      <?php if ($isCafeMode): ?>
+        <p class="settings-link-note"><a href="<?= e(baseUrl('admin/owner/tables.php')) ?>"><?= e(t('cafe_qr_manage_link')) ?></a></p>
+      <?php endif; ?>
+    </fieldset>
+
+    <fieldset class="settings-fieldset" id="cafe-verify-fieldset">
+      <legend><?= e(t('cafe_verify')) ?></legend>
+      <p class="settings-fieldset-desc"><?= e(t('cafe_verify_hint_short')) ?></p>
+      <div class="option-cards option-cards-compact">
+        <label class="option-card">
+          <input type="radio" name="cafe_verify" value="email" <?= shopCafeVerify($shop) === 'email' ? 'checked' : '' ?>>
+          <span class="option-card-body">
+            <strong><?= e(t('cafe_verify_email')) ?></strong>
+            <span><?= e(t('cafe_verify_email_short')) ?></span>
+          </span>
+        </label>
+        <label class="option-card">
+          <input type="radio" name="cafe_verify" value="none" <?= shopCafeVerify($shop) === 'none' ? 'checked' : '' ?>>
+          <span class="option-card-body">
+            <strong><?= e(t('cafe_verify_none')) ?></strong>
+            <span><?= e(t('cafe_verify_none_short')) ?></span>
+          </span>
+        </label>
+      </div>
+    </fieldset>
     <?php endif; ?>
-    <?php endif; ?>
-    <h3 style="margin:22px 0 8px"><?= e(t('sound_settings')) ?></h3>
-    <p class="order-meta" style="margin:0 0 12px"><?= e(t('sound_settings_hint')) ?></p>
+
+    <fieldset class="settings-fieldset">
+      <legend><?= e(t('sound_settings')) ?></legend>
+      <p class="settings-fieldset-desc"><?= e(t('sound_settings_hint')) ?></p>
     <div class="form-group">
       <label><?= e(t('sound_mode')) ?></label>
       <select name="sound_mode">
@@ -231,7 +250,9 @@ $retentionLabel = $shop['retention_days'] === null
       <label><?= e(t('sound_volume')) ?> (%)</label>
       <input type="number" min="20" max="100" name="sound_volume" value="<?= (int) ($shop['sound_volume'] ?? 100) ?>">
     </div>
-    <button type="submit" class="btn btn-primary"><?= e(t('save')) ?></button>
+    </fieldset>
+
+    <button type="submit" class="btn btn-primary settings-save"><?= e(t('save')) ?></button>
   </form>
 </div>
 
