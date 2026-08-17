@@ -50,6 +50,10 @@ $config = getConfig();
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e(t('login')) ?> — <?= e($config['app_name']) ?></title>
+  <?php
+  require_once dirname(__DIR__) . '/includes/seo.php';
+  seoFaviconLinks();
+  ?>
   <link rel="stylesheet" href="<?= e(assetUrl('css/admin.css')) ?>">
 </head>
 <body class="admin">

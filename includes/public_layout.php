@@ -27,8 +27,7 @@ function publicLayoutStart(array $opts): void
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#e85d04">
-  <link rel="icon" href="<?= e($logo) ?>">
-  <link rel="apple-touch-icon" href="<?= e(assetUrl('img/brand/tabletap-icon-512.png')) ?>">
+  <?php seoFaviconLinks(); ?>
   <?php seoHead([
       'title' => $opts['title'],
       'description' => $opts['description'],
