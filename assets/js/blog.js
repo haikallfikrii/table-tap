@@ -135,28 +135,48 @@
     updateProgress();
   }
 
-  /* ---------- Single: TOC active section ---------- */
+  /* ---------- Single: TOC active section indicator ---------- */
   var tocLinks = document.querySelectorAll('#blog-toc-nav a');
   var headings = [];
+  var tocReadOffset = navOffset + 48;
 
   tocLinks.forEach(function (link) {
     var id = link.getAttribute('href');
     if (!id || id.charAt(0) !== '#') return;
     var el = document.getElementById(id.slice(1));
-    if (el) headings.push({ link: link, el: el });
+    if (el) {
+      headings.push({ link: link, li: link.closest('li'), el: el });
+    }
   });
 
-  if (headings.length && 'IntersectionObserver' in window) {
-    var tocObserver = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
-        headings.forEach(function (h) {
-          h.link.classList.toggle('active', h.el === entry.target);
-        });
-      });
-    }, { rootMargin: '-20% 0px -60% 0px', threshold: 0 });
+  function setActiveToc(index) {
+    headings.forEach(function (h, i) {
+      var active = i === index;
+      h.link.classList.toggle('active', active);
+      if (h.li) h.li.classList.toggle('is-active', active);
+      if (active) {
+        h.link.setAttribute('aria-current', 'true');
+      } else {
+        h.link.removeAttribute('aria-current');
+      }
+    });
+  }
 
-    headings.forEach(function (h) { tocObserver.observe(h.el); });
+  function updateActiveToc() {
+    if (!headings.length) return;
+    var scrollPos = window.scrollY + tocReadOffset;
+    var activeIndex = 0;
+    headings.forEach(function (h, i) {
+      if (h.el.offsetTop <= scrollPos) activeIndex = i;
+    });
+    var nearEnd = (window.innerHeight + window.scrollY) >= (document.documentElement.scrollHeight - 48);
+    if (nearEnd) activeIndex = headings.length - 1;
+    setActiveToc(activeIndex);
+  }
+
+  if (headings.length) {
+    window.addEventListener('scroll', updateActiveToc, { passive: true });
+    updateActiveToc();
   }
 
   tocLinks.forEach(function (link) {
@@ -166,8 +186,12 @@
       var target = document.getElementById(id.slice(1));
       if (!target) return;
       e.preventDefault();
-      target.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      var top = target.getBoundingClientRect().top + window.scrollY - navOffset - 16;
+      window.scrollTo({ top: top, behavior: reduceMotion ? 'auto' : 'smooth' });
       history.replaceState(null, '', id);
+      headings.forEach(function (h, i) {
+        if (h.link === link) setActiveToc(i);
+      });
     });
   });
 
