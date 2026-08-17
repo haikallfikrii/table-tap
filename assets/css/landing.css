@@ -2471,53 +2471,40 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 .case-play[data-mode="cafe"] [data-panel="cafe"] { display: block; }
 
 .case-switch.case-switch-3 {
-  display: flex;
-  grid-template-columns: none;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
+  gap: 8px;
   width: 100%;
-  max-width: 100%;
+  max-width: 680px;
   margin: 0 auto 22px;
   overflow: visible;
-}
-
-.case-switch-track {
-  display: flex;
-  flex-wrap: nowrap;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  width: max-content;
-  max-width: 100%;
-  margin: 0 auto;
 }
 
 .case-switch-3 button {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
+  width: 100%;
+  text-align: center;
   white-space: nowrap;
-  padding: 0 22px;
+  padding: 0 12px;
 }
 
 @media (max-width: 640px) {
   .case-switch.case-switch-3 {
-    justify-content: flex-start;
+    max-width: 100%;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    grid-template-columns: repeat(3, minmax(132px, 1fr));
     scrollbar-width: none;
   }
 
   .case-switch-3::-webkit-scrollbar { display: none; }
 
-  .case-switch-track {
-    margin: 0;
-  }
-
   .case-switch-3 button {
     font-size: 0.82rem;
-    padding: 0 18px;
+    padding: 0 10px;
   }
 }
 
