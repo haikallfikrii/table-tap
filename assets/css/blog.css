@@ -303,9 +303,17 @@ a.blog-tag:hover {
   align-items: start;
 }
 
+.blog-single-main {
+  min-width: 0;
+}
+
 @media (min-width: 960px) {
   .blog-single-layout {
     grid-template-columns: 220px 1fr;
+  }
+
+  .blog-single-layout:not(:has(.blog-toc-aside)) {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -329,11 +337,10 @@ a.blog-tag:hover {
 }
 
 @media (min-width: 960px) {
-  .blog-toc-panel {
+  .blog-toc-panel.is-fixed {
     position: fixed;
     top: 88px;
     z-index: 50;
-    width: 220px;
     max-height: calc(100vh - 104px);
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -341,11 +348,11 @@ a.blog-tag:hover {
     scrollbar-color: var(--line) transparent;
   }
 
-  .blog-toc-panel::-webkit-scrollbar {
+  .blog-toc-panel.is-fixed::-webkit-scrollbar {
     width: 5px;
   }
 
-  .blog-toc-panel::-webkit-scrollbar-thumb {
+  .blog-toc-panel.is-fixed::-webkit-scrollbar-thumb {
     background: var(--line);
     border-radius: 999px;
   }

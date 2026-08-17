@@ -57,14 +57,6 @@ publicLayoutStart([
 ]);
 ?>
 <div class="wrap blog-single-wrap">
-  <nav class="blog-breadcrumb reveal" aria-label="Breadcrumb">
-    <a href="<?= e(baseUrl('')) ?>"><?= e(t('blog_home')) ?></a>
-    <span aria-hidden="true">/</span>
-    <a href="<?= e(blogUrl()) ?>"><?= e(t('lp_nav_blog')) ?></a>
-    <span aria-hidden="true">/</span>
-    <span aria-current="page"><?= e($postTitle) ?></span>
-  </nav>
-
   <div class="blog-single-layout">
     <?php if ($toc !== []): ?>
     <aside class="blog-toc-aside reveal" aria-label="<?= e(t('blog_toc')) ?>">
@@ -82,6 +74,15 @@ publicLayoutStart([
       </div>
     </aside>
     <?php endif; ?>
+
+    <div class="blog-single-main">
+      <nav class="blog-breadcrumb reveal" aria-label="Breadcrumb">
+        <a href="<?= e(baseUrl('')) ?>"><?= e(t('blog_home')) ?></a>
+        <span aria-hidden="true">/</span>
+        <a href="<?= e(blogUrl()) ?>"><?= e(t('lp_nav_blog')) ?></a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page"><?= e($postTitle) ?></span>
+      </nav>
 
     <article class="blog-article reveal" id="blog-article">
       <header class="blog-article-head">
@@ -119,6 +120,7 @@ publicLayoutStart([
         </div>
       </footer>
     </article>
+    </div>
   </div>
 
   <?php if ($related !== []): ?>
