@@ -398,7 +398,7 @@ return [
 
     'lp_allinone_kicker'=> 'All-in-one',
     'lp_allinone_title' => 'One system. No extra hardware.',
-    'lp_allinone_sub'   => 'One by one from the top of TableTap, slowly tracing the dashed ring like a loader — then back in.',
+    'lp_allinone_sub'   => 'Receipt printers, buzzer pagers, POS, printed menus — TableTap replaces them all. One QR, one system, nothing extra to install.',
     'lp_aio_printer'    => 'Receipt printer',
     'lp_aio_pos'        => 'Cash register / POS',
     'lp_aio_calc'       => 'Calculator & order pad',
