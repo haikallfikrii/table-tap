@@ -4,6 +4,8 @@ $staffMode = $staffMode ?? false;
 $staffBackUrl = $staffBackUrl ?? '';
 $submitUrl = $submitUrl ?? baseUrl('public/api/submit_order.php');
 $showGuestName = $selfPickup || $staffMode;
+$activeOrders = $activeOrders ?? [];
+$trackOrdersUrl = $trackOrdersUrl ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="<?= e($lang === 'en' ? 'en' : 'ms') ?>">
@@ -43,6 +45,12 @@ $showGuestName = $selfPickup || $staffMode;
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
     </div>
   </header>
+
+  <?php if (!$staffMode && count($activeOrders ?? []) > 0): ?>
+  <a class="active-orders-bar" href="<?= e($trackOrdersUrl ?? '') ?>">
+    <?= e(t('active_orders_banner', count($activeOrders))) ?>
+  </a>
+  <?php endif; ?>
 
   <nav class="category-tabs">
     <a href="#makanan" class="active"><?= e(t('makanan')) ?></a>

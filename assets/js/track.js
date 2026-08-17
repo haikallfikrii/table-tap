@@ -1,5 +1,5 @@
 /**
- * Customer self-pickup tracker — live stages, looping hero, status sounds
+ * Customer order tracker — multi-order, live stages, sounds
  */
 (function () {
   const root = document.getElementById('track-app');
@@ -13,6 +13,7 @@
   const fulfillment = root.dataset.fulfillment || 'waiter';
   const loopingReady = fulfillment === 'self_pickup';
   const sound = window.TableTapSound;
+  const focusOrderId = Number(root.dataset.focusOrder || 0);
 
   let lastStage = root.dataset.stage || 'queue';
   let lastItems = {};
@@ -114,11 +115,7 @@
       }
       if (loopingReady) {
         if (!alarmOn || isChange) {
-          sound.configure({
-            mode: 'until_cleared',
-            interval_ms: 1100,
-            volume: 100,
-          });
+          sound.configure({ mode: 'until_cleared', interval_ms: 1100, volume: 100 });
           stopLoop();
           sound.startAlarm();
           alarmOn = true;
@@ -164,11 +161,6 @@
     if (hero) hero.setAttribute('data-stage', stage);
     const title = document.getElementById('track-title');
     if (title) title.textContent = titleFor(stage);
-    const banner = document.getElementById('track-banner');
-    if (banner) {
-      banner.className = 'confirm-status track-banner ' + stage;
-      banner.textContent = overallText(stage);
-    }
     document.querySelectorAll('#track-steps [data-step]').forEach(function (el) {
       const step = el.getAttribute('data-step');
       const order = [];
@@ -180,64 +172,108 @@
       el.classList.toggle('is-current', step === stage);
       el.classList.toggle('is-done', now >= 0 && i < now);
     });
-    const collectBtn = document.getElementById('btn-i-collected');
-    if (collectBtn) {
-      collectBtn.style.display = loopingReady && stage === 'ready' ? '' : 'none';
-    }
     root.dataset.stage = stage;
   }
 
-  function render(data) {
-    const items = data.items || [];
-    const key = data.stage || 'queue';
-    setHero(key);
-    const list = document.getElementById('track-items');
-    if (!list) return;
-    list.innerHTML = items.map(function (it) {
-      const st = it.status_item;
-      return (
-        '<li class="' + itemClass(st) + '">' +
-          '<span class="track-item-pulse" aria-hidden="true"></span>' +
-          '<span class="track-item-name"><b>' + esc(String(it.qty)) + '×</b> ' + esc(it.nama) + '</span>' +
-          '<span class="track-pill">' + esc(itemLabel(st)) + '</span>' +
-        '</li>'
-      );
-    }).join('');
+  function renderOrderCard(order, isFocus) {
+    const oid = Number(order.order_id || 0);
+    const stage = order.stage || 'queue';
+    const gt = order.guest_token || '';
+    const items = order.items || [];
+    const label = isFocus ? (i18n.order_latest || 'Latest') : (i18n.order_earlier || 'Earlier');
+    const jenis = order.jenis_hidang === 'takeaway' ? (i18n.takeaway || 'Takeaway') : (i18n.dine_in || 'Dine in');
+    const total = order.total_formatted || order.total_harga || '';
+    const name = order.nama_pelanggan ? '<span class="track-order-name">' + esc(order.nama_pelanggan) + '</span>' : '';
+
+    let html =
+      '<article class="track-order-card' + (isFocus ? ' is-focus' : '') + '" data-order-id="' + oid + '" data-guest-token="' + esc(gt) + '" data-stage="' + esc(stage) + '">' +
+        '<header class="track-order-card-head">' +
+          '<div><span class="track-order-label">' + esc(label) + '</span> <strong class="track-order-no">#' + oid + '</strong>' + name + '</div>' +
+          '<div class="confirm-status track-banner track-order-banner ' + esc(stage) + '">' + esc(overallText(stage)) + '</div>' +
+        '</header>' +
+        '<p class="track-order-meta">' + esc(jenis) + ' · ' + esc(String(total)) + '</p>' +
+        '<ul class="track-items track-order-items">' +
+        items.map(function (it) {
+          const st = it.status_item;
+          return (
+            '<li class="' + itemClass(st) + '">' +
+              '<span class="track-item-pulse" aria-hidden="true"></span>' +
+              '<span class="track-item-name"><b>' + esc(String(it.qty)) + '×</b> ' + esc(it.nama) + '</span>' +
+              '<span class="track-pill">' + esc(itemLabel(st)) + '</span>' +
+            '</li>'
+          );
+        }).join('') +
+        '</ul>';
+
+    if (loopingReady) {
+      html += '<button type="button" class="btn btn-success btn-collect-order" style="width:100%;margin-top:8px;' + (stage === 'ready' ? '' : 'display:none') + '" data-order-id="' + oid + '" data-guest-token="' + esc(gt) + '">' +
+        esc(i18n.i_collected || 'Collected') + ' (#' + oid + ')</button>';
+    }
+    html += '</article>';
+    return html;
   }
 
-  function detectChanges(items) {
+  function render(data) {
+    const orders = data.orders || [];
+    const focusId = Number(data.focus_order_id || focusOrderId);
+    const focusOrder = orders.find(function (o) { return Number(o.order_id) === focusId; }) || orders[0];
+    const stage = focusOrder ? (focusOrder.stage || 'queue') : (data.focus_stage || 'queue');
+    setHero(stage);
+
+    const list = document.getElementById('track-orders-list');
+    const heading = document.getElementById('track-orders-heading');
+    if (heading && orders.length > 1) {
+      heading.textContent = (i18n.your_orders || 'Your orders') + ' (' + orders.length + ')';
+    }
+    if (list) {
+      list.innerHTML = orders.map(function (o) {
+        return renderOrderCard(o, Number(o.order_id) === focusId);
+      }).join('');
+    }
+    return { stage: stage, focusOrder: focusOrder, orders: orders };
+  }
+
+  function detectChanges(orders, focusId) {
     let cooking = false;
     let ready = false;
     let collected = false;
-    items.forEach(function (it) {
-      const prev = lastItems[it.id];
-      if (prev && prev !== it.status_item) {
-        if (it.status_item === 'sedang_dimasak') cooking = true;
-        if (it.status_item === 'siap') ready = true;
-        if (it.status_item === 'diambil') ready = true;
-        if (it.status_item === 'dihantar') collected = true;
-      }
+    orders.forEach(function (order) {
+      if (Number(order.order_id) !== focusId) return;
+      (order.items || []).forEach(function (it) {
+        const key = order.order_id + ':' + it.id;
+        const prev = lastItems[key];
+        if (prev && prev !== it.status_item) {
+          if (it.status_item === 'sedang_dimasak') cooking = true;
+          if (it.status_item === 'siap') ready = true;
+          if (it.status_item === 'diambil') ready = true;
+          if (it.status_item === 'dihantar') collected = true;
+        }
+      });
     });
     const map = {};
-    items.forEach(function (it) { map[it.id] = it.status_item; });
+    orders.forEach(function (order) {
+      (order.items || []).forEach(function (it) {
+        map[order.order_id + ':' + it.id] = it.status_item;
+      });
+    });
     lastItems = map;
     return { cooking: cooking, ready: ready, collected: collected };
   }
 
   async function poll() {
-    if (busy) return;
+    if (busy || !pollUrl) return;
     busy = true;
     try {
-      const url = pollUrl +
-        (pollUrl.indexOf('?') >= 0 ? '&' : '?') +
-        'lang=' + encodeURIComponent(lang);
+      const url = pollUrl + (pollUrl.indexOf('?') >= 0 ? '&' : '?') + 'lang=' + encodeURIComponent(lang);
       const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
       const data = await res.json();
       if (!data.ok) return;
-      const items = data.items || [];
-      const stage = data.stage || 'queue';
-      const alertOn = data.pickup_alert !== false;
-      const changes = detectChanges(items);
+
+      const focusId = Number(data.focus_order_id || focusOrderId);
+      const focusOrder = (data.orders || []).find(function (o) { return Number(o.order_id) === focusId; });
+      const stage = focusOrder ? (focusOrder.stage || 'queue') : (data.focus_stage || 'queue');
+      const alertOn = focusOrder ? focusOrder.pickup_alert !== false : true;
+      const changes = detectChanges(data.orders || [], focusId);
       const becameDone = stage === 'done' && lastStage !== 'done';
       muted = !alertOn && stage !== 'done';
       if (!alertOn && stage !== 'done') stopLoop();
@@ -269,19 +305,21 @@
     }
   }
 
-  document.getElementById('btn-i-collected')?.addEventListener('click', async function () {
-    if (collecting || !collectUrl) return;
+  document.getElementById('track-orders-list')?.addEventListener('click', async function (e) {
+    const btn = e.target.closest('.btn-collect-order');
+    if (!btn || collecting || !collectUrl) return;
     collecting = true;
     stopLoop();
-    this.disabled = true;
+    btn.disabled = true;
     try {
       const res = await fetch(collectUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
-          order: Number(root.dataset.order || 0),
+          order: Number(btn.dataset.orderId || 0),
           meja: root.dataset.meja || '',
           token: root.dataset.token || '',
+          guest_token: btn.dataset.guestToken || '',
         }),
       });
       const data = await res.json();
@@ -290,8 +328,7 @@
       await poll();
     } catch (err) {
       muted = false;
-      collecting = false;
-      this.disabled = false;
+      btn.disabled = false;
     } finally {
       collecting = false;
     }

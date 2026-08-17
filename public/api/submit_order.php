@@ -7,6 +7,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/helpers.php';
+require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 
 requirePost();
 
@@ -41,8 +42,14 @@ $created = createShopOrder(
     false
 );
 $orderId = $created['order_id'];
+$guestToken = (string) ($created['guest_token'] ?? '');
 $totals = $created['totals'];
-$redirect = baseUrl('public/confirmation.php?order=' . $orderId . '&meja=' . urlencode($nomorMeja) . '&token=' . urlencode($token));
+$redirect = baseUrl(
+    'public/confirmation.php?order=' . $orderId
+    . '&meja=' . urlencode($nomorMeja)
+    . '&token=' . urlencode($token)
+    . ($guestToken !== '' ? '&gt=' . urlencode($guestToken) : '')
+);
 
 jsonResponse([
     'ok' => true,

@@ -29,6 +29,12 @@ $staffMode = false;
 $staffBackUrl = '';
 $staffFrom = '';
 $submitUrl = baseUrl('public/api/submit_order.php');
+$activeOrders = fetchActiveCustomerOrders($table, $lang);
+$trackOrdersUrl = baseUrl(
+    'public/confirmation.php?meja=' . urlencode($nomorMeja)
+    . '&token=' . urlencode($token)
+    . ($activeOrders !== [] ? '&order=' . (int) $activeOrders[0]['order_id'] : '')
+);
 
 $i18nJs = [
     'cart_empty'    => t('cart_empty'),
