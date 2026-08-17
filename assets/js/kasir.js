@@ -54,16 +54,22 @@
     return res.json();
   }
 
-  function receiptButtons(order) {
+  function receiptSection(order) {
     if (order.status_bayar !== 'lunas') return '';
-    let html =
-      '<button type="button" class="btn btn-secondary btn-sm" data-print-receipt="' + order.id + '">' +
-        esc(i18n.print_receipt || 'Print receipt') + '</button>';
-    html +=
-      '<button type="button" class="btn btn-secondary btn-sm" data-send-receipt="' + order.id + '"' +
-        (order.has_customer_email ? ' data-has-email="1"' : '') + '>' +
-        esc(i18n.send_receipt || 'E-receipt') + '</button>';
-    return html;
+    return (
+      '<div class="order-card-receipt">' +
+        '<div class="order-card-receipt-label">' + esc(i18n.receipt || 'Receipt') + '</div>' +
+        '<div class="order-card-receipt-btns">' +
+          '<button type="button" class="btn btn-secondary btn-sm" data-print-receipt="' + order.id + '">' +
+            esc(i18n.print_receipt || 'Print receipt') +
+          '</button>' +
+          '<button type="button" class="btn btn-secondary btn-sm" data-send-receipt="' + order.id + '"' +
+            (order.has_customer_email ? ' data-has-email="1"' : '') + '>' +
+            esc(i18n.send_receipt || 'E-receipt') +
+          '</button>' +
+        '</div>' +
+      '</div>'
+    );
   }
 
   function tableTitle(num) {
@@ -108,9 +114,8 @@
         }).join('');
 
         const paidBtn = unpaid
-          ? '<button type="button" class="btn btn-success btn-sm" data-mark-paid="' + o.id + '"' +
-              (o.has_customer_email ? ' data-has-email="1" data-email-masked="' + esc(o.customer_email_masked || '') + '"' : '') +
-            '>' + esc(i18n.mark_paid || 'Mark paid') + '</button>'
+          ? '<button type="button" class="btn btn-success btn-sm" data-mark-paid="' + o.id + '">' +
+              esc(i18n.mark_paid || 'Mark paid') + '</button>'
           : '<span class="badge badge-lunas">' + esc(i18n.paid || 'Paid') + '</span>';
 
         let pickupBtns = '';
@@ -153,9 +158,10 @@
             '<ul class="order-items">' + itemsHtml + '</ul>' +
             '<div class="order-card-footer">' +
               '<div><div class="order-total">' + money(o.total_harga) + '</div>' + sstLine + '</div>' +
-              '<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">' +
-                paidBtn + pickupBtns +
-                (!unpaid ? '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">' + receiptButtons(o) + '</div>' : '') +
+              '<div class="order-card-actions">' +
+                '<div class="order-card-pay">' + paidBtn + '</div>' +
+                pickupBtns +
+                receiptSection(o) +
               '</div>' +
             '</div>' +
           '</article>'
@@ -254,32 +260,16 @@
     const orderId = Number(btn.getAttribute('data-mark-paid'));
     if (!orderId) return;
 
-    let sendReceiptFlag = false;
-    if (btn.getAttribute('data-has-email') === '1') {
-      const masked = btn.getAttribute('data-email-masked') || '';
-      sendReceiptFlag = window.confirm(
-        (i18n.receipt_send_confirm || 'Send e-receipt?') + (masked ? '\n' + masked : '')
-      );
-    }
-
     btn.disabled = true;
     try {
       const res = await fetch(paidUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         credentials: 'same-origin',
-        body: JSON.stringify({ order_id: orderId, send_receipt: sendReceiptFlag }),
+        body: JSON.stringify({ order_id: orderId }),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Failed');
-      if (data.receipt_url) {
-        openReceipt(orderId, true);
-      }
-      if (data.email_sent && data.email_masked) {
-        alert((i18n.receipt_sent || 'E-receipt sent') + ' → ' + data.email_masked);
-      } else if (data.email_error === 'send_failed') {
-        alert(i18n.receipt_send_failed || 'Failed to send e-receipt');
-      }
       await poll();
     } catch (err) {
       alert(err.message || 'Error');
