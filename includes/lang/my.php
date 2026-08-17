@@ -149,6 +149,7 @@ return [
     'receipt_not_paid'  => 'Resit hanya untuk pesanan yang sudah dibayar.',
     'receipt_no_email'  => 'Tiada e-mel pelanggan.',
     'receipt_send_failed' => 'Gagal hantar e-resit. Semak tetapan SMTP.',
+    'receipt_after_paid' => 'Tersedia selepas tandakan lunas',
 
     // Kitchen / drinks
     'dapur_title'       => 'Dashboard Dapur',

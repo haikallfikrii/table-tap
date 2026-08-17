@@ -26,7 +26,14 @@ $stmt = $pdo->prepare(
      INNER JOIN tables t ON t.id = o.table_id
      WHERE o.shop_id = ?
        AND o.status_order != 'dibatalkan'
-       AND (o.status_bayar = 'belum_bayar' OR o.status_order IN ('menunggu', 'diproses'))
+       AND (
+         o.status_bayar = 'belum_bayar'
+         OR o.status_order IN ('menunggu', 'diproses')
+         OR (
+           o.status_bayar = 'lunas'
+           AND o.waktu_lunas >= DATE_SUB(NOW(), INTERVAL 4 HOUR)
+         )
+       )
      ORDER BY o.waktu_order ASC, o.id ASC"
 );
 $stmt->execute([$shopId]);

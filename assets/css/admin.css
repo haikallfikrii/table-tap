@@ -102,6 +102,16 @@ body.admin {
   color: var(--success);
 }
 
+.badge-serve-sini {
+  background: #e6f6f4;
+  color: #1d7a70;
+}
+
+.badge-serve-bungkus {
+  background: #fff1e6;
+  color: var(--accent);
+}
+
 /* Cards */
 .table-grid {
   display: grid;
@@ -136,8 +146,17 @@ body.admin {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 8px;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.order-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+  align-items: center;
+  max-width: min(100%, 168px);
 }
 
 .table-num {
@@ -230,6 +249,13 @@ body.admin {
   flex-wrap: wrap;
   gap: 8px;
   justify-content: flex-end;
+}
+
+.order-card-receipt-hint {
+  font-size: 0.78rem;
+  color: var(--ink-muted);
+  text-align: right;
+  line-height: 1.35;
 }
 
 .order-total {

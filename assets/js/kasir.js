@@ -55,10 +55,18 @@
   }
 
   function receiptSection(order) {
-    if (order.status_bayar !== 'lunas') return '';
+    const label = esc(i18n.receipt || 'Receipt');
+    if (order.status_bayar !== 'lunas') {
+      return (
+        '<div class="order-card-receipt">' +
+          '<div class="order-card-receipt-label">' + label + '</div>' +
+          '<div class="order-card-receipt-hint">' + esc(i18n.receipt_after_paid || 'Available after payment') + '</div>' +
+        '</div>'
+      );
+    }
     return (
       '<div class="order-card-receipt">' +
-        '<div class="order-card-receipt-label">' + esc(i18n.receipt || 'Receipt') + '</div>' +
+        '<div class="order-card-receipt-label">' + label + '</div>' +
         '<div class="order-card-receipt-btns">' +
           '<button type="button" class="btn btn-secondary btn-sm" data-print-receipt="' + order.id + '">' +
             esc(i18n.print_receipt || 'Print receipt') +
@@ -70,6 +78,20 @@
         '</div>' +
       '</div>'
     );
+  }
+
+  function statusBadges(order, unpaid) {
+    const serve = order.jenis_hidang === 'takeaway'
+      ? '<span class="badge badge-serve-bungkus">' + esc(i18n.takeaway || 'Takeaway') + '</span>'
+      : '<span class="badge badge-serve-sini">' + esc(i18n.dine_in || 'Dine in') + '</span>';
+    const orderStatus =
+      '<span class="badge badge-' + esc(order.status_order) + '">' +
+        esc(statusLabel(order.status_order)) +
+      '</span>';
+    const payStatus = unpaid
+      ? '<span class="badge badge-belum_bayar">' + esc(i18n.unpaid || 'Unpaid') + '</span>'
+      : '<span class="badge badge-lunas">' + esc(i18n.paid || 'Paid') + '</span>';
+    return serve + orderStatus + payStatus;
   }
 
   function tableTitle(num) {
@@ -116,7 +138,7 @@
         const paidBtn = unpaid
           ? '<button type="button" class="btn btn-success btn-sm" data-mark-paid="' + o.id + '">' +
               esc(i18n.mark_paid || 'Mark paid') + '</button>'
-          : '<span class="badge badge-lunas">' + esc(i18n.paid || 'Paid') + '</span>';
+          : '';
 
         let pickupBtns = '';
         if (o.has_ready) {
@@ -145,21 +167,13 @@
                   (o.sumber_order === 'staf' ? ' · ' + esc(i18n.sourced_staff || 'Staff') : '') +
                 '</div>' +
               '</div>' +
-              '<div style="text-align:right;display:flex;flex-direction:column;gap:6px;align-items:flex-end">' +
-                (o.jenis_hidang === 'takeaway'
-                  ? '<span class="badge serve-badge bungkus">' + esc(i18n.takeaway || 'Takeaway') + '</span>'
-                  : '<span class="badge serve-badge sini">' + esc(i18n.dine_in || 'Dine in') + '</span>') +
-                '<span class="badge badge-' + esc(o.status_order) + '">' + esc(statusLabel(o.status_order)) + '</span>' +
-                (unpaid
-                  ? '<span class="badge badge-belum_bayar">' + esc(i18n.unpaid || 'Unpaid') + '</span>'
-                  : '') +
-              '</div>' +
+              '<div class="order-card-badges">' + statusBadges(o, unpaid) + '</div>' +
             '</div>' +
             '<ul class="order-items">' + itemsHtml + '</ul>' +
             '<div class="order-card-footer">' +
               '<div><div class="order-total">' + money(o.total_harga) + '</div>' + sstLine + '</div>' +
               '<div class="order-card-actions">' +
-                '<div class="order-card-pay">' + paidBtn + '</div>' +
+                (paidBtn ? '<div class="order-card-pay">' + paidBtn + '</div>' : '') +
                 pickupBtns +
                 receiptSection(o) +
               '</div>' +
