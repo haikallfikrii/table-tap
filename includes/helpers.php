@@ -26,10 +26,68 @@ function generateToken(int $bytes = 32): string
     return bin2hex(random_bytes($bytes));
 }
 
-function baseUrl(string $path = ''): string
+/** Public hosts that may serve this app (login, QR, assets stay on the current domain). */
+function allowedAppHosts(): array
 {
     $c = getConfig();
-    $base = rtrim($c['app_url'] ?? '', '/');
+    $hosts = $c['allowed_hosts'] ?? [
+        'tabletap.my',
+        'www.tabletap.my',
+        'tabletap.jomsite.com',
+        'localhost',
+        '127.0.0.1',
+    ];
+    $configured = parse_url((string) ($c['app_url'] ?? ''), PHP_URL_HOST);
+    if (is_string($configured) && $configured !== '') {
+        $hosts[] = $configured;
+    }
+    $clean = [];
+    foreach ($hosts as $host) {
+        $host = strtolower(trim((string) $host));
+        if ($host !== '') {
+            $clean[$host] = true;
+        }
+    }
+    return array_keys($clean);
+}
+
+function requestHost(): string
+{
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+    $host = strtolower(preg_replace('/:\d+$/', '', $host) ?? $host);
+    return trim($host);
+}
+
+/** Canonical origin for this request: tabletap.my stays on .my, jomsite stays on jomsite. */
+function appBaseUrl(): string
+{
+    static $base = null;
+    if ($base !== null) {
+        return $base;
+    }
+
+    $c = getConfig();
+    $fallback = rtrim((string) ($c['app_url'] ?? ''), '/');
+    $host = requestHost();
+
+    if ($host !== '' && in_array($host, allowedAppHosts(), true)) {
+        $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || ((string) ($_SERVER['SERVER_PORT'] ?? '') === '443')
+            || strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https';
+        if (str_ends_with($host, 'tabletap.my') || str_ends_with($host, 'jomsite.com')) {
+            $https = true;
+        }
+        $base = ($https ? 'https' : 'http') . '://' . $host;
+        return $base;
+    }
+
+    $base = $fallback;
+    return $base;
+}
+
+function baseUrl(string $path = ''): string
+{
+    $base = rtrim(appBaseUrl(), '/');
     $path = ltrim($path, '/');
     return $path === '' ? $base : $base . '/' . $path;
 }
