@@ -26,28 +26,17 @@ function generateOrderGuestToken(): string
 
 function assertTableOrderRateLimit(int $tableId, int $shopId): void
 {
-    // Burst anti-spam: max 4 submissions within 60 seconds (double-tap / bot)
+    // Anti double-tap: only unpaid orders in the last 30 seconds count (per table, all devices share QR).
     $burst = db()->prepare(
         "SELECT COUNT(*) FROM orders
          WHERE table_id = ? AND shop_id = ?
+           AND status_bayar = 'belum_bayar'
            AND status_order != 'dibatalkan'
-           AND waktu_order >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)"
+           AND waktu_order >= DATE_SUB(NOW(), INTERVAL 30 SECOND)"
     );
     $burst->execute([$tableId, $shopId]);
-    if ((int) $burst->fetchColumn() >= 4) {
+    if ((int) $burst->fetchColumn() >= 3) {
         jsonError(t('order_rate_limited'), 429);
-    }
-
-    // Unpaid open orders cap — paid (lunas) orders do not count
-    $open = db()->prepare(
-        "SELECT COUNT(*) FROM orders
-         WHERE table_id = ? AND shop_id = ?
-           AND status_bayar = 'belum_bayar'
-           AND status_order NOT IN ('selesai', 'dibatalkan')"
-    );
-    $open->execute([$tableId, $shopId]);
-    if ((int) $open->fetchColumn() >= 15) {
-        jsonError(t('order_unpaid_limit'), 429);
     }
 }
 
@@ -84,8 +73,8 @@ function fetchActiveCustomerOrders(array $table, string $lang): array
                 jenis_hidang, nama_pelanggan, pickup_alert{$guestCol}
          FROM orders
          WHERE table_id = ? AND shop_id = ?
-           AND status_order != 'dibatalkan'
-           AND (status_bayar = 'belum_bayar' OR status_order IN ('menunggu', 'diproses'))
+           AND status_bayar = 'belum_bayar'
+           AND status_order NOT IN ('selesai', 'dibatalkan')
          ORDER BY id DESC"
     );
     $stmt->execute([$tableId, $shopId]);
