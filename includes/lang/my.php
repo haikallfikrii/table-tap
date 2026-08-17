@@ -398,7 +398,7 @@ return [
 
     'lp_allinone_kicker'=> 'All-in-one',
     'lp_allinone_title' => 'Satu sistem. Tiada alat tambahan.',
-    'lp_allinone_sub'   => 'Keluar dari atas TableTap, orbit 2 pusingan (papar alat → coret), masuk semula satu persatu.',
+    'lp_allinone_sub'   => 'Satu persatu keluar dari atas TableTap, berputar perlahan mengikut garis oren — macam loading — lalu masuk semula.',
     'lp_aio_printer'    => 'Printer resit',
     'lp_aio_pos'        => 'Mesin kasir / POS',
     'lp_aio_calc'       => 'Kalkulator & buku nota',
