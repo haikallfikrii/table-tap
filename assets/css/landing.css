@@ -2470,36 +2470,39 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 .case-play[data-mode="pickup"] [data-panel="pickup"],
 .case-play[data-mode="cafe"] [data-panel="cafe"] { display: block; }
 
-.case-switch-3 {
+.case-switch.case-switch-3 {
   display: flex;
+  grid-template-columns: none;
   flex-wrap: nowrap;
   justify-content: center;
+  align-items: center;
   gap: 8px;
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  -webkit-overflow-scrolling: touch;
-  scroll-snap-type: x proximity;
-  scrollbar-width: none;
+  margin: 0 auto 22px;
+  overflow: visible;
 }
 
 .case-switch-3::-webkit-scrollbar { display: none; }
 
 .case-switch-3 button {
   flex: 0 0 auto;
-  scroll-snap-align: center;
   white-space: nowrap;
-  min-width: max-content;
-  padding: 0 18px;
+  padding: 0 22px;
 }
 
 @media (max-width: 640px) {
-  .case-switch-3 {
-    width: 100%;
+  .case-switch.case-switch-3 {
     justify-content: flex-start;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .case-switch-3 button {
+    scroll-snap-align: center;
+    padding: 0 18px;
   }
 }
 
