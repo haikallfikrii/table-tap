@@ -1,6 +1,6 @@
 <?php
 /**
- * Customer order page — accessed via QR: /public/order.php?meja=5&token=xxx
+ * Customer order page — table QR: ?meja=5&token=xxx | cafe session: ?s=session_token
  */
 
 declare(strict_types=1);
@@ -11,11 +11,21 @@ require_once dirname(__DIR__) . '/includes/i18n.php';
 $lang = currentLang();
 $config = getConfig();
 
+$sessionToken = trim((string) ($_GET['s'] ?? ''));
 $nomorMeja = trim((string) ($_GET['meja'] ?? ''));
 $token = trim((string) ($_GET['token'] ?? ''));
 
+$session = null;
 $table = null;
-if ($nomorMeja !== '' && $token !== '') {
+$cafeMode = false;
+
+if ($sessionToken !== '') {
+    $session = findSessionByToken($sessionToken);
+    if ($session && ($session['status'] ?? '') === 'active') {
+        $cafeMode = true;
+        $table = sessionAsTableContext($session);
+    }
+} elseif ($nomorMeja !== '' && $token !== '') {
     $table = findTableByAccess($nomorMeja, $token);
 }
 
@@ -29,12 +39,27 @@ $staffMode = false;
 $staffBackUrl = '';
 $staffFrom = '';
 $submitUrl = baseUrl('public/api/submit_order.php');
-$activeOrders = fetchActiveCustomerOrders($table, $lang);
-$trackOrdersUrl = baseUrl(
-    'public/confirmation.php?meja=' . urlencode($nomorMeja)
-    . '&token=' . urlencode($token)
-    . ($activeOrders !== [] ? '&order=' . (int) $activeOrders[0]['order_id'] : '')
-);
+
+if ($cafeMode && $session) {
+    $activeOrders = fetchActiveSessionOrders($session, $lang);
+    $trackOrdersUrl = cafeSessionTrackUrl(
+        $sessionToken,
+        $activeOrders !== [] ? (int) $activeOrders[0]['order_id'] : 0
+    );
+    $sessionOrderUrl = cafeSessionOrderUrl($sessionToken);
+    $prefillGuestName = (string) ($session['nama_pelanggan'] ?? '');
+} else {
+    $cafeMode = false;
+    $sessionToken = '';
+    $activeOrders = $table ? fetchActiveCustomerOrders($table, $lang) : [];
+    $trackOrdersUrl = baseUrl(
+        'public/confirmation.php?meja=' . urlencode($nomorMeja)
+        . '&token=' . urlencode($token)
+        . ($activeOrders !== [] ? '&order=' . (int) $activeOrders[0]['order_id'] : '')
+    );
+    $sessionOrderUrl = '';
+    $prefillGuestName = '';
+}
 
 $i18nJs = [
     'cart_empty'    => t('cart_empty'),
@@ -54,6 +79,7 @@ $i18nJs = [
     'serving_type'  => t('serving_type'),
     'menu_search_ph' => t('menu_search_ph'),
     'menu_search_empty' => t('menu_search_empty'),
+    'cafe_link_copied' => t('cafe_link_copied'),
 ];
 
 if (!$table):
@@ -74,7 +100,7 @@ if (!$table):
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
     </div>
     <h1><?= e($config['app_name']) ?></h1>
-    <p><?= e(t('invalid_table')) ?></p>
+    <p><?= e($cafeMode || $sessionToken !== '' ? t('cafe_session_expired') : t('invalid_table')) ?></p>
   </div>
   <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
 </body>

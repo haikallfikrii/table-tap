@@ -1290,3 +1290,81 @@ a {
   color: var(--ink-muted);
   font-size: 1.05rem;
 }
+
+/* Cafe mode — entry + private link */
+.cafe-entry {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.cafe-lang {
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.cafe-entry-head {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.cafe-entry-head h1 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+
+.cafe-entry-head p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
+.cafe-entry-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.cafe-entry-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.1rem;
+}
+
+.cafe-foot {
+  text-align: center;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.cafe-link-btn {
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+
+.cafe-link-qr {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0;
+}
+
+.cafe-link-qr img {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.cafe-name-note {
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.customer-header {
+  flex-wrap: wrap;
+  gap: 8px;
+}

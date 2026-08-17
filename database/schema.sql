@@ -15,6 +15,8 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 DROP TABLE IF EXISTS `order_items`;
 DROP TABLE IF EXISTS `orders`;
+DROP TABLE IF EXISTS `verification_codes`;
+DROP TABLE IF EXISTS `customer_sessions`;
 DROP TABLE IF EXISTS `menu_photos`;
 DROP TABLE IF EXISTS `menu_items`;
 DROP TABLE IF EXISTS `tables`;
@@ -50,6 +52,9 @@ CREATE TABLE `shops` (
   `sst_enabled` TINYINT(1) NOT NULL DEFAULT 0,
   `sst_rate` DECIMAL(5,2) NOT NULL DEFAULT 6.00 COMMENT 'Percent, e.g. 6.00 = 6%',
   `fulfillment_mode` ENUM('waiter', 'self_pickup') NOT NULL DEFAULT 'waiter',
+  `ordering_mode` ENUM('table', 'cafe') NOT NULL DEFAULT 'table',
+  `shop_token` VARCHAR(64) DEFAULT NULL,
+  `cafe_verify` ENUM('email', 'none') NOT NULL DEFAULT 'email',
   `sound_mode` ENUM('until_cleared', 'count', 'duration') NOT NULL DEFAULT 'until_cleared',
   `sound_repeat_count` TINYINT UNSIGNED NOT NULL DEFAULT 8,
   `sound_duration_sec` SMALLINT UNSIGNED NOT NULL DEFAULT 45,
@@ -59,6 +64,7 @@ CREATE TABLE `shops` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_shop_slug` (`slug`),
+  UNIQUE KEY `uq_shop_token` (`shop_token`),
   KEY `idx_shop_status` (`status`),
   CONSTRAINT `fk_shops_package`
     FOREIGN KEY (`package_id`) REFERENCES `packages` (`id`)
@@ -101,6 +107,48 @@ CREATE TABLE `tables` (
   UNIQUE KEY `uq_shop_nomor_meja` (`shop_id`, `nomor_meja`),
   UNIQUE KEY `uq_token_akses` (`token_akses`),
   CONSTRAINT `fk_tables_shop`
+    FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Cafe mode — per-customer sessions & email OTP
+CREATE TABLE `customer_sessions` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `shop_id` INT UNSIGNED NOT NULL,
+  `session_token` VARCHAR(64) NOT NULL,
+  `table_id` INT UNSIGNED NOT NULL,
+  `nama_pelanggan` VARCHAR(40) NOT NULL,
+  `contact_hash` CHAR(64) DEFAULT NULL,
+  `verified_at` DATETIME DEFAULT NULL,
+  `expires_at` DATETIME NOT NULL,
+  `last_order_at` DATETIME DEFAULT NULL,
+  `status` ENUM('pending','active','blocked') NOT NULL DEFAULT 'pending',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_session_token` (`session_token`),
+  KEY `idx_session_shop` (`shop_id`, `status`, `expires_at`),
+  CONSTRAINT `fk_session_shop`
+    FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `fk_session_table`
+    FOREIGN KEY (`table_id`) REFERENCES `tables` (`id`)
+    ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `verification_codes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `shop_id` INT UNSIGNED NOT NULL,
+  `channel` ENUM('email') NOT NULL DEFAULT 'email',
+  `destination_hash` CHAR(64) NOT NULL,
+  `code_hash` VARCHAR(255) NOT NULL,
+  `attempts` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  `expires_at` DATETIME NOT NULL,
+  `consumed_at` DATETIME DEFAULT NULL,
+  `ip_hash` CHAR(64) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_verify_lookup` (`shop_id`, `destination_hash`, `consumed_at`),
+  CONSTRAINT `fk_verify_shop`
     FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
     ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -155,6 +203,7 @@ CREATE TABLE `orders` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `shop_id` INT UNSIGNED NOT NULL,
   `table_id` INT UNSIGNED NOT NULL,
+  `session_id` INT UNSIGNED DEFAULT NULL,
   `waktu_order` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `status_order` ENUM('menunggu', 'diproses', 'selesai', 'dibatalkan') NOT NULL DEFAULT 'menunggu',
   `status_bayar` ENUM('belum_bayar', 'lunas') NOT NULL DEFAULT 'belum_bayar',
@@ -173,6 +222,7 @@ CREATE TABLE `orders` (
   KEY `idx_shop_waktu` (`shop_id`, `waktu_order`),
   KEY `idx_polling` (`shop_id`, `id`, `status_order`),
   KEY `idx_retention` (`shop_id`, `status_bayar`, `waktu_order`),
+  KEY `idx_orders_session` (`session_id`),
   CONSTRAINT `fk_orders_shop`
     FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
     ON UPDATE CASCADE ON DELETE CASCADE,

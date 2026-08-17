@@ -7,6 +7,7 @@
 
   const pollUrl = root.dataset.pollUrl;
   const collectUrl = root.dataset.collectUrl;
+  const sessionToken = root.dataset.session || '';
   const interval = Number(root.dataset.interval) || 4000;
   const lang = root.dataset.lang || 'my';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
@@ -312,15 +313,20 @@
     stopLoop();
     btn.disabled = true;
     try {
+      const body = {
+        order: Number(btn.dataset.orderId || 0),
+        guest_token: btn.dataset.guestToken || '',
+      };
+      if (sessionToken) {
+        body.session = sessionToken;
+      } else {
+        body.meja = root.dataset.meja || '';
+        body.token = root.dataset.token || '';
+      }
       const res = await fetch(collectUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          order: Number(btn.dataset.orderId || 0),
-          meja: root.dataset.meja || '',
-          token: root.dataset.token || '',
-          guest_token: btn.dataset.guestToken || '',
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Failed');
