@@ -495,98 +495,67 @@
     }, 1400);
   }
 
-  /* ---------- All-in-one peek animation ---------- */
+  /* ---------- All-in-one orbit loop (status text only) ---------- */
   var aioStage = document.getElementById('aio-stage');
+  var aioVisual = aioStage && aioStage.querySelector('.aio-visual');
   var aioStatus = document.getElementById('aio-status');
-  var aioChips = aioStage ? aioStage.querySelectorAll('.aio-chip') : [];
-  var toolKeys = ['pos', 'calc', 'paper'];
-  var toolIdx = 0;
-  var toolTimer = null;
-  var printerTimer = null;
+  var aioKeys = ['printer', 'pos', 'calc', 'paper'];
   var aioLabels = {};
+  var aioIdx = 0;
+  var aioStatusTimer = null;
+  var aioStepMs = 4000;
 
-  aioChips.forEach(function (chip) {
-    var k = chip.getAttribute('data-aio');
-    var lab = chip.querySelector('.aio-label');
-    if (k && lab) aioLabels[k] = lab.textContent;
-  });
+  if (aioStage) {
+    aioKeys.forEach(function (key) {
+      var chip = aioStage.querySelector('.aio-chip[data-aio="' + key + '"]');
+      var lab = chip && chip.querySelector('.aio-label');
+      if (lab) aioLabels[key] = lab.textContent;
+    });
+  }
 
   function aioStatusText(key) {
     if (!aioStatus || !aioLabels[key]) return;
     var prefix = document.documentElement.lang === 'en' ? 'No longer needed: ' : 'Tak perlu lagi: ';
     aioStatus.textContent = prefix + aioLabels[key];
-  }
-
-  function peekAio(key) {
-    aioChips.forEach(function (chip) {
-      chip.classList.remove('is-peek', 'is-struck');
-    });
-    var chip = aioStage.querySelector('.aio-chip[data-aio="' + key + '"]');
-    if (!chip) return;
-    void chip.offsetWidth;
-    chip.classList.add('is-peek', 'is-struck');
-    aioStatusText(key);
-  }
-
-  function stopAioLoops() {
-    if (toolTimer) { clearInterval(toolTimer); toolTimer = null; }
-    if (printerTimer) { clearInterval(printerTimer); printerTimer = null; }
-    aioChips.forEach(function (chip) {
-      chip.classList.remove('is-peek', 'is-struck');
+    aioStage.querySelectorAll('.aio-chip').forEach(function (chip) {
+      chip.classList.toggle('is-active-label', chip.getAttribute('data-aio') === key);
     });
   }
 
-  function startAioLoops() {
-    stopAioLoops();
-    if (reduceMotion) {
-      peekAio('pos');
+  function stopAioStatus() {
+    if (aioStatusTimer) {
+      clearInterval(aioStatusTimer);
+      aioStatusTimer = null;
+    }
+    if (aioVisual) aioVisual.classList.remove('is-running');
+  }
+
+  function startAioStatus() {
+    stopAioStatus();
+    if (!aioStage || reduceMotion) {
+      aioStatusText(aioKeys[0]);
       return;
     }
-    peekAio(toolKeys[0]);
-    toolTimer = setInterval(function () {
-      toolIdx = (toolIdx + 1) % toolKeys.length;
-      peekAio(toolKeys[toolIdx]);
-    }, 3800);
-    printerTimer = setInterval(function () {
-      peekAio('printer');
-    }, 7600);
-    setTimeout(function () {
-      peekAio('printer');
-    }, 1900);
+    if (aioVisual) aioVisual.classList.add('is-running');
+    aioIdx = 0;
+    aioStatusText(aioKeys[0]);
+    aioStatusTimer = setInterval(function () {
+      aioIdx = (aioIdx + 1) % aioKeys.length;
+      aioStatusText(aioKeys[aioIdx]);
+    }, aioStepMs);
   }
 
-  if (aioStage && aioChips.length) {
-    aioChips.forEach(function (chip) {
-      chip.addEventListener('click', function () {
-        var k = chip.getAttribute('data-aio');
-        if (!k) return;
-        if (k !== 'printer') {
-          toolIdx = toolKeys.indexOf(k);
-          if (toolIdx < 0) return;
-        }
-        stopAioLoops();
-        peekAio(k);
-        if (!reduceMotion) {
-          toolTimer = setInterval(function () {
-            toolIdx = (toolIdx + 1) % toolKeys.length;
-            peekAio(toolKeys[toolIdx]);
-          }, 3800);
-          printerTimer = setInterval(function () {
-            peekAio('printer');
-          }, 7600);
-        }
-      });
-    });
+  if (aioStage) {
     if ('IntersectionObserver' in window) {
       var aioObs = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
-          if (entry.isIntersecting) startAioLoops();
-          else stopAioLoops();
+          if (entry.isIntersecting) startAioStatus();
+          else stopAioStatus();
         });
       }, { threshold: 0.2 });
       aioObs.observe(aioStage);
     } else {
-      startAioLoops();
+      startAioStatus();
     }
   }
 
