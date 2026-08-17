@@ -52,6 +52,14 @@ $trackOrdersUrl = $trackOrdersUrl ?? '';
   </a>
   <?php endif; ?>
 
+  <div class="menu-search-wrap">
+    <label class="menu-search" for="menu-search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <input type="search" id="menu-search" placeholder="<?= e(t('menu_search_ph')) ?>" autocomplete="off" enterkeyhint="search">
+    </label>
+    <p class="menu-search-empty" id="menu-search-empty" hidden><?= e(t('menu_search_empty')) ?></p>
+  </div>
+
   <nav class="category-tabs">
     <a href="#makanan" class="active"><?= e(t('makanan')) ?></a>
     <a href="#minuman"><?= e(t('minuman')) ?></a>
@@ -80,8 +88,14 @@ $trackOrdersUrl = $trackOrdersUrl ?? '';
                 'photos' => $photos,
                 'out' => $out,
             ];
+            $searchText = mb_strtolower(
+                ($item['nama_my'] ?? '') . ' '
+                . ($item['nama_en'] ?? '') . ' '
+                . ($item['deskripsi_my'] ?? '') . ' '
+                . ($item['deskripsi_en'] ?? '')
+            );
           ?>
-            <article class="menu-item<?= $out ? ' out' : '' ?>">
+            <article class="menu-item<?= $out ? ' out' : '' ?>" data-search="<?= e($searchText) ?>">
               <?php if (!empty($item['foto_url'])): ?>
                 <img class="menu-item-photo<?= $canGallery ? ' tap' : '' ?>" src="<?= e(baseUrl($item['foto_url'])) ?>" alt="<?= e($item['nama']) ?>" loading="lazy"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>>
               <?php else: ?>

@@ -380,5 +380,37 @@
     });
   });
 
+  // Menu search
+  const searchInput = document.getElementById('menu-search');
+  const searchEmpty = document.getElementById('menu-search-empty');
+
+  function applyMenuSearch() {
+    const q = (searchInput?.value || '').trim().toLowerCase();
+    let totalVisible = 0;
+    document.querySelectorAll('.menu-item').forEach(function (el) {
+      const text = el.getAttribute('data-search') || '';
+      const show = q === '' || text.indexOf(q) !== -1;
+      el.hidden = !show;
+      if (show) totalVisible++;
+    });
+    document.querySelectorAll('.menu-section').forEach(function (sec) {
+      const count = sec.querySelectorAll('.menu-item:not([hidden])').length;
+      sec.hidden = q !== '' && count === 0;
+    });
+    if (searchEmpty) {
+      searchEmpty.hidden = q === '' || totalVisible > 0;
+    }
+    if (q !== '') {
+      document.querySelectorAll('.category-tabs a').forEach(function (a) {
+        a.classList.remove('active');
+      });
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', applyMenuSearch);
+    searchInput.addEventListener('search', applyMenuSearch);
+  }
+
   refresh();
 })();

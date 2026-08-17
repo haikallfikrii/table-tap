@@ -26,14 +26,28 @@ function generateOrderGuestToken(): string
 
 function assertTableOrderRateLimit(int $tableId, int $shopId): void
 {
-    $stmt = db()->prepare(
-        'SELECT COUNT(*) FROM orders
+    // Burst anti-spam: max 4 submissions within 60 seconds (double-tap / bot)
+    $burst = db()->prepare(
+        "SELECT COUNT(*) FROM orders
          WHERE table_id = ? AND shop_id = ?
-           AND waktu_order >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)'
+           AND status_order != 'dibatalkan'
+           AND waktu_order >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)"
     );
-    $stmt->execute([$tableId, $shopId]);
-    if ((int) $stmt->fetchColumn() >= 10) {
+    $burst->execute([$tableId, $shopId]);
+    if ((int) $burst->fetchColumn() >= 4) {
         jsonError(t('order_rate_limited'), 429);
+    }
+
+    // Unpaid open orders cap — paid (lunas) orders do not count
+    $open = db()->prepare(
+        "SELECT COUNT(*) FROM orders
+         WHERE table_id = ? AND shop_id = ?
+           AND status_bayar = 'belum_bayar'
+           AND status_order NOT IN ('selesai', 'dibatalkan')"
+    );
+    $open->execute([$tableId, $shopId]);
+    if ((int) $open->fetchColumn() >= 15) {
+        jsonError(t('order_unpaid_limit'), 429);
     }
 }
 

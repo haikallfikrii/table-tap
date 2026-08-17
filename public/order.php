@@ -52,6 +52,8 @@ $i18nJs = [
     'dine_in'       => t('dine_in'),
     'takeaway'      => t('takeaway'),
     'serving_type'  => t('serving_type'),
+    'menu_search_ph' => t('menu_search_ph'),
+    'menu_search_empty' => t('menu_search_empty'),
 ];
 
 if (!$table):
