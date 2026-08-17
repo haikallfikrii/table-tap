@@ -397,8 +397,9 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
           <div class="aio-orbit" aria-hidden="true">
           <?php
           foreach ($aioItems as $aioIdx => [$aioKey, $aioLabel]):
+              $aioSlot = -1 * ($aioIdx * 360) / $aioCount;
           ?>
-          <div class="aio-sat" data-aio="<?= e($aioKey) ?>" style="--i:<?= (int) $aioIdx ?>">
+          <div class="aio-sat" data-aio="<?= e($aioKey) ?>" style="--i:<?= (int) $aioIdx ?>; --slot:<?= round($aioSlot, 2) ?>deg">
             <div class="aio-sat-arm">
               <div class="aio-chip-wrap">
                 <button type="button" class="aio-chip" data-aio="<?= e($aioKey) ?>" aria-label="<?= e($aioLabel) ?>">
