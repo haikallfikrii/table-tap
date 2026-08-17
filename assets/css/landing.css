@@ -982,12 +982,13 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 
 .aio-visual {
   --aio-orbit-r: 186px;
-  --aio-hub-top: 56px;
-  --aio-item-cycle: 48s;
+  --aio-hub-top: 54px;
+  --aio-lap: 16s;
+  --aio-cycle: 48s;
   --aio-count: 8;
   position: relative;
-  width: min(100%, 420px);
-  height: 430px;
+  width: min(100%, 460px);
+  height: 460px;
   margin: 0 auto 20px;
 }
 
@@ -1022,6 +1023,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: absolute;
   inset: 0;
   z-index: 10;
+  animation: aio-lap-spin var(--aio-lap) linear infinite;
+  animation-play-state: paused;
+  will-change: transform;
 }
 
 .aio-hub {
@@ -1065,24 +1069,19 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   top: 50%;
   width: 0;
   height: 0;
-  transform: rotate(-90deg);
+  transform: rotate(var(--slot));
   pointer-events: none;
-  animation: aio-spinner-travel var(--aio-item-cycle) linear infinite;
-  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
-  animation-play-state: paused;
-  will-change: transform;
 }
 
 .aio-sat-arm {
-  animation: aio-spinner-radial var(--aio-item-cycle) ease-in-out infinite;
-  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
+  animation: aio-queue-radial var(--aio-cycle) ease-in-out infinite both;
+  animation-delay: calc(var(--i) * var(--aio-lap) / var(--aio-count));
   animation-play-state: paused;
   will-change: transform, opacity;
 }
 
 .aio-chip-wrap {
-  animation: aio-spinner-upright var(--aio-item-cycle) linear infinite;
-  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
+  animation: aio-keep-upright var(--aio-lap) linear infinite;
   animation-play-state: paused;
   will-change: transform;
 }
@@ -1103,8 +1102,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   cursor: default;
   transform: translate(-50%, -50%);
   will-change: filter, border-color;
-  animation: aio-chip-strike var(--aio-item-cycle) ease-in-out infinite;
-  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
+  animation: aio-chip-strike var(--aio-cycle) ease-in-out infinite both;
+  animation-delay: calc(var(--i) * var(--aio-lap) / var(--aio-count));
   animation-play-state: paused;
 }
 
@@ -1119,8 +1118,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   border-radius: 1px;
   transform: scaleX(0);
   transform-origin: left center;
-  animation: aio-strike-draw var(--aio-item-cycle) ease-in-out infinite;
-  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
+  animation: aio-strike-draw var(--aio-cycle) ease-in-out infinite both;
+  animation-delay: calc(var(--i) * var(--aio-lap) / var(--aio-count));
   animation-play-state: paused;
   pointer-events: none;
 }
@@ -1136,8 +1135,8 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   border-radius: 1px;
   transform: rotate(-52deg) scaleX(0);
   transform-origin: left center;
-  animation: aio-strike-draw-alt var(--aio-item-cycle) ease-in-out infinite;
-  animation-delay: calc(var(--i) * var(--aio-item-cycle) / var(--aio-count) * -1);
+  animation: aio-strike-draw-alt var(--aio-cycle) ease-in-out infinite both;
+  animation-delay: calc(var(--i) * var(--aio-lap) / var(--aio-count));
   animation-play-state: paused;
 }
 
@@ -1159,7 +1158,7 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   color: var(--danger);
 }
 
-.aio-visual.is-running .aio-sat,
+.aio-visual.is-running .aio-orbit,
 .aio-visual.is-running .aio-sat-arm,
 .aio-visual.is-running .aio-chip-wrap,
 .aio-visual.is-running .aio-chip,
@@ -1176,77 +1175,69 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: relative;
 }
 
-/* Spinner: one-by-one from hub top → 2 slow laps on dashed ring → back in through top */
-@keyframes aio-spinner-travel {
-  0%, 2% { transform: rotate(-90deg); }
-  3%, 5% { transform: rotate(-90deg); }
-  9%, 10% { transform: rotate(-90deg); }
-  44% { transform: rotate(270deg); }
-  78% { transform: rotate(630deg); }
-  82%, 86% { transform: rotate(-90deg); }
-  88%, 100% { transform: rotate(-90deg); }
+/* Ring turns once per lap; each tool joins at the top one lap-slot after the previous.
+   Item i pops out of the hub top at i * lap / count, rides 2 laps, then is pulled
+   back in through the hub top — a queue of tools chasing each other like a loader. */
+@keyframes aio-lap-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-@keyframes aio-spinner-upright {
-  0%, 2% { transform: rotate(90deg); }
-  3%, 10% { transform: rotate(90deg); }
-  44% { transform: rotate(-270deg); }
-  78% { transform: rotate(-630deg); }
-  82%, 100% { transform: rotate(90deg); }
+@keyframes aio-keep-upright {
+  from { transform: rotate(calc(-1 * var(--slot))); }
+  to { transform: rotate(calc(-1 * var(--slot) - 360deg)); }
 }
 
-@keyframes aio-spinner-radial {
-  0%, 2% {
+@keyframes aio-queue-radial {
+  0% {
     transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.08);
     opacity: 0;
   }
-  4%, 6% {
-    transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.62);
-    opacity: 0.75;
+  0.8% {
+    transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.55);
+    opacity: 0.85;
   }
-  9%, 10% {
+  2.4%, 63% {
     transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1);
     opacity: 1;
   }
-  76%, 78% {
-    transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1);
-    opacity: 1;
+  65.2% {
+    transform: translateY(calc(-1 * var(--aio-orbit-r) * 0.7)) scale(0.72);
+    opacity: 0.8;
   }
-  82%, 85% {
-    transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.45);
-    opacity: 0.45;
+  66.7% {
+    transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.28);
+    opacity: 0.28;
   }
-  87%, 100% {
+  67.6%, 100% {
     transform: translateY(calc(-1 * var(--aio-hub-top))) scale(0.08);
     opacity: 0;
   }
 }
 
 @keyframes aio-chip-strike {
-  0%, 43%, 81%, 100% {
+  0%, 34%, 67%, 100% {
     filter: grayscale(0);
     border-color: var(--line);
   }
-  45%, 78% {
-    filter: grayscale(0.55);
+  37%, 62% {
+    filter: grayscale(0.5);
     border-color: rgba(220, 53, 69, 0.45);
   }
 }
 
 @keyframes aio-strike-draw {
-  0%, 43%, 81%, 100% { transform: scaleX(0); opacity: 0; }
-  45% { transform: scaleX(0); opacity: 1; }
-  47%, 76% { transform: scaleX(1); opacity: 1; }
-  79% { transform: scaleX(1); opacity: 0.35; }
-  81% { transform: scaleX(0); opacity: 0; }
+  0%, 34%, 66%, 100% { transform: scaleX(0); opacity: 0; }
+  36% { transform: scaleX(0); opacity: 1; }
+  38%, 62% { transform: scaleX(1); opacity: 1; }
+  64% { transform: scaleX(1); opacity: 0.3; }
 }
 
 @keyframes aio-strike-draw-alt {
-  0%, 43%, 81%, 100% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
-  45% { transform: rotate(-52deg) scaleX(0); opacity: 1; }
-  47%, 76% { transform: rotate(-52deg) scaleX(1); opacity: 1; }
-  79% { transform: rotate(-52deg) scaleX(1); opacity: 0.35; }
-  81% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
+  0%, 34%, 66%, 100% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
+  36% { transform: rotate(-52deg) scaleX(0); opacity: 1; }
+  38%, 62% { transform: rotate(-52deg) scaleX(1); opacity: 1; }
+  64% { transform: rotate(-52deg) scaleX(1); opacity: 0.3; }
 }
 
 @keyframes aio-glow-pulse {
@@ -1539,12 +1530,18 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   50% { left: 82px; top: 59px; }
 }
 
-@media (max-width: 800px) {
+@media (max-width: 560px) {
   .aio-visual {
-    --aio-orbit-r: 168px;
-    --aio-hub-top: 52px;
-    height: 410px;
+    --aio-orbit-r: 124px;
+    --aio-hub-top: 46px;
+    height: 320px;
   }
+  .aio-hub { width: 108px; padding: 12px 10px; border-radius: 20px; }
+  .aio-hub strong { font-size: 0.85rem; }
+  .aio-hub small { font-size: 0.64rem; }
+  .aio-chip { width: 64px; padding: 6px 4px 8px; border-radius: 12px; }
+  .aio-ico { width: 26px; height: 22px; }
+  .aio-label { font-size: 0.54rem; }
 }
 
 /* ---------- Steps ---------- */
@@ -3075,20 +3072,18 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .reveal { opacity: 1; transform: none; }
   .tb-scene .btn,
   .ps-send { animation: none !important; }
-  .aio-chip.is-peek { animation: none !important; opacity: 1; transform: translate(-50%, calc(-50% - 80px)) scale(1); }
-  .aio-chip-printer.is-peek { transform: translate(calc(-50% - 100px), -50%) scale(1); }
-  .aio-sat,
+  .aio-orbit,
   .aio-sat-arm,
   .aio-chip-wrap,
   .aio-chip,
   .aio-strike-line,
   .aio-strike-line::after { animation: none !important; }
-  .aio-sat { transform: rotate(-90deg); }
+  .aio-orbit { transform: none; }
   .aio-sat-arm {
     transform: translateY(calc(-1 * var(--aio-orbit-r))) scale(1);
     opacity: 1;
   }
-  .aio-chip-wrap { transform: rotate(90deg); }
+  .aio-chip-wrap { transform: rotate(calc(-1 * var(--slot))); }
   .aio-chip { transform: translate(-50%, -50%); }
   .aio-strike-line,
   .aio-strike-line::after {

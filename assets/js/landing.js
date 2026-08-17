@@ -506,8 +506,8 @@
   var aioStrikeTimer = null;
   var aioStrikeReleaseTimer = null;
   var aioCycleMs = 48000;
-  var aioStrikeAtMs = 21600;
-  var aioStrikeHoldMs = 16800;
+  var aioStrikeAtMs = 16000;
+  var aioStrikeHoldMs = 29000;
 
   function aioSetActiveLabel(on) {
     aioChips.forEach(function (chip) {
