@@ -29,6 +29,10 @@ $pageSubtitle = $cafeBrowseMode
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#e85d04">
   <title><?= e($brand) ?> — <?= e($cafeMode ? t('cafe_order_title') : t('table') . ' ' . $table['nomor_meja']) ?></title>
+  <?php
+  require_once dirname(__DIR__) . '/includes/seo.php';
+  seoFaviconLinks();
+  ?>
   <link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
 </head>
 <body>

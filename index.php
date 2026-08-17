@@ -133,8 +133,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#e85d04">
-  <link rel="icon" href="<?= e($logo) ?>">
-  <link rel="apple-touch-icon" href="<?= e($iconLarge) ?>">
+  <?php seoFaviconLinks(); ?>
   <?php seoHead([
       'title' => $config['app_name'] . ' — ' . t('lp_badge'),
       'description' => t('lp_hero_sub'),

@@ -10,6 +10,9 @@ $base = rtrim(appBaseUrl(), '/');
 
 echo "User-agent: *\n";
 echo "Allow: /\n";
+echo "Allow: /favicon.ico\n";
+echo "Allow: /assets/\n";
+echo "Allow: /site.webmanifest\n";
 echo "Disallow: /admin/\n";
 echo "Disallow: /cron/\n";
 echo "Disallow: /includes/\n";

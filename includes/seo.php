@@ -7,6 +7,26 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/helpers.php';
 
+/** Stable brand image URL — no cache-bust query string (Google needs a fixed favicon URL). */
+function brandIconUrl(string $file): string
+{
+    return rtrim(appBaseUrl(), '/') . '/assets/img/brand/' . ltrim($file, '/');
+}
+
+/** Favicon + PWA icons for Google Search, Safari, and browser tabs. */
+function seoFaviconLinks(): void
+{
+    $base = rtrim(appBaseUrl(), '/');
+    ?>
+  <link rel="icon" href="<?= e($base) ?>/favicon.ico" sizes="48x48">
+  <link rel="icon" type="image/png" sizes="48x48" href="<?= e(brandIconUrl('tabletap-icon-48.png')) ?>">
+  <link rel="icon" type="image/png" sizes="96x96" href="<?= e(brandIconUrl('tabletap-icon-96.png')) ?>">
+  <link rel="icon" type="image/png" sizes="192x192" href="<?= e(brandIconUrl('tabletap-icon-192.png')) ?>">
+  <link rel="apple-touch-icon" sizes="180x180" href="<?= e(brandIconUrl('apple-touch-icon.png')) ?>">
+  <link rel="manifest" href="<?= e($base) ?>/site.webmanifest">
+    <?php
+}
+
 /** @param array{title:string,description:string,path?:string,image?:string,type?:string,robots?:string,noindex?:bool} $opts */
 function seoHead(array $opts): void
 {
