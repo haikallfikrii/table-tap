@@ -3,6 +3,13 @@ Options -Indexes
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
+
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
+  RewriteRule ^robots\.txt$ robots.php [L]
+  RewriteRule ^blog/?$ blog/index.php [L,QSA]
+  RewriteRule ^blog/([a-z0-9-]+)/?$ blog/post.php?slug=$1 [L,QSA]
+
+  RewriteRule ^content/ - [F,L]
 </IfModule>
 
 # Block access to sensitive extensions if misplaced

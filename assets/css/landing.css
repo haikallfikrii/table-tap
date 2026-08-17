@@ -2377,6 +2377,39 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .case-scene, .pickup-scene, .waiter-scene { grid-template-columns: 1fr; justify-items: center; }
 }
 
+.lp-blog-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.lp-blog-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+}
+
+.lp-blog-card h3 {
+  font-size: 1.05rem;
+  margin: 0 0 10px;
+  line-height: 1.35;
+}
+
+.lp-blog-card h3 a:hover { color: var(--brand); }
+
+.lp-blog-card p {
+  margin: 0 0 14px;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.lp-blog-link {
+  font-weight: 600;
+  color: var(--brand);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

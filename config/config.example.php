@@ -48,4 +48,7 @@ return [
     'chatlm_enabled' => true,
     'chatlm_base_url' => 'https://chatlm.tech',
     'chatlm_api_key' => 'df78d68075cf72f71568061bf7e17726424993dcd938fb16b1331cd12dd63b41',
+
+    // Google Search Console — paste content value from HTML tag verification method
+    'google_site_verification' => '',
 ];
