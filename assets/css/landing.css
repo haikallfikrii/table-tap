@@ -981,12 +981,13 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 }
 
 .aio-visual {
-  --aio-r: 132px;
-  --aio-cycle: 16s;
-  --aio-spin: 9s;
+  --aio-r: 172px;
+  --aio-hub-top: 56px;
+  --aio-cycle: 26s;
+  --aio-count: 8;
   position: relative;
-  width: min(100%, 380px);
-  height: 360px;
+  width: min(100%, 400px);
+  height: 420px;
   margin: 0 auto 20px;
 }
 
@@ -994,9 +995,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: absolute;
   left: 50%;
   top: 50%;
-  width: calc(var(--aio-r) * 2 + 28px);
-  height: calc(var(--aio-r) * 2 + 28px);
-  margin: calc(-1 * (var(--aio-r) + 14px)) 0 0 calc(-1 * (var(--aio-r) + 14px));
+  width: calc(var(--aio-r) * 2 + 32px);
+  height: calc(var(--aio-r) * 2 + 32px);
+  margin: calc(-1 * (var(--aio-r) + 16px)) 0 0 calc(-1 * (var(--aio-r) + 16px));
   border-radius: 50%;
   border: 1px dashed rgba(232, 93, 4, 0.22);
   z-index: 1;
@@ -1008,9 +1009,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 220px;
-  height: 220px;
-  margin: -110px 0 0 -110px;
+  width: calc(var(--aio-r) * 2 + 20px);
+  height: calc(var(--aio-r) * 2 + 20px);
+  margin: calc(-1 * (var(--aio-r) + 10px)) 0 0 calc(-1 * (var(--aio-r) + 10px));
   border-radius: 50%;
   background: radial-gradient(circle, rgba(232, 93, 4, 0.14) 0%, transparent 70%);
   z-index: 0;
@@ -1021,7 +1022,7 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: absolute;
   inset: 0;
   z-index: 10;
-  animation: aio-orbit-spin var(--aio-spin) linear infinite;
+  animation: aio-orbit-spin var(--aio-cycle) linear infinite;
   animation-play-state: paused;
   will-change: transform;
 }
@@ -1044,6 +1045,20 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   animation: aio-hub-pulse 2.4s ease-in-out infinite;
 }
 
+.aio-hub::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  width: 14px;
+  height: 6px;
+  margin-left: -7px;
+  border-radius: 6px 6px 2px 2px;
+  background: rgba(232, 93, 4, 0.35);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
 .aio-hub img { border-radius: 12px; }
 .aio-hub strong { font-size: 0.95rem; }
 .aio-hub small { font-size: 0.72rem; color: var(--ink-soft); font-weight: 600; }
@@ -1054,18 +1069,21 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   top: 50%;
   width: 0;
   height: 0;
-  transform: rotate(var(--angle));
+  transform: rotate(-90deg);
   pointer-events: none;
+  animation: aio-sat-fan var(--aio-cycle) cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+  animation-play-state: paused;
+  will-change: transform;
 }
 
 .aio-sat-arm {
-  animation: aio-arm-pulse var(--aio-cycle) cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
+  animation: aio-arm-cycle var(--aio-cycle) cubic-bezier(0.22, 0.61, 0.36, 1) infinite;
   animation-play-state: paused;
   will-change: transform, opacity;
 }
 
 .aio-chip-wrap {
-  animation: aio-counter-orbit var(--aio-spin) linear infinite;
+  animation: aio-counter-orbit var(--aio-cycle) linear infinite;
   animation-play-state: paused;
   will-change: transform;
 }
@@ -1085,7 +1103,7 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   pointer-events: auto;
   cursor: default;
   transform: translateX(-50%);
-  will-change: transform, opacity, filter;
+  will-change: filter, border-color;
   animation: aio-chip-strike var(--aio-cycle) ease-in-out infinite;
   animation-play-state: paused;
 }
@@ -1140,6 +1158,7 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 }
 
 .aio-visual.is-running .aio-orbit,
+.aio-visual.is-running .aio-sat,
 .aio-visual.is-running .aio-sat-arm,
 .aio-visual.is-running .aio-chip-wrap,
 .aio-visual.is-running .aio-chip,
@@ -1156,69 +1175,81 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   position: relative;
 }
 
-/* All tools emerge, orbit together, strike together, absorb together */
+/* Top exit → fan out → 2 orbits (show, then strike) → one-by-one back in */
 @keyframes aio-orbit-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  0%, 5% { transform: rotate(0deg); }
+  45% { transform: rotate(360deg); }
+  83% { transform: rotate(720deg); }
+  100% { transform: rotate(720deg); }
 }
 
 @keyframes aio-counter-orbit {
-  from { transform: rotate(calc(-1 * var(--angle))); }
-  to { transform: rotate(calc(-1 * var(--angle) - 360deg)); }
+  0%, 5% { transform: rotate(calc(-1 * var(--angle) + 90deg)); }
+  45% { transform: rotate(calc(-1 * var(--angle) + 90deg - 360deg)); }
+  83% { transform: rotate(calc(-1 * var(--angle) + 90deg - 720deg)); }
+  100% { transform: rotate(calc(-1 * var(--angle) + 90deg - 720deg)); }
 }
 
-@keyframes aio-arm-pulse {
-  0%, 92%, 100% {
-    transform: translate(-50%, 0) scale(0.12);
+@keyframes aio-sat-fan {
+  0%, 3% { transform: rotate(-90deg); }
+  4% { transform: rotate(-90deg); }
+  5%, calc(82% + var(--i) * 1.5%) { transform: rotate(var(--angle)); }
+  calc(84% + var(--i) * 1.5%) { transform: rotate(-90deg); }
+  calc(85% + var(--i) * 1.5%), 100% { transform: rotate(-90deg); }
+}
+
+@keyframes aio-arm-cycle {
+  0%, 2% {
+    transform: translate(-50%, calc(-1 * var(--aio-hub-top))) scale(0.1);
     opacity: 0;
   }
-  5% {
-    transform: translate(-50%, calc(-1 * var(--aio-r) * 0.2)) scale(0.5);
-    opacity: 0.45;
+  3%, 4% {
+    transform: translate(-50%, calc(-1 * var(--aio-hub-top))) scale(0.55);
+    opacity: 0.65;
   }
-  9%, 66% {
+  5%, calc(81% + var(--i) * 1.5%) {
     transform: translate(-50%, calc(-1 * var(--aio-r))) scale(1);
     opacity: 1;
   }
-  72%, 78% {
-    transform: translate(-50%, calc(-1 * var(--aio-r))) scale(0.96);
-    opacity: 0.92;
+  calc(83% + var(--i) * 1.5%) {
+    transform: translate(-50%, calc(-1 * var(--aio-hub-top))) scale(0.45);
+    opacity: 0.55;
   }
-  86% {
-    transform: translate(-50%, calc(-1 * var(--aio-r) * 0.18)) scale(0.42);
-    opacity: 0.3;
+  calc(84.5% + var(--i) * 1.5%) {
+    transform: translate(-50%, calc(-1 * var(--aio-hub-top))) scale(0.1);
+    opacity: 0;
   }
-  92% {
-    transform: translate(-50%, 0) scale(0.12);
+  calc(85% + var(--i) * 1.5%), 100% {
+    transform: translate(-50%, calc(-1 * var(--aio-hub-top))) scale(0.08);
     opacity: 0;
   }
 }
 
 @keyframes aio-chip-strike {
-  0%, 68%, 88%, 100% {
+  0%, 44%, 84%, 100% {
     filter: grayscale(0);
     border-color: var(--line);
   }
-  72%, 82% {
+  46%, 82% {
     filter: grayscale(0.55);
     border-color: rgba(220, 53, 69, 0.45);
   }
 }
 
 @keyframes aio-strike-draw {
-  0%, 68%, 88%, 100% { transform: scaleX(0); opacity: 0; }
-  71% { transform: scaleX(0); opacity: 1; }
-  73%, 81% { transform: scaleX(1); opacity: 1; }
-  85% { transform: scaleX(1); opacity: 0.35; }
-  88% { transform: scaleX(0); opacity: 0; }
+  0%, 44%, 84%, 100% { transform: scaleX(0); opacity: 0; }
+  46% { transform: scaleX(0); opacity: 1; }
+  48%, 80% { transform: scaleX(1); opacity: 1; }
+  83% { transform: scaleX(1); opacity: 0.35; }
+  84% { transform: scaleX(0); opacity: 0; }
 }
 
 @keyframes aio-strike-draw-alt {
-  0%, 68%, 88%, 100% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
-  71% { transform: rotate(-52deg) scaleX(0); opacity: 1; }
-  73%, 81% { transform: rotate(-52deg) scaleX(1); opacity: 1; }
-  85% { transform: rotate(-52deg) scaleX(1); opacity: 0.35; }
-  88% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
+  0%, 44%, 84%, 100% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
+  46% { transform: rotate(-52deg) scaleX(0); opacity: 1; }
+  48%, 80% { transform: rotate(-52deg) scaleX(1); opacity: 1; }
+  83% { transform: rotate(-52deg) scaleX(1); opacity: 0.35; }
+  84% { transform: rotate(-52deg) scaleX(0); opacity: 0; }
 }
 
 @keyframes aio-glow-pulse {
@@ -1513,8 +1544,9 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
 
 @media (max-width: 800px) {
   .aio-visual {
-    --aio-r: 118px;
-    height: 340px;
+    --aio-r: 158px;
+    --aio-hub-top: 52px;
+    height: 400px;
   }
 }
 
@@ -3049,17 +3081,19 @@ h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.1; margin: 0; }
   .aio-chip.is-peek { animation: none !important; opacity: 1; transform: translate(-50%, calc(-50% - 80px)) scale(1); }
   .aio-chip-printer.is-peek { transform: translate(calc(-50% - 100px), -50%) scale(1); }
   .aio-orbit,
+  .aio-sat,
   .aio-sat-arm,
   .aio-chip-wrap,
   .aio-chip,
   .aio-strike-line,
   .aio-strike-line::after { animation: none !important; }
   .aio-orbit { transform: none; }
+  .aio-sat { transform: rotate(var(--angle)); }
   .aio-sat-arm {
     transform: translate(-50%, calc(-1 * var(--aio-r))) scale(1);
     opacity: 1;
   }
-  .aio-chip-wrap { transform: rotate(calc(-1 * var(--angle))); }
+  .aio-chip-wrap { transform: rotate(calc(-1 * var(--angle) + 90deg)); }
   .aio-strike-line,
   .aio-strike-line::after {
     transform: scaleX(1);
