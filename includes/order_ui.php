@@ -69,6 +69,16 @@ $pageSubtitle = $cafeBrowseMode
       <span class="brand-table"><?= e($pageSubtitle) ?></span>
     </div>
     <div class="header-actions">
+      <button
+        type="button"
+        class="menu-search-toggle"
+        id="menu-search-toggle"
+        aria-label="<?= e(t('search')) ?>"
+        aria-expanded="false"
+        aria-controls="menu-search-panel"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
       <?php if ($cafeMode && !$staffMode && $sessionToken !== ''): ?>
       <button type="button" class="btn btn-ghost btn-sm cafe-link-btn" id="btn-my-link" title="<?= e(t('cafe_my_link')) ?>"><?= e(t('cafe_my_link')) ?></button>
       <?php endif; ?>
@@ -85,15 +95,17 @@ $pageSubtitle = $cafeBrowseMode
   </a>
   <?php endif; ?>
 
-  <div class="menu-search-wrap">
-    <label class="menu-search" for="menu-search">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      <input type="search" id="menu-search" placeholder="<?= e(t('menu_search_ph')) ?>" autocomplete="off" enterkeyhint="search">
-    </label>
-    <p class="menu-search-empty" id="menu-search-empty" hidden><?= e(t('menu_search_empty')) ?></p>
-  </div>
+  <div class="menu-sticky-bar" id="menu-sticky-bar">
+    <div class="menu-search-panel" id="menu-search-panel" aria-hidden="true">
+      <label class="menu-search" for="menu-search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="search" id="menu-search" placeholder="<?= e(t('menu_search_ph')) ?>" autocomplete="off" enterkeyhint="search">
+        <button type="button" class="menu-search-clear" id="menu-search-clear" aria-label="<?= e(t('close')) ?>" hidden>&times;</button>
+      </label>
+      <p class="menu-search-empty" id="menu-search-empty" hidden><?= e(t('menu_search_empty')) ?></p>
+    </div>
 
-  <nav class="category-tabs">
+    <nav class="category-tabs" id="category-tabs" aria-label="<?= e(t('category')) ?>">
     <?php
       $menuCategories = $menu['categories'] ?? [];
       if ($menuCategories === [] && isset($menu['makanan'])) {
@@ -106,7 +118,8 @@ $pageSubtitle = $cafeBrowseMode
     ?>
       <a href="#cat-<?= e((string) $cat['kod']) ?>" class="<?= $i === 0 ? 'active' : '' ?>"><?= e((string) $cat['label']) ?></a>
     <?php endforeach; ?>
-  </nav>
+    </nav>
+  </div>
 
   <?php foreach ($menuCategories as $cat): ?>
     <section class="menu-section" id="cat-<?= e((string) $cat['kod']) ?>">
@@ -132,7 +145,8 @@ $pageSubtitle = $cafeBrowseMode
                 'out' => $out,
             ];
             $searchText = mb_strtolower(
-                ($item['nama_my'] ?? '') . ' '
+                ($item['nama'] ?? '') . ' '
+                . ($item['nama_my'] ?? '') . ' '
                 . ($item['nama_en'] ?? '') . ' '
                 . ($item['deskripsi_my'] ?? '') . ' '
                 . ($item['deskripsi_en'] ?? '')
