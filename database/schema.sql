@@ -19,6 +19,7 @@ DROP TABLE IF EXISTS `verification_codes`;
 DROP TABLE IF EXISTS `customer_sessions`;
 DROP TABLE IF EXISTS `menu_photos`;
 DROP TABLE IF EXISTS `menu_items`;
+DROP TABLE IF EXISTS `menu_categories`;
 DROP TABLE IF EXISTS `tables`;
 DROP TABLE IF EXISTS `expenses`;
 DROP TABLE IF EXISTS `users`;
@@ -180,6 +181,26 @@ CREATE TABLE `verification_codes` (
     ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Customer menu tabs (Pro custom: Western, Burger, Top picks, …)
+CREATE TABLE `menu_categories` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `shop_id` INT UNSIGNED NOT NULL,
+  `kod` VARCHAR(40) NOT NULL,
+  `nama_my` VARCHAR(80) NOT NULL,
+  `nama_en` VARCHAR(80) NOT NULL,
+  `kind` ENUM('makanan', 'minuman') NOT NULL DEFAULT 'makanan',
+  `is_system` TINYINT(1) NOT NULL DEFAULT 0,
+  `urutan` INT NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_shop_menu_cat_kod` (`shop_id`, `kod`),
+  KEY `idx_menu_cat_shop` (`shop_id`, `is_active`, `urutan`),
+  CONSTRAINT `fk_menu_categories_shop`
+    FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- --------------------------------------------------------
 -- Menu
 -- --------------------------------------------------------
@@ -193,6 +214,7 @@ CREATE TABLE `menu_items` (
   `harga` DECIMAL(10,2) NOT NULL,
   `kategori` ENUM('makanan', 'minuman') NOT NULL,
   `station_id` INT UNSIGNED DEFAULT NULL,
+  `menu_category_id` INT UNSIGNED DEFAULT NULL,
   `foto_url` VARCHAR(255) DEFAULT NULL,
   `status_stok` ENUM('tersedia', 'habis') NOT NULL DEFAULT 'tersedia',
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
@@ -202,11 +224,15 @@ CREATE TABLE `menu_items` (
   PRIMARY KEY (`id`),
   KEY `idx_shop_kategori_stok` (`shop_id`, `kategori`, `status_stok`, `is_active`),
   KEY `idx_menu_station` (`shop_id`, `station_id`),
+  KEY `idx_menu_category` (`shop_id`, `menu_category_id`),
   CONSTRAINT `fk_menu_shop`
     FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
     ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT `fk_menu_station`
     FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL,
+  CONSTRAINT `fk_menu_category`
+    FOREIGN KEY (`menu_category_id`) REFERENCES `menu_categories` (`id`)
     ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -341,6 +367,10 @@ INSERT INTO `stations` (`shop_id`, `kod`, `nama_my`, `nama_en`, `is_system`, `ur
 (@shop_id, 'dapur', 'Dapur', 'Kitchen', 1, 1, 1),
 (@shop_id, 'minuman', 'Minuman', 'Drinks', 1, 2, 1);
 
+INSERT INTO `menu_categories` (`shop_id`, `kod`, `nama_my`, `nama_en`, `kind`, `is_system`, `urutan`, `is_active`) VALUES
+(@shop_id, 'makanan', 'Makanan', 'Food', 'makanan', 1, 1, 1),
+(@shop_id, 'minuman', 'Minuman', 'Drinks', 'minuman', 1, 2, 1);
+
 INSERT INTO `users` (`shop_id`, `username`, `password_hash`, `role`, `nama_paparan`) VALUES
 (@shop_id, 'owner',   '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'owner',   'Pemilik Demo'),
 (@shop_id, 'kasir',   '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'kasir',   'Kasir'),
@@ -368,4 +398,9 @@ INSERT INTO `menu_items` (`shop_id`, `nama_my`, `nama_en`, `deskripsi_my`, `desk
 UPDATE `menu_items` mi
 INNER JOIN `stations` s ON s.shop_id = mi.shop_id AND s.kod = IF(mi.kategori = 'minuman', 'minuman', 'dapur')
 SET mi.station_id = s.id
+WHERE mi.shop_id = @shop_id;
+
+UPDATE `menu_items` mi
+INNER JOIN `menu_categories` mc ON mc.shop_id = mi.shop_id AND mc.kod = mi.kategori
+SET mi.menu_category_id = mc.id
 WHERE mi.shop_id = @shop_id;

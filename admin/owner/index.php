@@ -143,6 +143,10 @@ function ownerOpsChip(string $label, int $n, string $id, string $mod = ''): void
     <div class="table-num" style="font-size:1.4rem"><?= e(t('reports')) ?></div>
     <p class="order-meta"><?= e(t('income')) ?> / <?= e(t('expenses')) ?></p>
   </a>
+  <a class="order-card" href="<?= e(baseUrl('admin/owner/categories.php')) ?>" style="text-decoration:none">
+    <div class="table-num" style="font-size:1.4rem"><?= e(t('manage_menu_categories')) ?></div>
+    <p class="order-meta"><?= e(t('menu_categories_hint_short')) ?></p>
+  </a>
   <a class="order-card" href="<?= e(baseUrl('admin/owner/stations.php')) ?>" style="text-decoration:none">
     <div class="table-num" style="font-size:1.4rem"><?= e(t('manage_stations')) ?></div>
     <p class="order-meta"><?= e(t('stations_hint_short')) ?></p>
