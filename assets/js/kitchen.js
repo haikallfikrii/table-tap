@@ -8,6 +8,7 @@
   const pollUrl = root.dataset.pollUrl;
   const updateUrl = root.dataset.updateUrl;
   const kategori = root.dataset.kategori || 'makanan';
+  const stationId = root.dataset.stationId || '';
   const interval = Number(root.dataset.interval) || 3000;
   const lang = root.dataset.lang || 'my';
   const fulfillment = root.dataset.fulfillment || 'waiter';
@@ -116,6 +117,7 @@
     try {
       const url = pollUrl +
         '?kategori=' + encodeURIComponent(kategori) +
+        (stationId ? ('&station_id=' + encodeURIComponent(stationId)) : '') +
         '&since_id=' + encodeURIComponent(String(sinceId)) +
         '&lang=' + encodeURIComponent(lang);
       const res = await TableTapLive.fetch(url);

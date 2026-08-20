@@ -96,24 +96,18 @@ function ownerOpsChip(string $label, int $n, string $id, string $mod = ''): void
 <div class="ops-board" id="ops-board"
      data-poll-url="<?= e(baseUrl('admin/api/owner_ops_poll.php')) ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>">
-  <a class="ops-card<?= $ops['kitchen']['items'] > 0 ? ' is-busy' : '' ?>" id="ops-card-kitchen" href="<?= e(baseUrl('admin/dapur.php')) ?>">
-    <div class="ops-kicker"><?= e(t('ops_kitchen')) ?></div>
-    <div class="ops-value"><span id="ops-kitchen-items"><?= (int) $ops['kitchen']['items'] ?></span></div>
-    <div class="ops-sub"><span id="ops-kitchen-orders"><?= (int) $ops['kitchen']['orders'] ?></span> <?= e(t('ops_orders_n')) ?></div>
-    <div class="ops-chips">
-      <?php ownerOpsChip(t('ops_queue'), (int) $ops['kitchen']['menunggu'], 'ops-kitchen-queue'); ?>
-      <?php ownerOpsChip(t('ops_cooking'), (int) $ops['kitchen']['sedang_dimasak'], 'ops-kitchen-cook', 'cook'); ?>
-    </div>
-  </a>
-  <a class="ops-card<?= $ops['drinks']['items'] > 0 ? ' is-busy' : '' ?>" id="ops-card-drinks" href="<?= e(baseUrl('admin/minuman.php')) ?>">
-    <div class="ops-kicker"><?= e(t('ops_drinks')) ?></div>
-    <div class="ops-value"><span id="ops-drinks-items"><?= (int) $ops['drinks']['items'] ?></span></div>
-    <div class="ops-sub"><span id="ops-drinks-orders"><?= (int) $ops['drinks']['orders'] ?></span> <?= e(t('ops_orders_n')) ?></div>
-    <div class="ops-chips">
-      <?php ownerOpsChip(t('ops_queue'), (int) $ops['drinks']['menunggu'], 'ops-drinks-queue'); ?>
-      <?php ownerOpsChip(t('ops_cooking'), (int) $ops['drinks']['sedang_dimasak'], 'ops-drinks-cook', 'cook'); ?>
-    </div>
-  </a>
+  <?php foreach (($ops['stations'] ?? []) as $st): ?>
+    <?php $sid = (int) $st['id']; ?>
+    <a class="ops-card<?= $st['items'] > 0 ? ' is-busy' : '' ?>" id="ops-card-st-<?= $sid ?>" href="<?= e($st['url']) ?>">
+      <div class="ops-kicker"><?= e($st['name']) ?></div>
+      <div class="ops-value"><span id="ops-st-items-<?= $sid ?>"><?= (int) $st['items'] ?></span></div>
+      <div class="ops-sub"><span id="ops-st-orders-<?= $sid ?>"><?= (int) $st['orders'] ?></span> <?= e(t('ops_orders_n')) ?></div>
+      <div class="ops-chips">
+        <?php ownerOpsChip(t('ops_queue'), (int) $st['menunggu'], 'ops-st-queue-' . $sid); ?>
+        <?php ownerOpsChip(t('ops_cooking'), (int) $st['sedang_dimasak'], 'ops-st-cook-' . $sid, 'cook'); ?>
+      </div>
+    </a>
+  <?php endforeach; ?>
   <a class="ops-card<?= $ops['handover']['items'] > 0 ? ' is-busy' : '' ?>" id="ops-card-hand" href="<?= e($handoverUrl) ?>">
     <div class="ops-kicker"><?= e($handoverTitle) ?></div>
     <div class="ops-value"><span id="ops-hand-items"><?= (int) $ops['handover']['items'] ?></span></div>
@@ -149,19 +143,22 @@ function ownerOpsChip(string $label, int $n, string $id, string $mod = ''): void
     <div class="table-num" style="font-size:1.4rem"><?= e(t('reports')) ?></div>
     <p class="order-meta"><?= e(t('income')) ?> / <?= e(t('expenses')) ?></p>
   </a>
+  <a class="order-card" href="<?= e(baseUrl('admin/owner/stations.php')) ?>" style="text-decoration:none">
+    <div class="table-num" style="font-size:1.4rem"><?= e(t('manage_stations')) ?></div>
+    <p class="order-meta"><?= e(t('stations_hint_short')) ?></p>
+  </a>
   <a class="order-card" href="<?= e(baseUrl('admin/owner/users.php')) ?>" style="text-decoration:none">
     <div class="table-num" style="font-size:1.4rem"><?= e(t('manage_users')) ?></div>
-    <p class="order-meta">kasir · dapur · minuman · waiter</p>
+    <p class="order-meta">kasir · stesen · waiter</p>
   </a>
   <a class="order-card" href="<?= e(baseUrl('admin/kasir.php')) ?>" style="text-decoration:none">
     <div class="table-num" style="font-size:1.4rem"><?= e(t('kasir_title')) ?></div>
   </a>
-  <a class="order-card" href="<?= e(baseUrl('admin/dapur.php')) ?>" style="text-decoration:none">
-    <div class="table-num" style="font-size:1.4rem"><?= e(t('dapur_title')) ?></div>
-  </a>
-  <a class="order-card" href="<?= e(baseUrl('admin/minuman.php')) ?>" style="text-decoration:none">
-    <div class="table-num" style="font-size:1.4rem"><?= e(t('minuman_title')) ?></div>
-  </a>
+  <?php foreach (($ops['stations'] ?? []) as $st): ?>
+    <a class="order-card" href="<?= e($st['url']) ?>" style="text-decoration:none">
+      <div class="table-num" style="font-size:1.4rem"><?= e($st['name']) ?></div>
+    </a>
+  <?php endforeach; ?>
   <a class="order-card" href="<?= e(baseUrl('admin/waiter.php')) ?>" style="text-decoration:none">
     <div class="table-num" style="font-size:1.4rem"><?= e(t('waiter_title')) ?></div>
   </a>

@@ -3,6 +3,7 @@
 $links = [
     'home'     => ['url' => baseUrl('admin/owner/index.php'), 'label' => t('owner_title')],
     'menu'     => ['url' => baseUrl('admin/owner/menu.php'), 'label' => t('manage_menu')],
+    'stations' => ['url' => baseUrl('admin/owner/stations.php'), 'label' => t('manage_stations')],
     'tables'   => ['url' => baseUrl('admin/owner/tables.php'), 'label' => t('manage_tables')],
     'reports'  => ['url' => baseUrl('admin/owner/reports.php'), 'label' => t('reports')],
     'history'  => ['url' => baseUrl('admin/owner/history.php'), 'label' => t('order_history')],

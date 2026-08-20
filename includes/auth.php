@@ -26,6 +26,23 @@ function currentUser(): ?array
     if (empty($_SESSION['user_id'])) {
         return null;
     }
+    static $stationHydrated = false;
+    if (!$stationHydrated && !array_key_exists('station_id', $_SESSION)) {
+        $stationHydrated = true;
+        try {
+            require_once __DIR__ . '/stations.php';
+            if (userStationColumnExists()) {
+                $st = db()->prepare('SELECT station_id FROM users WHERE id = ? LIMIT 1');
+                $st->execute([(int) $_SESSION['user_id']]);
+                $row = $st->fetch();
+                $_SESSION['station_id'] = ($row && $row['station_id'] !== null) ? (int) $row['station_id'] : null;
+            } else {
+                $_SESSION['station_id'] = null;
+            }
+        } catch (Throwable $e) {
+            $_SESSION['station_id'] = null;
+        }
+    }
     return [
         'id'       => (int) $_SESSION['user_id'],
         'username' => (string) ($_SESSION['username'] ?? ''),
@@ -35,6 +52,9 @@ function currentUser(): ?array
             ? (int) $_SESSION['shop_id']
             : null,
         'shop_name'=> (string) ($_SESSION['shop_name'] ?? ''),
+        'station_id' => isset($_SESSION['station_id']) && $_SESSION['station_id'] !== null
+            ? (int) $_SESSION['station_id']
+            : null,
     ];
 }
 
@@ -55,13 +75,15 @@ function currentShop(): ?array
 
 function loginUser(string $username, string $password): bool
 {
+    require_once __DIR__ . '/stations.php';
+    $stationSelect = userStationColumnExists() ? ', u.station_id' : '';
     $stmt = db()->prepare(
-        'SELECT u.id, u.username, u.password_hash, u.role, u.nama_paparan, u.shop_id,
+        "SELECT u.id, u.username, u.password_hash, u.role, u.nama_paparan, u.shop_id{$stationSelect},
                 s.nama_kedai, s.status AS shop_status
          FROM users u
          LEFT JOIN shops s ON s.id = u.shop_id
          WHERE u.username = ? AND u.is_active = 1
-         LIMIT 1'
+         LIMIT 1"
     );
     $stmt->execute([$username]);
     $user = $stmt->fetch();
@@ -85,6 +107,9 @@ function loginUser(string $username, string $password): bool
     $_SESSION['nama_paparan'] = $user['nama_paparan'] ?: $user['username'];
     $_SESSION['shop_id'] = $user['shop_id'] !== null ? (int) $user['shop_id'] : null;
     $_SESSION['shop_name'] = $user['nama_kedai'] ?? '';
+    $_SESSION['station_id'] = isset($user['station_id']) && $user['station_id'] !== null
+        ? (int) $user['station_id']
+        : null;
 
     // Opportunistic retention cleanup for this shop (lightweight)
     if (!empty($user['shop_id'])) {

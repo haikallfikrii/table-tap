@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
+require_once dirname(__DIR__, 2) . '/includes/stations.php';
 
 requireLogin(['owner']);
 
@@ -22,12 +23,26 @@ $error = '';
 $pdo = db();
 
 $roles = ['owner', 'kasir', 'dapur', 'minuman', 'waiter'];
+$stations = shopStations($shopId, true);
 
 function roleLabel(string $role): string
 {
     $key = 'role_' . $role;
     $label = t($key);
     return $label === $key ? $role : $label;
+}
+
+function postedStaffStationId(string $role, int $shopId): ?int
+{
+    if (!userStationColumnExists() || !in_array($role, ['dapur', 'minuman'], true)) {
+        return null;
+    }
+    $sid = (int) ($_POST['station_id'] ?? 0);
+    if ($sid <= 0) {
+        return null;
+    }
+    $st = findShopStation($shopId, $sid);
+    return ($st && (int) $st['is_active'] === 1) ? $sid : null;
 }
 
 function countActiveOwners(PDO $pdo, int $shopId, ?int $exceptId = null): int
@@ -46,7 +61,7 @@ function countActiveOwners(PDO $pdo, int $shopId, ?int $exceptId = null): int
 function findShopUser(PDO $pdo, int $shopId, int $id): ?array
 {
     $stmt = $pdo->prepare(
-        'SELECT id, username, role, nama_paparan, is_active FROM users WHERE id = ? AND shop_id = ? LIMIT 1'
+        'SELECT id, username, role, station_id, nama_paparan, is_active FROM users WHERE id = ? AND shop_id = ? LIMIT 1'
     );
     $stmt->execute([$id, $shopId]);
     $row = $stmt->fetch();
@@ -68,10 +83,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 throw new RuntimeException('Username, role & password (min 6) wajib');
             }
             $hash = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare(
-                'INSERT INTO users (shop_id, username, password_hash, role, nama_paparan) VALUES (?, ?, ?, ?, ?)'
-            );
-            $stmt->execute([$shopId, $username, $hash, $role, $nama ?: null]);
+            $stationId = postedStaffStationId($role, $shopId);
+            if (userStationColumnExists()) {
+                $stmt = $pdo->prepare(
+                    'INSERT INTO users (shop_id, username, password_hash, role, station_id, nama_paparan) VALUES (?, ?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([$shopId, $username, $hash, $role, $stationId, $nama ?: null]);
+            } else {
+                $stmt = $pdo->prepare(
+                    'INSERT INTO users (shop_id, username, password_hash, role, nama_paparan) VALUES (?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([$shopId, $username, $hash, $role, $nama ?: null]);
+            }
             redirect(baseUrl('admin/owner/users.php?ok=1'));
         }
 
@@ -102,13 +125,27 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     throw new RuntimeException('Password min 6 aksara');
                 }
                 $hash = password_hash($password, PASSWORD_DEFAULT);
-                $pdo->prepare(
-                    'UPDATE users SET username = ?, nama_paparan = ?, role = ?, password_hash = ? WHERE id = ? AND shop_id = ?'
-                )->execute([$username, $nama ?: null, $role, $hash, $id, $shopId]);
+                $stationId = postedStaffStationId($role, $shopId);
+                if (userStationColumnExists()) {
+                    $pdo->prepare(
+                        'UPDATE users SET username = ?, nama_paparan = ?, role = ?, station_id = ?, password_hash = ? WHERE id = ? AND shop_id = ?'
+                    )->execute([$username, $nama ?: null, $role, $stationId, $hash, $id, $shopId]);
+                } else {
+                    $pdo->prepare(
+                        'UPDATE users SET username = ?, nama_paparan = ?, role = ?, password_hash = ? WHERE id = ? AND shop_id = ?'
+                    )->execute([$username, $nama ?: null, $role, $hash, $id, $shopId]);
+                }
             } else {
-                $pdo->prepare(
-                    'UPDATE users SET username = ?, nama_paparan = ?, role = ? WHERE id = ? AND shop_id = ?'
-                )->execute([$username, $nama ?: null, $role, $id, $shopId]);
+                $stationId = postedStaffStationId($role, $shopId);
+                if (userStationColumnExists()) {
+                    $pdo->prepare(
+                        'UPDATE users SET username = ?, nama_paparan = ?, role = ?, station_id = ? WHERE id = ? AND shop_id = ?'
+                    )->execute([$username, $nama ?: null, $role, $stationId, $id, $shopId]);
+                } else {
+                    $pdo->prepare(
+                        'UPDATE users SET username = ?, nama_paparan = ?, role = ? WHERE id = ? AND shop_id = ?'
+                    )->execute([$username, $nama ?: null, $role, $id, $shopId]);
+                }
             }
 
             if ($id === (int) $user['id']) {
@@ -116,6 +153,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $_SESSION['username'] = $username;
                 $_SESSION['role'] = $role;
                 $_SESSION['nama_paparan'] = $nama !== '' ? $nama : $username;
+                $_SESSION['station_id'] = $stationId;
                 if ($role !== 'owner') {
                     redirect(roleHome($role));
                 }
@@ -187,7 +225,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 }
 
 $usersStmt = $pdo->prepare(
-    'SELECT id, username, role, nama_paparan, is_active, created_at
+    'SELECT id, username, role, station_id, nama_paparan, is_active, created_at
      FROM users WHERE shop_id = ? ORDER BY role, username'
 );
 $usersStmt->execute([$shopId]);
@@ -217,9 +255,18 @@ $users = $usersStmt->fetchAll();
     </div>
     <div class="form-group" style="margin:0">
       <label><?= e(t('role')) ?></label>
-      <select name="role">
+      <select name="role" class="staff-role">
         <?php foreach ($roles as $r): ?>
           <option value="<?= e($r) ?>" <?= $editing['role'] === $r ? 'selected' : '' ?>><?= e(roleLabel($r)) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="form-group staff-station-wrap" style="margin:0">
+      <label><?= e(t('send_to_station')) ?></label>
+      <select name="station_id">
+        <option value="0"><?= e(t('station_default_for_role')) ?></option>
+        <?php foreach ($stations as $st): ?>
+          <option value="<?= (int) $st['id'] ?>" <?= (int) ($editing['station_id'] ?? 0) === (int) $st['id'] ? 'selected' : '' ?>><?= e(stationLabel($st, $lang)) ?></option>
         <?php endforeach; ?>
       </select>
     </div>
@@ -250,9 +297,18 @@ $users = $usersStmt->fetchAll();
     </div>
     <div class="form-group" style="margin:0">
       <label><?= e(t('role')) ?></label>
-      <select name="role">
+      <select name="role" class="staff-role">
         <?php foreach ($roles as $r): ?>
           <option value="<?= e($r) ?>"><?= e(roleLabel($r)) ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div class="form-group staff-station-wrap" style="margin:0">
+      <label><?= e(t('send_to_station')) ?></label>
+      <select name="station_id">
+        <option value="0"><?= e(t('station_default_for_role')) ?></option>
+        <?php foreach ($stations as $st): ?>
+          <option value="<?= (int) $st['id'] ?>"><?= e(stationLabel($st, $lang)) ?></option>
         <?php endforeach; ?>
       </select>
     </div>
@@ -282,7 +338,19 @@ $users = $usersStmt->fetchAll();
         <?php $isSelf = (int) $u['id'] === (int) $user['id']; ?>
         <tr>
           <td><?= e($u['username']) ?><?php if ($isSelf): ?> <span class="order-meta">(<?= e($lang === 'en' ? 'you' : 'anda') ?>)</span><?php endif; ?></td>
-          <td><?= e(roleLabel((string) $u['role'])) ?></td>
+          <td><?php
+            $roleTxt = roleLabel((string) $u['role']);
+            $sid = (int) ($u['station_id'] ?? 0);
+            if ($sid > 0) {
+                foreach ($stations as $st) {
+                    if ((int) $st['id'] === $sid) {
+                        $roleTxt .= ' · ' . stationLabel($st, $lang);
+                        break;
+                    }
+                }
+            }
+            echo e($roleTxt);
+          ?></td>
           <td><?= e($u['nama_paparan'] ?: '—') ?></td>
           <td>
             <span class="badge <?= (int) $u['is_active'] ? 'badge-selesai' : 'badge-belum_bayar' ?>">
@@ -312,4 +380,18 @@ $users = $usersStmt->fetchAll();
   </table>
 </div>
 
+<script>
+(function () {
+  function sync(select) {
+    var wrap = select.closest('form') && select.closest('form').querySelector('.staff-station-wrap');
+    if (!wrap) return;
+    var role = select.value;
+    wrap.style.display = (role === 'dapur' || role === 'minuman') ? '' : 'none';
+  }
+  document.querySelectorAll('select.staff-role').forEach(function (el) {
+    el.addEventListener('change', function () { sync(el); });
+    sync(el);
+  });
+})();
+</script>
 <?php require dirname(__DIR__, 2) . '/includes/admin_footer.php'; ?>

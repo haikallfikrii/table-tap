@@ -143,8 +143,9 @@ function shopPackageRank(?array $shop): int
 function shopHasFeature(?array $shop, string $feature): bool
 {
     $need = [
-        'self_pickup'  => 2, // Standard+
-        'menu_gallery' => 3, // Pro
+        'self_pickup'     => 2, // Standard+
+        'menu_gallery'    => 3, // Pro
+        'custom_stations' => 3, // Pro extra stations (Western, pastry, …)
     ];
     $required = $need[$feature] ?? 99;
     return shopPackageRank($shop) >= $required;
@@ -208,54 +209,82 @@ function collectSelfPickupReadyItems(PDO $pdo, int $orderId, int $shopId): void
 /** Live floor counts for the owner dashboard. */
 function ownerOpsSnapshot(int $shopId, ?array $shop = null): array
 {
+    require_once __DIR__ . '/stations.php';
+
     $shop = $shop ?? findShopById($shopId);
     $pickup = shopFulfillment($shop) === 'self_pickup';
+    $lang = function_exists('currentLang') ? currentLang() : 'my';
 
-    $station = static function (): array {
-        return [
-            'items' => 0,
-            'orders' => 0,
-            'menunggu' => 0,
-            'sedang_dimasak' => 0,
-            'siap' => 0,
-            'diambil' => 0,
-        ];
-    };
-    $kitchen = $station();
-    $drinks = $station();
-    $handover = $station();
-    $kitOrders = [];
-    $drinkOrders = [];
+    $handover = emptyStationCounts();
     $handOrders = [];
+    $stationsMeta = shopStations($shopId, true);
+    $byId = [];
+    $orderSets = [];
+    foreach ($stationsMeta as $st) {
+        $sid = (int) $st['id'];
+        $byId[$sid] = array_merge(emptyStationCounts(), [
+            'id' => $sid,
+            'kod' => (string) $st['kod'],
+            'name' => stationLabel($st, $lang),
+            'url' => stationScreenUrl($st),
+        ]);
+        $orderSets[$sid] = [];
+    }
+    $legacyKitchen = emptyStationCounts() + ['id' => 0, 'kod' => 'dapur', 'name' => $lang === 'en' ? 'Kitchen' : 'Dapur', 'url' => baseUrl('admin/dapur.php')];
+    $legacyDrinks = emptyStationCounts() + ['id' => 0, 'kod' => 'minuman', 'name' => $lang === 'en' ? 'Drinks' : 'Minuman', 'url' => baseUrl('admin/minuman.php')];
 
-    $stmt = db()->prepare(
-        "SELECT oi.order_id, oi.kategori_saat_order AS kat, oi.status_item AS st, COUNT(*) AS n
-         FROM order_items oi
-         INNER JOIN orders o ON o.id = oi.order_id
-         WHERE o.shop_id = ?
-           AND o.status_order != 'dibatalkan'
-           AND oi.status_item != 'dihantar'
-         GROUP BY oi.order_id, oi.kategori_saat_order, oi.status_item"
-    );
+    $hasStationCol = orderStationColumnExists();
+    $sql = $hasStationCol
+        ? "SELECT oi.order_id, oi.kategori_saat_order AS kat, oi.station_id_saat_order AS sid, oi.status_item AS st, COUNT(*) AS n
+           FROM order_items oi
+           INNER JOIN orders o ON o.id = oi.order_id
+           WHERE o.shop_id = ?
+             AND o.status_order != 'dibatalkan'
+             AND oi.status_item != 'dihantar'
+           GROUP BY oi.order_id, oi.kategori_saat_order, oi.station_id_saat_order, oi.status_item"
+        : "SELECT oi.order_id, oi.kategori_saat_order AS kat, NULL AS sid, oi.status_item AS st, COUNT(*) AS n
+           FROM order_items oi
+           INNER JOIN orders o ON o.id = oi.order_id
+           WHERE o.shop_id = ?
+             AND o.status_order != 'dibatalkan'
+             AND oi.status_item != 'dihantar'
+           GROUP BY oi.order_id, oi.kategori_saat_order, oi.status_item";
+    $stmt = db()->prepare($sql);
     $stmt->execute([$shopId]);
+
+    $dapurId = 0;
+    $minumanId = 0;
+    foreach ($stationsMeta as $st) {
+        if ($st['kod'] === 'dapur') {
+            $dapurId = (int) $st['id'];
+        }
+        if ($st['kod'] === 'minuman') {
+            $minumanId = (int) $st['id'];
+        }
+    }
 
     foreach ($stmt->fetchAll() as $row) {
         $n = (int) $row['n'];
         $st = (string) $row['st'];
         $oid = (int) $row['order_id'];
-        $kat = (string) $row['kat'];
+        $sid = (int) ($row['sid'] ?? 0);
+        if ($sid <= 0 || !isset($byId[$sid])) {
+            $sid = ((string) $row['kat'] === 'minuman') ? $minumanId : $dapurId;
+        }
         $inKitchen = $st === 'menunggu' || $st === 'sedang_dimasak';
         $inHandover = $pickup ? $st === 'siap' : ($st === 'siap' || $st === 'diambil');
 
-        if ($inKitchen) {
-            if ($kat === 'minuman') {
-                $drinks['items'] += $n;
-                $drinks[$st] += $n;
-                $drinkOrders[$oid] = true;
+        if ($inKitchen && $sid > 0 && isset($byId[$sid])) {
+            $byId[$sid]['items'] += $n;
+            $byId[$sid][$st] = ($byId[$sid][$st] ?? 0) + $n;
+            $orderSets[$sid][$oid] = true;
+        } elseif ($inKitchen && $stationsMeta === []) {
+            if ((string) $row['kat'] === 'minuman') {
+                $legacyDrinks['items'] += $n;
+                $legacyDrinks[$st] = ($legacyDrinks[$st] ?? 0) + $n;
             } else {
-                $kitchen['items'] += $n;
-                $kitchen[$st] += $n;
-                $kitOrders[$oid] = true;
+                $legacyKitchen['items'] += $n;
+                $legacyKitchen[$st] = ($legacyKitchen[$st] ?? 0) + $n;
             }
         }
         if ($inHandover) {
@@ -265,8 +294,24 @@ function ownerOpsSnapshot(int $shopId, ?array $shop = null): array
         }
     }
 
-    $kitchen['orders'] = count($kitOrders);
-    $drinks['orders'] = count($drinkOrders);
+    $stationsOut = [];
+    foreach ($byId as $sid => $bucket) {
+        $bucket['orders'] = count($orderSets[$sid] ?? []);
+        $stationsOut[] = $bucket;
+    }
+    if ($stationsOut === []) {
+        $stationsOut = [$legacyKitchen, $legacyDrinks];
+    }
+
+    $kitchen = emptyStationCounts();
+    $drinks = emptyStationCounts();
+    foreach ($stationsOut as $bucket) {
+        if ($bucket['kod'] === 'minuman') {
+            $drinks = $bucket;
+        } elseif ($bucket['kod'] === 'dapur') {
+            $kitchen = $bucket;
+        }
+    }
     $handover['orders'] = count($handOrders);
 
     $pay = db()->prepare(
@@ -279,6 +324,7 @@ function ownerOpsSnapshot(int $shopId, ?array $shop = null): array
 
     return [
         'fulfillment' => $pickup ? 'self_pickup' : 'waiter',
+        'stations' => $stationsOut,
         'kitchen' => $kitchen,
         'drinks' => $drinks,
         'handover' => $handover,

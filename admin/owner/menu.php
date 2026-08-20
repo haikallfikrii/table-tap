@@ -24,6 +24,8 @@ $pdo = db();
 $shop = getShopOrFail($shopId);
 $canGallery = shopHasFeature($shop, 'menu_gallery');
 $maxGallery = 6;
+require_once dirname(__DIR__, 2) . '/includes/stations.php';
+$stations = shopStations($shopId, true);
 
 function handleMenuUpload(array $file, array $config): ?string
 {
@@ -98,6 +100,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $descEn = trim((string) ($_POST['deskripsi_en'] ?? ''));
             $harga = (float) ($_POST['harga'] ?? 0);
             $kategori = ($_POST['kategori'] ?? '') === 'minuman' ? 'minuman' : 'makanan';
+            $stationId = resolveMenuStationId($shopId, $kategori, (int) ($_POST['station_id'] ?? 0));
             $stok = ($_POST['status_stok'] ?? '') === 'habis' ? 'habis' : 'tersedia';
             $urutan = (int) ($_POST['urutan'] ?? 0);
 
@@ -119,12 +122,21 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             }
 
             if ($action === 'create') {
-                $stmt = $pdo->prepare(
-                    'INSERT INTO menu_items
-                     (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, foto_url, status_stok, urutan)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-                );
-                $stmt->execute([$shopId, $namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $fotoUrl, $stok, $urutan]);
+                if (menuStationColumnExists()) {
+                    $stmt = $pdo->prepare(
+                        'INSERT INTO menu_items
+                         (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, station_id, foto_url, status_stok, urutan)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                    );
+                    $stmt->execute([$shopId, $namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $stationId, $fotoUrl, $stok, $urutan]);
+                } else {
+                    $stmt = $pdo->prepare(
+                        'INSERT INTO menu_items
+                         (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, foto_url, status_stok, urutan)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                    );
+                    $stmt->execute([$shopId, $namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $fotoUrl, $stok, $urutan]);
+                }
                 $newId = (int) $pdo->lastInsertId();
                 if ($canGallery && $newId > 0 && !empty($_FILES['gallery'])) {
                     saveGalleryUploads($pdo, $shopId, $newId, $_FILES['gallery'], $config, $maxGallery);
@@ -135,19 +147,37 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     throw new RuntimeException('Invalid ID');
                 }
                 if ($fotoUrl) {
-                    $stmt = $pdo->prepare(
-                        'UPDATE menu_items SET
-                         nama_my=?, nama_en=?, deskripsi_my=?, deskripsi_en=?, harga=?, kategori=?, foto_url=?, status_stok=?, urutan=?
-                         WHERE id=? AND shop_id=?'
-                    );
-                    $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $fotoUrl, $stok, $urutan, $id, $shopId]);
+                    if (menuStationColumnExists()) {
+                        $stmt = $pdo->prepare(
+                            'UPDATE menu_items SET
+                             nama_my=?, nama_en=?, deskripsi_my=?, deskripsi_en=?, harga=?, kategori=?, station_id=?, foto_url=?, status_stok=?, urutan=?
+                             WHERE id=? AND shop_id=?'
+                        );
+                        $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $stationId, $fotoUrl, $stok, $urutan, $id, $shopId]);
+                    } else {
+                        $stmt = $pdo->prepare(
+                            'UPDATE menu_items SET
+                             nama_my=?, nama_en=?, deskripsi_my=?, deskripsi_en=?, harga=?, kategori=?, foto_url=?, status_stok=?, urutan=?
+                             WHERE id=? AND shop_id=?'
+                        );
+                        $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $fotoUrl, $stok, $urutan, $id, $shopId]);
+                    }
                 } else {
-                    $stmt = $pdo->prepare(
-                        'UPDATE menu_items SET
-                         nama_my=?, nama_en=?, deskripsi_my=?, deskripsi_en=?, harga=?, kategori=?, status_stok=?, urutan=?
-                         WHERE id=? AND shop_id=?'
-                    );
-                    $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $stok, $urutan, $id, $shopId]);
+                    if (menuStationColumnExists()) {
+                        $stmt = $pdo->prepare(
+                            'UPDATE menu_items SET
+                             nama_my=?, nama_en=?, deskripsi_my=?, deskripsi_en=?, harga=?, kategori=?, station_id=?, status_stok=?, urutan=?
+                             WHERE id=? AND shop_id=?'
+                        );
+                        $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $stationId, $stok, $urutan, $id, $shopId]);
+                    } else {
+                        $stmt = $pdo->prepare(
+                            'UPDATE menu_items SET
+                             nama_my=?, nama_en=?, deskripsi_my=?, deskripsi_en=?, harga=?, kategori=?, status_stok=?, urutan=?
+                             WHERE id=? AND shop_id=?'
+                        );
+                        $stmt->execute([$namaMy, $namaEn, $descMy ?: null, $descEn ?: null, $harga, $kategori, $stok, $urutan, $id, $shopId]);
+                    }
                 }
                 if ($canGallery && !empty($_FILES['gallery'])) {
                     saveGalleryUploads($pdo, $shopId, $id, $_FILES['gallery'], $config, $maxGallery);
@@ -250,6 +280,18 @@ if (isset($_GET['ok'])) {
         </select>
       </div>
       <div class="form-group">
+        <label><?= e(t('send_to_station')) ?></label>
+        <select name="station_id">
+          <?php
+            $editSid = (int) ($editItem['station_id'] ?? 0);
+            foreach ($stations as $st):
+          ?>
+            <option value="<?= (int) $st['id'] ?>" <?= $editSid === (int) $st['id'] ? 'selected' : '' ?>><?= e(stationLabel($st, $lang)) ?></option>
+          <?php endforeach; ?>
+        </select>
+        <p class="order-meta" style="margin:6px 0 0"><?= e(t('send_to_station_hint')) ?></p>
+      </div>
+      <div class="form-group">
         <label><?= e(t('status')) ?></label>
         <select name="status_stok">
           <option value="tersedia" <?= ($editItem['status_stok'] ?? 'tersedia') === 'tersedia' ? 'selected' : '' ?>><?= e(t('stock_available')) ?></option>
@@ -323,6 +365,7 @@ if (isset($_GET['ok'])) {
         <th><?= e(t('photo')) ?></th>
         <th><?= e(t('name_my')) ?></th>
         <th><?= e(t('category')) ?></th>
+        <th><?= e(t('send_to_station')) ?></th>
         <th><?= e(t('price')) ?></th>
         <th><?= e(t('status')) ?></th>
         <th><?= e(t('actions')) ?></th>
@@ -343,6 +386,17 @@ if (isset($_GET['ok'])) {
             <span class="order-meta"><?= e($item['nama_en']) ?></span>
           </td>
           <td><?= e(t($item['kategori'])) ?></td>
+          <td><?php
+            $sid = (int) ($item['station_id'] ?? 0);
+            $sname = '—';
+            foreach ($stations as $st) {
+                if ((int) $st['id'] === $sid) {
+                    $sname = stationLabel($st, $lang);
+                    break;
+                }
+            }
+            echo e($sname);
+          ?></td>
           <td><?= e(formatMoney($item['harga'])) ?></td>
           <td>
             <span class="badge <?= $item['status_stok'] === 'tersedia' ? 'badge-selesai' : 'badge-belum_bayar' ?>">

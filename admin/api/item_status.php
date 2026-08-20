@@ -7,6 +7,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
+require_once dirname(__DIR__, 2) . '/includes/stations.php';
 
 requirePost();
 $body = readJsonBody();
@@ -26,8 +27,9 @@ if ($itemId <= 0 || !in_array($status, $allowed, true)) {
 }
 
 $pdo = db();
+$stationCol = orderStationColumnExists() ? ', oi.station_id_saat_order' : '';
 $stmt = $pdo->prepare(
-    "SELECT oi.id, oi.kategori_saat_order, oi.status_item, oi.order_id, o.shop_id
+    "SELECT oi.id, oi.kategori_saat_order, oi.status_item, oi.order_id, o.shop_id{$stationCol}
      FROM order_items oi
      INNER JOIN orders o ON o.id = oi.order_id
      WHERE oi.id = ? AND o.status_order != 'dibatalkan'
@@ -44,11 +46,15 @@ $shop = findShopById((int) $item['shop_id']);
 $selfPickup = shopFulfillment($shop) === 'self_pickup';
 
 if (in_array($status, $kitchenStatuses, true)) {
-    $kat = $item['kategori_saat_order'];
-    if ($kat === 'makanan') {
-        requireLoginApi(['dapur', 'owner']);
-    } else {
-        requireLoginApi(['minuman', 'owner']);
+    $user = requireLoginApi(['dapur', 'minuman', 'owner']);
+    $shopIdCheck = (int) $item['shop_id'];
+    $sid = (int) ($item['station_id_saat_order'] ?? 0);
+    $station = $sid > 0 ? findShopStation($shopIdCheck, $sid) : null;
+    if (!$station) {
+        $station = defaultStationForKategori($shopIdCheck, (string) $item['kategori_saat_order']);
+    }
+    if (!userCanAccessStation($user, $station)) {
+        jsonError('Forbidden', 403);
     }
 } elseif ($status === 'dihantar' && $selfPickup) {
     requireLoginApi(['dapur', 'minuman', 'kasir', 'owner']);

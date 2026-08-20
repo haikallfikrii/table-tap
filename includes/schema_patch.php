@@ -193,6 +193,52 @@ function ensureAppSchema(PDO $pdo): void
                 KEY idx_verify_lookup (shop_id, destination_hash, consumed_at)
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
+
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS stations (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                shop_id INT UNSIGNED NOT NULL,
+                kod VARCHAR(40) NOT NULL,
+                nama_my VARCHAR(80) NOT NULL,
+                nama_en VARCHAR(80) NOT NULL,
+                is_system TINYINT(1) NOT NULL DEFAULT 0,
+                urutan INT NOT NULL DEFAULT 0,
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY uq_shop_station_kod (shop_id, kod),
+                KEY idx_stations_shop (shop_id, is_active, urutan)
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        $menuStationCol = $pdo->query("SHOW COLUMNS FROM menu_items LIKE 'station_id'")->fetch();
+        if (!$menuStationCol) {
+            $pdo->exec('ALTER TABLE menu_items ADD COLUMN station_id INT UNSIGNED DEFAULT NULL AFTER kategori');
+            try {
+                $pdo->exec('ALTER TABLE menu_items ADD KEY idx_menu_station (shop_id, station_id)');
+            } catch (Throwable $e) {
+                // index may already exist
+            }
+        }
+
+        $orderStationCol = $pdo->query("SHOW COLUMNS FROM order_items LIKE 'station_id_saat_order'")->fetch();
+        if (!$orderStationCol) {
+            $pdo->exec('ALTER TABLE order_items ADD COLUMN station_id_saat_order INT UNSIGNED DEFAULT NULL AFTER kategori_saat_order');
+            try {
+                $pdo->exec('ALTER TABLE order_items ADD KEY idx_status_station (status_item, station_id_saat_order)');
+            } catch (Throwable $e) {
+                // index may already exist
+            }
+        }
+
+        $userStationCol = $pdo->query("SHOW COLUMNS FROM users LIKE 'station_id'")->fetch();
+        if (!$userStationCol) {
+            $pdo->exec('ALTER TABLE users ADD COLUMN station_id INT UNSIGNED DEFAULT NULL AFTER role');
+        }
+
+        require_once __DIR__ . '/stations.php';
+        ensureAllShopStations($pdo);
+        backfillMenuAndOrderStations($pdo);
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }

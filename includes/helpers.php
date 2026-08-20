@@ -332,11 +332,16 @@ function createShopOrder(
     $pdo = db();
     $placeholders = implode(',', array_fill(0, count($normalized), '?'));
     $ids = array_keys($normalized);
-    $stmt = $pdo->prepare(
-        "SELECT id, nama_my, nama_en, harga, kategori, status_stok, is_active
-         FROM menu_items
-         WHERE shop_id = ? AND id IN ($placeholders)"
-    );
+    require_once __DIR__ . '/stations.php';
+    $stationCols = menuStationColumnExists();
+    $menuSql = $stationCols
+        ? "SELECT id, nama_my, nama_en, harga, kategori, station_id, status_stok, is_active
+           FROM menu_items
+           WHERE shop_id = ? AND id IN ($placeholders)"
+        : "SELECT id, nama_my, nama_en, harga, kategori, status_stok, is_active
+           FROM menu_items
+           WHERE shop_id = ? AND id IN ($placeholders)";
+    $stmt = $pdo->prepare($menuSql);
     $stmt->execute(array_merge([$shopId], $ids));
     $menuById = [];
     foreach ($stmt->fetchAll() as $m) {
@@ -356,6 +361,14 @@ function createShopOrder(
         $harga = (float) $m['harga'];
         $qty = (int) $line['qty'];
         $subtotal += $harga * $qty;
+        $stationId = null;
+        if ($stationCols) {
+            $stationId = (int) ($m['station_id'] ?? 0);
+            if ($stationId <= 0) {
+                $fallback = defaultStationForKategori($shopId, (string) $m['kategori']);
+                $stationId = $fallback ? (int) $fallback['id'] : null;
+            }
+        }
         $lines[] = [
             'menu_item_id' => $menuId,
             'qty' => $qty,
@@ -364,6 +377,7 @@ function createShopOrder(
             'nama_saat_order_my' => $m['nama_my'],
             'nama_saat_order_en' => $m['nama_en'],
             'kategori_saat_order' => $m['kategori'],
+            'station_id_saat_order' => $stationId,
         ];
     }
 
@@ -486,13 +500,18 @@ function createShopOrder(
             saveOrderCustomerEmail($orderId, $customerEmail);
         }
 
+        $snapStation = orderStationColumnExists();
         $insItem = $pdo->prepare(
-            'INSERT INTO order_items
-             (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            $snapStation
+                ? 'INSERT INTO order_items
+                   (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order, station_id_saat_order)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                : 'INSERT INTO order_items
+                   (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         foreach ($lines as $line) {
-            $insItem->execute([
+            $args = [
                 $orderId,
                 $line['menu_item_id'],
                 $line['qty'],
@@ -502,7 +521,11 @@ function createShopOrder(
                 $line['nama_saat_order_my'],
                 $line['nama_saat_order_en'],
                 $line['kategori_saat_order'],
-            ]);
+            ];
+            if ($snapStation) {
+                $args[] = $line['station_id_saat_order'];
+            }
+            $insItem->execute($args);
         }
         $pdo->commit();
     } catch (Throwable $e) {

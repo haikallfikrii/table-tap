@@ -22,6 +22,7 @@ DROP TABLE IF EXISTS `menu_items`;
 DROP TABLE IF EXISTS `tables`;
 DROP TABLE IF EXISTS `expenses`;
 DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `stations`;
 DROP TABLE IF EXISTS `shops`;
 DROP TABLE IF EXISTS `packages`;
 
@@ -71,10 +72,30 @@ CREATE TABLE `shops` (
     ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Work stations (kitchen / drinks / Pro custom e.g. Western)
+CREATE TABLE `stations` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `shop_id` INT UNSIGNED NOT NULL,
+  `kod` VARCHAR(40) NOT NULL,
+  `nama_my` VARCHAR(80) NOT NULL,
+  `nama_en` VARCHAR(80) NOT NULL,
+  `is_system` TINYINT(1) NOT NULL DEFAULT 0,
+  `urutan` INT NOT NULL DEFAULT 0,
+  `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_shop_station_kod` (`shop_id`, `kod`),
+  KEY `idx_stations_shop` (`shop_id`, `is_active`, `urutan`),
+  CONSTRAINT `fk_stations_shop`
+    FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
+    ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- --------------------------------------------------------
 -- Users
 -- role: master (platform) | owner | kasir | dapur | minuman | waiter
 -- shop_id NULL only for master
+-- station_id: optional lock for dapur/minuman staff (Pro extra stations)
 -- --------------------------------------------------------
 CREATE TABLE `users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -82,15 +103,20 @@ CREATE TABLE `users` (
   `username` VARCHAR(50) NOT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
   `role` ENUM('master', 'owner', 'kasir', 'dapur', 'minuman', 'waiter') NOT NULL,
+  `station_id` INT UNSIGNED DEFAULT NULL,
   `nama_paparan` VARCHAR(100) DEFAULT NULL,
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_username` (`username`),
   KEY `idx_users_shop` (`shop_id`),
+  KEY `idx_users_station` (`station_id`),
   CONSTRAINT `fk_users_shop`
     FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
-    ON UPDATE CASCADE ON DELETE CASCADE
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `fk_users_station`
+    FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
@@ -166,6 +192,7 @@ CREATE TABLE `menu_items` (
   `deskripsi_en` TEXT DEFAULT NULL,
   `harga` DECIMAL(10,2) NOT NULL,
   `kategori` ENUM('makanan', 'minuman') NOT NULL,
+  `station_id` INT UNSIGNED DEFAULT NULL,
   `foto_url` VARCHAR(255) DEFAULT NULL,
   `status_stok` ENUM('tersedia', 'habis') NOT NULL DEFAULT 'tersedia',
   `is_active` TINYINT(1) NOT NULL DEFAULT 1,
@@ -174,9 +201,13 @@ CREATE TABLE `menu_items` (
   `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_shop_kategori_stok` (`shop_id`, `kategori`, `status_stok`, `is_active`),
+  KEY `idx_menu_station` (`shop_id`, `station_id`),
   CONSTRAINT `fk_menu_shop`
     FOREIGN KEY (`shop_id`) REFERENCES `shops` (`id`)
-    ON UPDATE CASCADE ON DELETE CASCADE
+    ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `fk_menu_station`
+    FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`)
+    ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Extra gallery photos (Pro package)
@@ -247,9 +278,11 @@ CREATE TABLE `order_items` (
   `nama_saat_order_my` VARCHAR(150) NOT NULL,
   `nama_saat_order_en` VARCHAR(150) NOT NULL,
   `kategori_saat_order` ENUM('makanan', 'minuman') NOT NULL,
+  `station_id_saat_order` INT UNSIGNED DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_order` (`order_id`),
   KEY `idx_status_kategori` (`status_item`, `kategori_saat_order`),
+  KEY `idx_status_station` (`status_item`, `station_id_saat_order`),
   KEY `idx_polling_items` (`id`, `status_item`),
   CONSTRAINT `fk_order_items_order`
     FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`)
@@ -304,6 +337,10 @@ INSERT INTO `shops` (`nama_kedai`, `slug`, `package_id`, `sst_enabled`, `sst_rat
 
 SET @shop_id = LAST_INSERT_ID();
 
+INSERT INTO `stations` (`shop_id`, `kod`, `nama_my`, `nama_en`, `is_system`, `urutan`, `is_active`) VALUES
+(@shop_id, 'dapur', 'Dapur', 'Kitchen', 1, 1, 1),
+(@shop_id, 'minuman', 'Minuman', 'Drinks', 1, 2, 1);
+
 INSERT INTO `users` (`shop_id`, `username`, `password_hash`, `role`, `nama_paparan`) VALUES
 (@shop_id, 'owner',   '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'owner',   'Pemilik Demo'),
 (@shop_id, 'kasir',   '$2y$12$pIALBj8IQ6paaAFA1bMB/.TQmxDfHrgRphurpmOcs03DUz5BB7PPe', 'kasir',   'Kasir'),
@@ -327,3 +364,8 @@ INSERT INTO `menu_items` (`shop_id`, `nama_my`, `nama_en`, `deskripsi_my`, `desk
 (@shop_id, 'Kopi O', 'Kopi O', 'Kopi hitam panas', 'Hot black coffee', 2.00, 'minuman', 'tersedia', 2),
 (@shop_id, 'Air Bandung', 'Bandung Drink', 'Minuman sirap bandung sejuk', 'Chilled bandung syrup drink', 3.00, 'minuman', 'tersedia', 3),
 (@shop_id, 'Limau Ais', 'Iced Lemon', 'Air limau ais', 'Iced lemon drink', 3.50, 'minuman', 'tersedia', 4);
+
+UPDATE `menu_items` mi
+INNER JOIN `stations` s ON s.shop_id = mi.shop_id AND s.kod = IF(mi.kategori = 'minuman', 'minuman', 'dapur')
+SET mi.station_id = s.id
+WHERE mi.shop_id = @shop_id;

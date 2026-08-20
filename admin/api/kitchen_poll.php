@@ -1,49 +1,79 @@
 <?php
 /**
- * Kitchen/drinks polling — shop-scoped, filter by kategori
+ * Kitchen poll — filter by station (legacy kategori= still works).
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/shop.php';
+require_once dirname(__DIR__, 2) . '/includes/stations.php';
 
+$user = requireLoginApi(['dapur', 'minuman', 'owner']);
+$shopId = requireShopIdApi();
+$shop = findShopById($shopId);
+$lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
+$sinceId = max(0, (int) ($_GET['since_id'] ?? 0));
+
+$requestedId = (int) ($_GET['station_id'] ?? 0);
 $kategori = ($_GET['kategori'] ?? '') === 'minuman' ? 'minuman' : 'makanan';
-
-if ($kategori === 'makanan') {
-    requireLoginApi(['dapur', 'owner']);
-} else {
-    requireLoginApi(['minuman', 'owner']);
+$fallbackKod = $requestedId > 0 ? 'dapur' : $kategori;
+if ($requestedId <= 0 && $kategori === 'minuman') {
+    $fallbackKod = 'minuman';
 }
 
-$shopId = requireShopIdApi();
-$sinceId = max(0, (int) ($_GET['since_id'] ?? 0));
-$lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
+$station = resolveKitchenStation($user, $shopId, $requestedId > 0 ? $requestedId : null, $fallbackKod);
+if (!$station || !userCanAccessStation($user, $station)) {
+    jsonError('Forbidden', 403);
+}
 
 $pdo = db();
-$shop = findShopById($shopId);
 $selfPickup = shopFulfillment($shop) === 'self_pickup';
 $statusList = $selfPickup
     ? "'menunggu', 'sedang_dimasak', 'siap'"
     : "'menunggu', 'sedang_dimasak'";
 
-$stmt = $pdo->prepare(
-    "SELECT oi.id, oi.order_id, oi.qty, oi.catatan, oi.status_item,
-            oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
-            o.waktu_order, o.jenis_hidang, o.nama_pelanggan, t.nomor_meja
-     FROM order_items oi
-     INNER JOIN orders o ON o.id = oi.order_id
-     INNER JOIN tables t ON t.id = o.table_id
-     WHERE o.shop_id = ?
-       AND oi.kategori_saat_order = ?
-       AND oi.status_item IN ($statusList)
-       AND o.status_order != 'dibatalkan'
-     ORDER BY
-       FIELD(oi.status_item, 'menunggu', 'sedang_dimasak', 'siap'),
-       o.waktu_order ASC,
-       oi.id ASC"
-);
-$stmt->execute([$shopId, $kategori]);
+$stationId = (int) ($station['id'] ?? 0);
+$useStationCol = orderStationColumnExists() && $stationId > 0;
+
+if ($useStationCol) {
+    $stmt = $pdo->prepare(
+        "SELECT oi.id, oi.order_id, oi.qty, oi.catatan, oi.status_item,
+                oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
+                o.waktu_order, o.jenis_hidang, o.nama_pelanggan, t.nomor_meja
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         INNER JOIN tables t ON t.id = o.table_id
+         WHERE o.shop_id = ?
+           AND oi.station_id_saat_order = ?
+           AND oi.status_item IN ($statusList)
+           AND o.status_order != 'dibatalkan'
+         ORDER BY
+           FIELD(oi.status_item, 'menunggu', 'sedang_dimasak', 'siap'),
+           o.waktu_order ASC,
+           oi.id ASC"
+    );
+    $stmt->execute([$shopId, $stationId]);
+} else {
+    $kat = (($station['kod'] ?? $kategori) === 'minuman') ? 'minuman' : 'makanan';
+    $stmt = $pdo->prepare(
+        "SELECT oi.id, oi.order_id, oi.qty, oi.catatan, oi.status_item,
+                oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
+                o.waktu_order, o.jenis_hidang, o.nama_pelanggan, t.nomor_meja
+         FROM order_items oi
+         INNER JOIN orders o ON o.id = oi.order_id
+         INNER JOIN tables t ON t.id = o.table_id
+         WHERE o.shop_id = ?
+           AND oi.kategori_saat_order = ?
+           AND oi.status_item IN ($statusList)
+           AND o.status_order != 'dibatalkan'
+         ORDER BY
+           FIELD(oi.status_item, 'menunggu', 'sedang_dimasak', 'siap'),
+           o.waktu_order ASC,
+           oi.id ASC"
+    );
+    $stmt->execute([$shopId, $kat]);
+}
 $items = $stmt->fetchAll();
 
 $maxId = $sinceId;
