@@ -2,7 +2,7 @@
 /**
  * Shared admin page header fragment.
  * Expects: $pageTitle, $user, $lang, $config
- * Optional: $showSound = true
+ * Optional: $showSound = true, $showPrinter = true
  */
 
 declare(strict_types=1);
@@ -11,6 +11,7 @@ if (!isset($pageTitle, $user, $lang, $config)) {
     return;
 }
 $showSound = $showSound ?? false;
+$showPrinter = $showPrinter ?? false;
 ?>
 <!DOCTYPE html>
 <html lang="<?= e($lang === 'en' ? 'en' : 'ms') ?>">
@@ -39,6 +40,11 @@ $showSound = $showSound ?? false;
     <div class="admin-actions">
       <?php if ($showSound): ?>
         <button type="button" class="btn btn-secondary btn-sm" id="btn-enable-sound"><?= e(t('enable_sound')) ?></button>
+      <?php endif; ?>
+      <?php if ($showPrinter): ?>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-connect-printer"><?= e(t('printer_connect')) ?></button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-test-print" hidden><?= e(t('print_test')) ?></button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-autoprint" aria-pressed="true"><?= e(t('autoprint_on')) ?></button>
       <?php endif; ?>
       <div class="lang-toggle">
         <button type="button" data-set-lang="my" class="<?= $lang === 'my' ? 'active' : '' ?>"><?= e(t('lang_my')) ?></button>

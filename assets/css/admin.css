@@ -39,6 +39,40 @@ body.admin {
   gap: 8px;
 }
 
+#btn-connect-printer.is-connected {
+  background: var(--success-soft);
+  color: var(--success);
+  border-color: rgba(42, 157, 143, 0.35);
+}
+
+#btn-autoprint.is-on {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.print-status {
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--ink-muted);
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.print-status.ok {
+  background: var(--success-soft);
+  border-color: rgba(42, 157, 143, 0.3);
+  color: var(--success);
+}
+
+.print-status.warn {
+  background: var(--warning-soft);
+  border-color: rgba(244, 162, 97, 0.35);
+  color: #9a5b1a;
+}
+
 .stat-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
