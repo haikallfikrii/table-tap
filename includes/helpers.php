@@ -548,11 +548,23 @@ function createShopOrder(
 
 function getMenuGrouped(int $shopId, string $lang = 'my'): array
 {
+    require_once __DIR__ . '/menu_categories.php';
+
+    $useCategories = menuCategoriesTableExists() && menuCategoryColumnExists();
+    if ($useCategories) {
+        ensureShopMenuCategories($shopId);
+        backfillMenuItemCategories();
+    }
+
+    $orderBy = $useCategories
+        ? 'menu_category_id ASC, urutan ASC, id ASC'
+        : 'kategori ASC, urutan ASC, id ASC';
     $stmt = db()->prepare(
         "SELECT id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, foto_url, status_stok
+                " . ($useCategories ? ', menu_category_id' : '') . "
          FROM menu_items
          WHERE shop_id = ? AND is_active = 1
-         ORDER BY kategori ASC, urutan ASC, id ASC"
+         ORDER BY {$orderBy}"
     );
     $stmt->execute([$shopId]);
     $items = $stmt->fetchAll();
@@ -575,8 +587,8 @@ function getMenuGrouped(int $shopId, string $lang = 'my'): array
             $gallery = [];
         }
     }
-    $grouped = ['makanan' => [], 'minuman' => []];
 
+    $itemRows = [];
     foreach ($items as $item) {
         $item['nama'] = $lang === 'en' ? $item['nama_en'] : $item['nama_my'];
         $item['deskripsi'] = $lang === 'en' ? $item['deskripsi_en'] : $item['deskripsi_my'];
@@ -590,10 +602,65 @@ function getMenuGrouped(int $shopId, string $lang = 'my'): array
             }
         }
         $item['gallery'] = $photos;
-        $grouped[$item['kategori']][] = $item;
+        $itemRows[] = $item;
     }
 
-    return $grouped;
+    if ($useCategories) {
+        $cats = shopMenuCategories($shopId, true);
+        $byCat = [];
+        foreach ($cats as $cat) {
+            $byCat[(int) $cat['id']] = [];
+        }
+        foreach ($itemRows as $item) {
+            $cid = (int) ($item['menu_category_id'] ?? 0);
+            if ($cid <= 0 || !isset($byCat[$cid])) {
+                $legacy = menuCategoryByKod($shopId, (string) ($item['kategori'] ?? 'makanan'));
+                $cid = $legacy ? (int) $legacy['id'] : 0;
+            }
+            if ($cid > 0 && isset($byCat[$cid])) {
+                $byCat[$cid][] = $item;
+            }
+        }
+        $categories = [];
+        foreach ($cats as $cat) {
+            $cid = (int) $cat['id'];
+            $categories[] = [
+                'id' => $cid,
+                'kod' => (string) $cat['kod'],
+                'label' => menuCategoryLabel($cat, $lang),
+                'kind' => menuCategoryKind($cat),
+                'items' => $byCat[$cid] ?? [],
+            ];
+        }
+        return ['categories' => $categories];
+    }
+
+    $grouped = ['makanan' => [], 'minuman' => []];
+    foreach ($itemRows as $item) {
+        $kat = (string) ($item['kategori'] ?? 'makanan');
+        if (!isset($grouped[$kat])) {
+            $kat = 'makanan';
+        }
+        $grouped[$kat][] = $item;
+    }
+    return [
+        'categories' => [
+            [
+                'id' => 0,
+                'kod' => 'makanan',
+                'label' => t('makanan'),
+                'kind' => 'makanan',
+                'items' => $grouped['makanan'],
+            ],
+            [
+                'id' => 0,
+                'kod' => 'minuman',
+                'label' => t('minuman'),
+                'kind' => 'minuman',
+                'items' => $grouped['minuman'],
+            ],
+        ],
+    ];
 }
 
 /** Overall track stage from order_items rows. */

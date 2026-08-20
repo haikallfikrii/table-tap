@@ -90,6 +90,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $pdo->commit();
             require_once dirname(__DIR__, 2) . '/includes/stations.php';
             ensureShopStations($shopId);
+            require_once dirname(__DIR__, 2) . '/includes/menu_categories.php';
+            ensureShopMenuCategories($shopId);
             redirect(baseUrl('admin/master/index.php?ok=1'));
         }
 

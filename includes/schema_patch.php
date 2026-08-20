@@ -239,6 +239,38 @@ function ensureAppSchema(PDO $pdo): void
         require_once __DIR__ . '/stations.php';
         ensureAllShopStations($pdo);
         backfillMenuAndOrderStations($pdo);
+
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS menu_categories (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                shop_id INT UNSIGNED NOT NULL,
+                kod VARCHAR(40) NOT NULL,
+                nama_my VARCHAR(80) NOT NULL,
+                nama_en VARCHAR(80) NOT NULL,
+                kind ENUM('makanan', 'minuman') NOT NULL DEFAULT 'makanan',
+                is_system TINYINT(1) NOT NULL DEFAULT 0,
+                urutan INT NOT NULL DEFAULT 0,
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (id),
+                UNIQUE KEY uq_shop_menu_cat_kod (shop_id, kod),
+                KEY idx_menu_cat_shop (shop_id, is_active, urutan)
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        $menuCatCol = $pdo->query("SHOW COLUMNS FROM menu_items LIKE 'menu_category_id'")->fetch();
+        if (!$menuCatCol) {
+            $pdo->exec('ALTER TABLE menu_items ADD COLUMN menu_category_id INT UNSIGNED DEFAULT NULL AFTER station_id');
+            try {
+                $pdo->exec('ALTER TABLE menu_items ADD KEY idx_menu_category (shop_id, menu_category_id)');
+            } catch (Throwable $e) {
+                // index may already exist
+            }
+        }
+
+        require_once __DIR__ . '/menu_categories.php';
+        ensureAllShopMenuCategories($pdo);
+        backfillMenuItemCategories($pdo);
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }

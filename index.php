@@ -76,6 +76,7 @@ $plans = [
             t('lp_pf_staff_inf'),
             t('lp_pf_gallery'),
             t('lp_pf_stations'),
+            t('lp_pf_menu_categories'),
             t('lp_pf_support_pri'),
         ],
     ],

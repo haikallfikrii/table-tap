@@ -146,6 +146,7 @@ function shopHasFeature(?array $shop, string $feature): bool
         'self_pickup'     => 2, // Standard+
         'menu_gallery'    => 3, // Pro
         'custom_stations' => 3, // Pro extra stations (Western, pastry, …)
+        'custom_menu_categories' => 3, // Pro custom menu tabs for customers
     ];
     $required = $need[$feature] ?? 99;
     return shopPackageRank($shop) >= $required;

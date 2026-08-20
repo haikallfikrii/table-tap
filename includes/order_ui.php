@@ -94,18 +94,28 @@ $pageSubtitle = $cafeBrowseMode
   </div>
 
   <nav class="category-tabs">
-    <a href="#makanan" class="active"><?= e(t('makanan')) ?></a>
-    <a href="#minuman"><?= e(t('minuman')) ?></a>
+    <?php
+      $menuCategories = $menu['categories'] ?? [];
+      if ($menuCategories === [] && isset($menu['makanan'])) {
+          $menuCategories = [
+              ['kod' => 'makanan', 'label' => t('makanan'), 'items' => $menu['makanan'] ?? []],
+              ['kod' => 'minuman', 'label' => t('minuman'), 'items' => $menu['minuman'] ?? []],
+          ];
+      }
+      foreach ($menuCategories as $i => $cat):
+    ?>
+      <a href="#cat-<?= e((string) $cat['kod']) ?>" class="<?= $i === 0 ? 'active' : '' ?>"><?= e((string) $cat['label']) ?></a>
+    <?php endforeach; ?>
   </nav>
 
-  <?php foreach (['makanan', 'minuman'] as $kat): ?>
-    <section class="menu-section" id="<?= e($kat) ?>">
-      <h2><?= e(t($kat)) ?></h2>
+  <?php foreach ($menuCategories as $cat): ?>
+    <section class="menu-section" id="cat-<?= e((string) $cat['kod']) ?>">
+      <h2><?= e((string) $cat['label']) ?></h2>
       <div class="menu-list">
-        <?php if (empty($menu[$kat])): ?>
+        <?php if (empty($cat['items'])): ?>
           <p style="color:var(--ink-muted)"><?= e(t('no_data')) ?></p>
         <?php else: ?>
-          <?php foreach ($menu[$kat] as $item):
+          <?php foreach ($cat['items'] as $item):
             $out = $item['status_stok'] === 'habis';
             $initial = mb_strtoupper(mb_substr($item['nama'], 0, 1));
             $photos = [];
