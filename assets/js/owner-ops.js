@@ -1,5 +1,5 @@
 /**
- * Owner dashboard — live kitchen / drinks / handover / unpaid counts
+ * Owner dashboard — live station / handover / unpaid counts
  */
 (function () {
   const root = document.getElementById('ops-board');
@@ -26,22 +26,18 @@
   }
 
   function apply(ops) {
-    const k = ops.kitchen || {};
-    const d = ops.drinks || {};
+    const stations = ops.stations || [];
+    stations.forEach(function (st) {
+      const id = st.id;
+      setText('ops-st-items-' + id, st.items || 0);
+      setText('ops-st-orders-' + id, st.orders || 0);
+      setChip('ops-st-queue-' + id, st.menunggu || 0);
+      setChip('ops-st-cook-' + id, st.sedang_dimasak || 0);
+      setBusy('ops-card-st-' + id, st.items || 0);
+    });
+
     const h = ops.handover || {};
     const u = ops.unpaid || {};
-
-    setText('ops-kitchen-items', k.items || 0);
-    setText('ops-kitchen-orders', k.orders || 0);
-    setChip('ops-kitchen-queue', k.menunggu || 0);
-    setChip('ops-kitchen-cook', k.sedang_dimasak || 0);
-    setBusy('ops-card-kitchen', k.items || 0);
-
-    setText('ops-drinks-items', d.items || 0);
-    setText('ops-drinks-orders', d.orders || 0);
-    setChip('ops-drinks-queue', d.menunggu || 0);
-    setChip('ops-drinks-cook', d.sedang_dimasak || 0);
-    setBusy('ops-card-drinks', d.items || 0);
 
     setText('ops-hand-items', h.items || 0);
     setText('ops-hand-orders', h.orders || 0);

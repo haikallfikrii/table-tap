@@ -66,9 +66,9 @@
       const note = it.catatan
         ? '<div class="item-note">' + esc(i18n.notes || 'Notes') + ': ' + esc(it.catatan) + '</div>'
         : '';
-      const kat = it.kategori === 'minuman'
+      const kat = it.station || (it.kategori === 'minuman'
         ? (i18n.minuman_title || 'Drinks')
-        : (i18n.dapur_title || 'Kitchen');
+        : (i18n.dapur_title || 'Kitchen'));
 
       let actions = '';
       if (it.status_item === 'siap') {
