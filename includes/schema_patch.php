@@ -271,6 +271,19 @@ function ensureAppSchema(PDO $pdo): void
         require_once __DIR__ . '/menu_categories.php';
         ensureAllShopMenuCategories($pdo);
         backfillMenuItemCategories($pdo);
+
+        $splitCol = $pdo->query("SHOW COLUMNS FROM orders LIKE 'split_from_order_id'")->fetch();
+        if (!$splitCol) {
+            $pdo->exec(
+                'ALTER TABLE orders
+                 ADD COLUMN split_from_order_id INT UNSIGNED DEFAULT NULL AFTER sumber_order'
+            );
+            try {
+                $pdo->exec('ALTER TABLE orders ADD KEY idx_orders_split_from (split_from_order_id)');
+            } catch (Throwable $e) {
+                // index may already exist
+            }
+        }
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }

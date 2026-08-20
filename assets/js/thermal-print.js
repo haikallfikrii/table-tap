@@ -280,8 +280,96 @@
     return printRaw(buildKitchenTicket(ticket, labels));
   }
 
+  function padMoneyLine(label, amount, width) {
+    width = width || 32;
+    var left = String(label || '');
+    var right = String(amount || '');
+    var space = width - left.length - right.length;
+    if (space < 1) return left + ' ' + right;
+    return left + new Array(space + 1).join(' ') + right;
+  }
+
+  function formatRm(n) {
+    return 'RM ' + (Number(n) || 0).toFixed(2);
+  }
+
+  /**
+   * Paid receipt (kasir) — silent ESC/POS, no browser print dialog.
+   */
+  function buildReceiptTicket(receipt, labels) {
+    labels = labels || {};
+    var width = 32;
+    var lang = (receipt && receipt.lang) === 'en' ? 'en' : 'my';
+    var chunks = [];
+    chunks.push(new Uint8Array([0x1b, 0x40]));
+    chunks.push(line((receipt && receipt.shop_name) || 'TableTap', { align: 'center', bold: true }));
+    chunks.push(line((labels.receipt || (lang === 'en' ? 'RECEIPT' : 'RESIT')) + ' #' + ((receipt && receipt.order_id) || ''), { align: 'center', bold: true }));
+    chunks.push(separator(width));
+    chunks.push(line((labels.table || 'Meja') + ' ' + ((receipt && receipt.nomor_meja) || '-')));
+    var paidAt = (receipt && (receipt.waktu_lunas || receipt.waktu_order)) || '';
+    if (paidAt) chunks.push(line((labels.paid || 'Paid') + ': ' + paidAt));
+    if (receipt && receipt.nama_pelanggan) {
+      chunks.push(line((labels.guest || 'Guest') + ': ' + receipt.nama_pelanggan));
+    }
+    var serve = (receipt && receipt.jenis_hidang) === 'takeaway'
+      ? (labels.takeaway || 'Takeaway')
+      : (labels.dine_in || 'Dine in');
+    chunks.push(line(serve));
+    if (receipt && receipt.split_from_order_id) {
+      chunks.push(line((labels.split_from || 'Split from') + ' #' + receipt.split_from_order_id));
+    }
+    chunks.push(separator(width));
+
+    (receipt && receipt.items ? receipt.items : []).forEach(function (it) {
+      var qty = (it.qty || 1) + 'x ';
+      var nameRows = wrapName(it.nama || '', width - qty.length - 8);
+      var amt = formatRm(it.line_total != null ? it.line_total : ((it.unit || 0) * (it.qty || 1)));
+      chunks.push(line(padMoneyLine(qty + nameRows[0], amt, width)));
+      for (var i = 1; i < nameRows.length; i++) {
+        chunks.push(line('   ' + nameRows[i]));
+      }
+      if (it.catatan) chunks.push(line('* ' + it.catatan));
+    });
+
+    chunks.push(separator(width));
+    chunks.push(line(padMoneyLine(labels.subtotal || 'Subtotal', formatRm(receipt && receipt.subtotal), width)));
+    if (receipt && Number(receipt.sst_jumlah) > 0) {
+      chunks.push(line(padMoneyLine(
+        'SST (' + Number(receipt.sst_rate || 0).toFixed(2) + '%)',
+        formatRm(receipt.sst_jumlah),
+        width
+      )));
+    }
+    chunks.push(line(padMoneyLine(labels.total || 'Total', formatRm(receipt && receipt.total_harga), width), { bold: true }));
+    chunks.push(separator(width));
+    chunks.push(line(labels.thank_you || (lang === 'en' ? 'Thank you!' : 'Terima kasih!'), { align: 'center' }));
+    chunks.push(line('TableTap', { align: 'center' }));
+    chunks.push(new Uint8Array([0x0a, 0x0a, 0x0a]));
+    chunks.push(new Uint8Array([0x1d, 0x56, 0x00]));
+    return concatBytes(chunks);
+  }
+
+  function printReceipt(receipt, labels) {
+    return printRaw(buildReceiptTicket(receipt, labels));
+  }
+
   function printTest(labels) {
     labels = labels || {};
+    if (labels.mode === 'receipt') {
+      return printReceipt({
+        shop_name: 'TableTap',
+        order_id: 'TEST',
+        nomor_meja: '0',
+        waktu_lunas: new Date().toLocaleString(),
+        jenis_hidang: 'dine_in',
+        subtotal: 1,
+        sst_rate: 0,
+        sst_jumlah: 0,
+        total_harga: 1,
+        items: [{ qty: 1, nama: labels.test_item || 'Test print OK', line_total: 1, catatan: '' }],
+        lang: 'my',
+      }, labels);
+    }
     return printKitchenTicket({
       shopName: 'TableTap',
       stationName: labels.test_station || 'Test',
@@ -301,7 +389,9 @@
     disconnect: disconnect,
     onChange: onChange,
     printKitchenTicket: printKitchenTicket,
+    printReceipt: printReceipt,
     printTest: printTest,
     buildKitchenTicket: buildKitchenTicket,
+    buildReceiptTicket: buildReceiptTicket,
   };
 })(window);

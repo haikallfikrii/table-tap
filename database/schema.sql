@@ -271,6 +271,7 @@ CREATE TABLE `orders` (
   `guest_token` VARCHAR(64) DEFAULT NULL,
   `pickup_alert` TINYINT(1) NOT NULL DEFAULT 1,
   `sumber_order` ENUM('qr', 'staf') NOT NULL DEFAULT 'qr',
+  `split_from_order_id` INT UNSIGNED DEFAULT NULL,
   `subtotal` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
   `sst_rate` DECIMAL(5,2) NOT NULL DEFAULT 0.00,
   `sst_jumlah` DECIMAL(10,2) NOT NULL DEFAULT 0.00,

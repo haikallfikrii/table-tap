@@ -75,11 +75,14 @@ if ($sendReceipt) {
     }
 }
 
+$receipt = fetchOrderReceipt($orderId, $shopId, $lang);
+
 jsonResponse([
     'ok' => true,
     'already' => $alreadyPaid,
     'order_id' => $orderId,
     'receipt_url' => orderReceiptUrl($orderId, true),
+    'receipt' => $receipt,
     'email_sent' => $emailSent,
     'email_masked' => $emailMasked,
     'email_error' => $emailError !== '' ? $emailError : null,
