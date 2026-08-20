@@ -63,6 +63,21 @@ function fetchOrderReceipt(int $orderId, int $shopId, string $lang = 'my'): ?arr
 
     $email = orderCustomerEmailColumnExists() ? trim((string) ($order['customer_email'] ?? '')) : '';
 
+    $splitFrom = 0;
+    static $hasSplitCol = null;
+    if ($hasSplitCol === null) {
+        try {
+            $hasSplitCol = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'split_from_order_id'")->fetch();
+        } catch (Throwable $e) {
+            $hasSplitCol = false;
+        }
+    }
+    if ($hasSplitCol) {
+        $sf = db()->prepare('SELECT split_from_order_id FROM orders WHERE id = ? LIMIT 1');
+        $sf->execute([(int) $order['id']]);
+        $splitFrom = (int) ($sf->fetchColumn() ?: 0);
+    }
+
     return [
         'order_id' => (int) $order['id'],
         'shop_name' => (string) $order['nama_kedai'],
@@ -75,6 +90,7 @@ function fetchOrderReceipt(int $orderId, int $shopId, string $lang = 'my'): ?arr
         'customer_email' => $email,
         'customer_email_masked' => $email !== '' ? maskEmail($email) : '',
         'sumber_order' => ($order['sumber_order'] ?? 'qr') === 'staf' ? 'staf' : 'qr',
+        'split_from_order_id' => $splitFrom > 0 ? $splitFrom : null,
         'subtotal' => (float) $order['subtotal'],
         'sst_rate' => (float) $order['sst_rate'],
         'sst_jumlah' => (float) $order['sst_jumlah'],
@@ -107,6 +123,9 @@ function receiptPlainText(array $receipt): string
         $lines[] = ($lang === 'en' ? 'Guest' : 'Pelanggan') . ': ' . (string) $receipt['nama_pelanggan'];
     }
     $lines[] = receiptServeLabel((string) ($receipt['jenis_hidang'] ?? 'dine_in'), $lang);
+    if (!empty($receipt['split_from_order_id'])) {
+        $lines[] = ($lang === 'en' ? 'Split from #' : 'Bahagi dari #') . (int) $receipt['split_from_order_id'];
+    }
     $lines[] = str_repeat('-', 32);
 
     foreach ($receipt['items'] ?? [] as $item) {
@@ -165,6 +184,9 @@ function receiptHtml(array $receipt, bool $standalone = true): string
         <div><?= e($lang === 'en' ? 'Guest' : 'Pelanggan') ?>: <?= e((string) $receipt['nama_pelanggan']) ?></div>
       <?php endif; ?>
       <div><?= e(receiptServeLabel((string) ($receipt['jenis_hidang'] ?? 'dine_in'), $lang)) ?></div>
+      <?php if (!empty($receipt['split_from_order_id'])): ?>
+        <div><?= e($lang === 'en' ? 'Split from' : 'Bahagi dari') ?> #<?= (int) $receipt['split_from_order_id'] ?></div>
+      <?php endif; ?>
     </div>
 
     <table class="receipt-items">

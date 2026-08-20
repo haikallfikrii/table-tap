@@ -15,9 +15,11 @@ $lang = currentLang();
 $config = getConfig();
 $pageTitle = t('kasir_title');
 $showSound = true;
+$showPrinter = true;
 $adminScripts = [
     assetUrl('js/sound.js'),
     assetUrl('js/live-poll.js'),
+    assetUrl('js/thermal-print.js'),
     assetUrl('js/kasir.js'),
 ];
 
@@ -27,7 +29,9 @@ $i18n = [
     'paid'          => t('paid'),
     'no_orders'     => t('no_orders'),
     'table_n'       => t('table_n'),
+    'table'         => t('table'),
     'total'         => t('total'),
+    'subtotal'      => t('subtotal'),
     'grand_total'   => t('grand_total'),
     'enable_sound'  => t('enable_sound'),
     'sound_on'      => t('sound_on'),
@@ -52,6 +56,28 @@ $i18n = [
     'receipt_email_prompt' => t('receipt_email_prompt'),
     'receipt_sent'  => t('receipt_sent'),
     'receipt_send_failed' => t('receipt_send_failed'),
+    'guest_name'    => t('guest_name'),
+    'ops_orders_n'  => t('ops_orders_n'),
+    'table_unpaid'  => t('table_unpaid'),
+    'split_bill'    => t('split_bill'),
+    'split_hint'    => t('split_hint'),
+    'split_select_partial' => t('split_select_partial'),
+    'split_confirm' => t('split_confirm'),
+    'split_from'    => t('split_from'),
+    'thank_you'     => t('thank_you'),
+    'printer_connect' => t('printer_connect'),
+    'printer_disconnect' => t('printer_disconnect'),
+    'printer_connected' => t('printer_connected'),
+    'printer_hint'  => t('printer_hint'),
+    'kasir_printer_hint' => t('kasir_printer_hint'),
+    'printer_unsupported' => t('printer_unsupported'),
+    'printer_cancelled' => t('printer_cancelled'),
+    'autoprint_on'  => t('autoprint_on'),
+    'autoprint_off' => t('autoprint_off'),
+    'print_test'    => t('print_test'),
+    'print_test_ok' => t('print_test_ok'),
+    'print_test_item' => t('print_test_item'),
+    'print_failed'  => t('print_failed'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
@@ -60,6 +86,8 @@ $i18n = [
 <p style="margin:0 0 16px">
   <a class="btn btn-primary" href="<?= e(baseUrl('admin/staff_order.php?from=kasir')) ?>"><?= e(t('staff_order')) ?></a>
 </p>
+
+<p class="print-status" id="print-status"><?= e(t('kasir_printer_hint')) ?></p>
 
 <div class="stat-row">
   <div class="stat-card">
@@ -79,13 +107,35 @@ $i18n = [
 <div id="orders-root" class="table-grid"
      data-poll-url="<?= e(baseUrl('admin/api/orders_poll.php')) ?>"
      data-paid-url="<?= e(baseUrl('admin/api/mark_paid.php')) ?>"
+     data-split-url="<?= e(baseUrl('admin/api/split_bill.php')) ?>"
      data-pickup-url="<?= e(baseUrl('admin/api/pickup_action.php')) ?>"
      data-receipt-url="<?= e(baseUrl('admin/receipt.php')) ?>"
+     data-receipt-json-url="<?= e(baseUrl('admin/api/receipt_json.php')) ?>"
      data-send-receipt-url="<?= e(baseUrl('admin/api/send_receipt.php')) ?>"
+     data-shop-name="<?= e((string) ($user['shop_name'] ?? 'TableTap')) ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 3000) ?>"
      data-lang="<?= e($lang) ?>"
      data-i18n="<?= e(json_encode($i18n, JSON_UNESCAPED_UNICODE)) ?>">
   <div class="empty-state"><?= e(t('loading')) ?></div>
 </div>
+
+<div class="sheet-overlay" id="split-overlay"></div>
+<aside class="cart-sheet split-sheet" id="split-sheet" aria-label="<?= e(t('split_bill')) ?>">
+  <div class="cart-sheet-header">
+    <h2 id="split-title"><?= e(t('split_bill')) ?></h2>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-close-split"><?= e(t('close')) ?></button>
+  </div>
+  <div class="cart-sheet-body">
+    <label class="split-guest-label" for="split-guest"><?= e(t('guest_name')) ?> <span class="order-meta">(<?= e(t('optional')) ?>)</span></label>
+    <input type="text" id="split-guest" maxlength="40" autocomplete="name" placeholder="<?= e(t('guest_name_ph')) ?>">
+    <div id="split-body" class="split-item-list"></div>
+  </div>
+  <div class="cart-sheet-footer">
+    <div id="split-total" class="split-total"></div>
+    <button type="button" class="btn btn-primary" id="btn-split-confirm" style="width:100%" disabled>
+      <?= e(t('split_confirm')) ?>
+    </button>
+  </div>
+</aside>
 
 <?php require dirname(__DIR__) . '/includes/admin_footer.php'; ?>
