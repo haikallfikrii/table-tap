@@ -198,7 +198,7 @@
         '<div class="duitnow-pay-block">' +
           '<p class="order-meta">' + esc(i18n.duitnow_scan_hint || 'Scan DuitNow QR') + '</p>' +
           '<div class="duitnow-pay-visual">' +
-            '<img class="duitnow-pay-qr" src="' + esc(qr) + '" alt="DuitNow QR" width="220" height="220" loading="eager" decoding="async">' +
+            '<img class="duitnow-pay-qr" src="' + esc(qr) + '" alt="DuitNow QR" width="220" height="220" decoding="sync">' +
           '</div>' +
           '<a class="btn btn-secondary btn-sm duitnow-download" href="' + esc(qr) + '" download="duitnow-qr.png" target="_blank" rel="noopener">' +
             esc(i18n.download_qr || 'Download QR') +
@@ -212,7 +212,7 @@
         '<input type="hidden" name="order_id" value="' + esc(String(order.order_id || '')) + '">' +
         '<input type="hidden" name="gt" value="' + esc(gt) + '">' +
         '<p class="order-meta">' + esc(i18n.proof_upload_hint || 'Upload proof') + '</p>' +
-        '<input type="file" name="proof" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" required>' +
+        '<input type="file" name="proof" accept="image/*,application/pdf,.pdf" required>' +
         '<button type="submit" class="btn btn-primary btn-sm" style="width:100%;margin-top:8px">' +
           esc(i18n.proof_upload_btn || 'Submit proof') +
         '</button>' +

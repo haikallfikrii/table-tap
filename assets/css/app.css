@@ -1746,7 +1746,22 @@ a {
 
 .duitnow-preview.is-collapsed,
 .duitnow-preview[hidden] {
-  display: none !important;
+  visibility: hidden;
+  height: 0;
+  max-height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.duitnow-preview:not(.is-collapsed) {
+  visibility: visible;
+  height: auto;
+  max-height: none;
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .duitnow-pay-block {
@@ -1765,11 +1780,14 @@ a {
 
 .duitnow-pay-qr {
   display: block;
-  width: min(220px, 100%);
-  height: auto;
+  width: 220px;
+  height: 220px;
   max-width: 100%;
+  object-fit: contain;
   border-radius: 8px;
   background: #fff;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 .duitnow-download {

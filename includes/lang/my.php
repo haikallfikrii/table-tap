@@ -106,7 +106,7 @@ return [
     'proof_uploaded'    => 'Bukti berjaya dihantar',
     'proof_upload_required' => 'Sila pilih fail bukti',
     'proof_too_large'   => 'Fail terlalu besar',
-    'proof_invalid_type'=> 'Guna JPG, PNG, WEBP atau PDF',
+    'proof_invalid_type'=> 'Guna JPG, PNG, HEIC (screenshot) atau PDF',
     'proof_upload_failed' => 'Gagal muat naik',
     'proof_not_needed'  => 'Bukti tidak diperlukan',
     'already_paid'      => 'Sudah lunas',
