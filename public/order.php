@@ -162,6 +162,10 @@ $i18nJs = [
     'pay_duitnow' => t('pay_duitnow'),
     'pay_counter' => t('pay_counter'),
     'pay_method_required' => t('pay_method_required'),
+    'addon_pick' => t('addon_pick'),
+    'addon_extras' => t('addon_extras'),
+    'addon_required' => t('addon_required'),
+    'addon_choice_required' => t('addon_choice_required'),
 ];
 
 if ($deliveryMode) {

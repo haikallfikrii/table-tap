@@ -26,6 +26,7 @@ $canGallery = shopHasFeature($shop, 'menu_gallery');
 $maxGallery = 6;
 require_once dirname(__DIR__, 2) . '/includes/stations.php';
 require_once dirname(__DIR__, 2) . '/includes/menu_categories.php';
+require_once dirname(__DIR__, 2) . '/includes/menu_addons.php';
 $stations = shopStations($shopId, true);
 $menuCategories = shopMenuCategories($shopId, true);
 
@@ -162,6 +163,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 if ($canGallery && $newId > 0 && !empty($_FILES['gallery'])) {
                     saveGalleryUploads($pdo, $shopId, $newId, $_FILES['gallery'], $config, $maxGallery);
                 }
+                if ($newId > 0) {
+                    saveMenuAddonsFromForm($pdo, $shopId, $newId, $_POST);
+                }
                 $flash = 'OK';
             } else {
                 if ($id <= 0) {
@@ -231,6 +235,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 if ($canGallery && !empty($_FILES['gallery'])) {
                     saveGalleryUploads($pdo, $shopId, $id, $_FILES['gallery'], $config, $maxGallery);
                 }
+                saveMenuAddonsFromForm($pdo, $shopId, $id, $_POST);
                 $flash = 'OK';
             }
             redirect(baseUrl('admin/owner/menu.php?ok=1'));
@@ -275,10 +280,17 @@ if ($editId > 0) {
 }
 
 $editPhotos = [];
+$editAddons = ['pilihan' => [], 'tambahan' => []];
 if ($editItem && $canGallery) {
     $ps = $pdo->prepare('SELECT id, foto_url FROM menu_photos WHERE shop_id = ? AND menu_item_id = ? ORDER BY urutan, id');
     $ps->execute([$shopId, (int) $editItem['id']]);
     $editPhotos = $ps->fetchAll();
+}
+if ($editItem) {
+    foreach (menuAddonsForItem($shopId, (int) $editItem['id'], false) as $addonRow) {
+        $jenis = ($addonRow['jenis'] ?? '') === 'pilihan' ? 'pilihan' : 'tambahan';
+        $editAddons[$jenis][] = $addonRow;
+    }
 }
 
 $itemsStmt = $pdo->prepare(
@@ -395,6 +407,44 @@ if (isset($_GET['ok'])) {
       <?php else: ?>
         <p class="order-meta" style="grid-column:1/-1"><?= e(t('gallery_upgrade')) ?></p>
       <?php endif; ?>
+
+      <div class="form-group" style="grid-column:1/-1;border-top:1px solid var(--border);padding-top:16px;margin-top:4px">
+        <h3 style="margin:0 0 6px;font-size:1rem"><?= e(t('menu_addons_pilihan')) ?></h3>
+        <p class="order-meta" style="margin:0 0 10px"><?= e(t('menu_addons_pilihan_hint')) ?></p>
+        <div class="addon-rows" id="addon-pilihan-rows">
+          <?php
+            $pilihanRows = $editAddons['pilihan'] ?: [['nama_my' => '', 'nama_en' => '', 'harga_delta' => '']];
+            foreach ($pilihanRows as $row):
+          ?>
+            <div class="addon-row" style="display:grid;grid-template-columns:1fr 1fr 120px 40px;gap:8px;margin-bottom:8px;align-items:end">
+              <input name="addon_pilihan_my[]" placeholder="<?= e(t('name_my')) ?>" value="<?= e((string) ($row['nama_my'] ?? '')) ?>">
+              <input name="addon_pilihan_en[]" placeholder="<?= e(t('name_en')) ?>" value="<?= e((string) ($row['nama_en'] ?? '')) ?>">
+              <input type="number" step="0.01" min="0" name="addon_pilihan_harga[]" placeholder="+RM" value="<?= e((string) ($row['harga_delta'] ?? '')) ?>">
+              <button type="button" class="btn btn-ghost btn-sm addon-row-remove" aria-label="<?= e(t('delete')) ?>">×</button>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-add-pilihan"><?= e(t('menu_addons_add_row')) ?></button>
+      </div>
+
+      <div class="form-group" style="grid-column:1/-1">
+        <h3 style="margin:0 0 6px;font-size:1rem"><?= e(t('menu_addons_tambahan')) ?></h3>
+        <p class="order-meta" style="margin:0 0 10px"><?= e(t('menu_addons_tambahan_hint')) ?></p>
+        <div class="addon-rows" id="addon-tambahan-rows">
+          <?php
+            $tambahanRows = $editAddons['tambahan'] ?: [['nama_my' => '', 'nama_en' => '', 'harga_delta' => '']];
+            foreach ($tambahanRows as $row):
+          ?>
+            <div class="addon-row" style="display:grid;grid-template-columns:1fr 1fr 120px 40px;gap:8px;margin-bottom:8px;align-items:end">
+              <input name="addon_tambahan_my[]" placeholder="<?= e(t('name_my')) ?>" value="<?= e((string) ($row['nama_my'] ?? '')) ?>">
+              <input name="addon_tambahan_en[]" placeholder="<?= e(t('name_en')) ?>" value="<?= e((string) ($row['nama_en'] ?? '')) ?>">
+              <input type="number" step="0.01" min="0" name="addon_tambahan_harga[]" placeholder="+RM" value="<?= e((string) ($row['harga_delta'] ?? '')) ?>">
+              <button type="button" class="btn btn-ghost btn-sm addon-row-remove" aria-label="<?= e(t('delete')) ?>">×</button>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="btn-add-tambahan"><?= e(t('menu_addons_add_row')) ?></button>
+      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:8px">
       <button type="submit" class="btn btn-primary"><?= e(t('save')) ?></button>
@@ -485,5 +535,43 @@ if (isset($_GET['ok'])) {
     </tbody>
   </table>
 </div>
+
+<script>
+(function () {
+  function bindRemove(container) {
+    container.querySelectorAll('.addon-row-remove').forEach(function (btn) {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        const row = btn.closest('.addon-row');
+        const rows = container.querySelectorAll('.addon-row');
+        if (rows.length <= 1) {
+          row.querySelectorAll('input').forEach(function (inp) { inp.value = ''; });
+          return;
+        }
+        row.remove();
+      });
+    });
+  }
+  function addRow(containerId, prefix) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const sample = container.querySelector('.addon-row');
+    if (!sample) return;
+    const clone = sample.cloneNode(true);
+    clone.querySelectorAll('input').forEach(function (inp) { inp.value = ''; });
+    container.appendChild(clone);
+    bindRemove(container);
+  }
+  document.getElementById('btn-add-pilihan')?.addEventListener('click', function () {
+    addRow('addon-pilihan-rows', 'pilihan');
+  });
+  document.getElementById('btn-add-tambahan')?.addEventListener('click', function () {
+    addRow('addon-tambahan-rows', 'tambahan');
+  });
+  bindRemove(document.getElementById('addon-pilihan-rows'));
+  bindRemove(document.getElementById('addon-tambahan-rows'));
+})();
+</script>
 
 <?php require dirname(__DIR__, 2) . '/includes/admin_footer.php'; ?>

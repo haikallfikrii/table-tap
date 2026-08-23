@@ -37,13 +37,51 @@
     return 'RM ' + v.toFixed(2);
   };
 
-  /** @type {Array<{id:number,nama:string,harga:number,qty:number,catatan:string}>} */
+  /** @type {Array<{id:number,key:string,nama:string,harga:number,qty:number,catatan:string,addon_ids?:number[]}>} */
   let cart = [];
   let serveType = deliveryMode ? 'delivery' : 'dine_in';
 
+  function lineKey(id, addonIds) {
+    const sorted = (addonIds || []).slice().sort(function (a, b) { return a - b; });
+    return String(id) + ':' + sorted.join(',');
+  }
+
+  function cartItemPayload(i) {
+    const row = {
+      menu_item_id: i.id,
+      qty: i.qty,
+      catatan: i.catatan || '',
+    };
+    if (i.addon_ids && i.addon_ids.length) {
+      row.addon_ids = i.addon_ids;
+    }
+    return row;
+  }
+
+  function itemHasAddons(item) {
+    if (!item || !item.addons) return false;
+    const a = item.addons;
+    return (Array.isArray(a.choices) && a.choices.length > 0)
+      || (Array.isArray(a.extras) && a.extras.length > 0);
+  }
+
+  function formatAddonDelta(delta) {
+    const v = Number(delta) || 0;
+    if (v <= 0) return '';
+    return ' (+' + money(v).replace('RM ', 'RM') + ')';
+  }
+
   try {
     const saved = sessionStorage.getItem(cartStore);
-    if (saved) cart = JSON.parse(saved) || [];
+    if (saved) {
+      cart = JSON.parse(saved) || [];
+      cart = cart.map(function (i) {
+        if (!i.key) {
+          i.key = lineKey(i.id, i.addon_ids || []);
+        }
+        return i;
+      });
+    }
     const savedServe = sessionStorage.getItem(serveStore);
     if (savedServe === 'takeaway' || savedServe === 'dine_in') serveType = savedServe;
     const savedName = sessionStorage.getItem(nameStore);
@@ -87,8 +125,8 @@
     return sub + cartSst(sub);
   }
 
-  function findLine(id) {
-    return cart.find((i) => i.id === id);
+  function findLine(key) {
+    return cart.find(function (i) { return i.key === key; });
   }
 
   function renderBar() {
@@ -120,9 +158,9 @@
       return;
     }
 
-    body.innerHTML = cart.map((item) => {
+    body.innerHTML = cart.map(function (item) {
       return (
-        '<div class="cart-line" data-id="' + item.id + '">' +
+        '<div class="cart-line" data-key="' + escapeHtml(item.key) + '">' +
           '<div>' +
             '<div class="cart-line-name">' + escapeHtml(item.nama) + '</div>' +
             '<div class="cart-line-meta">' + money(item.harga) + '</div>' +
@@ -186,26 +224,118 @@
     document.getElementById('cart-sheet')?.classList.remove('open');
   }
 
-  function addToCart(id, nama, harga) {
-    const existing = findLine(id);
+  function buildLineFromItem(item, choiceId, extraIds) {
+    const addonIds = [];
+    if (choiceId) addonIds.push(choiceId);
+    (extraIds || []).forEach(function (id) {
+      if (id && addonIds.indexOf(id) === -1) addonIds.push(id);
+    });
+    addonIds.sort(function (a, b) { return a - b; });
+
+    let harga = Number(item.harga) || 0;
+    const labels = [];
+    const addons = item.addons || { choices: [], extras: [] };
+
+    (addons.choices || []).forEach(function (c) {
+      if (c.id === choiceId) {
+        harga += Number(c.harga_delta) || 0;
+        labels.push(c.nama);
+      }
+    });
+    (addons.extras || []).forEach(function (ex) {
+      if (extraIds.indexOf(ex.id) !== -1) {
+        harga += Number(ex.harga_delta) || 0;
+        labels.push(ex.nama);
+      }
+    });
+
+    const nama = labels.length ? (item.nama + ' · ' + labels.join(' · ')) : item.nama;
+    return {
+      id: Number(item.id),
+      key: lineKey(item.id, addonIds),
+      nama: nama,
+      harga: Math.round(harga * 100) / 100,
+      qty: 1,
+      catatan: '',
+      addon_ids: addonIds,
+    };
+  }
+
+  function addLineToCart(line) {
+    const existing = findLine(line.key);
     if (existing) {
       existing.qty += 1;
     } else {
-      cart.push({ id, nama, harga, qty: 1, catatan: '' });
+      cart.push(line);
     }
     if (window.TableTapSound) TableTapSound.unlock();
     refresh();
   }
 
+  function addToCart(id, nama, harga) {
+    addLineToCart({
+      id: id,
+      key: lineKey(id, []),
+      nama: nama,
+      harga: harga,
+      qty: 1,
+      catatan: '',
+      addon_ids: [],
+    });
+  }
+
   let detailItem = null;
+  let detailChoiceId = 0;
+  let detailExtraIds = [];
+
+  function renderAddonOptions(item) {
+    const addons = item.addons || { choices: [], extras: [] };
+    let html = '';
+    if (addons.choices && addons.choices.length) {
+      html += '<div class="addon-group"><div class="addon-group-title">' + escapeHtml(i18n.addon_pick || 'Options') + ' <span class="addon-req">' + escapeHtml(i18n.addon_required || 'Required') + '</span></div>';
+      addons.choices.forEach(function (c, idx) {
+        const checked = detailChoiceId ? (detailChoiceId === c.id) : (idx === 0);
+        if (idx === 0 && !detailChoiceId) detailChoiceId = c.id;
+        html += '<label class="addon-opt"><input type="radio" name="detail-choice" value="' + c.id + '"' + (checked ? ' checked' : '') + '><span>' + escapeHtml(c.nama) + escapeHtml(formatAddonDelta(c.harga_delta)) + '</span></label>';
+      });
+      html += '</div>';
+    }
+    if (addons.extras && addons.extras.length) {
+      html += '<div class="addon-group"><div class="addon-group-title">' + escapeHtml(i18n.addon_extras || 'Add-ons') + '</div>';
+      addons.extras.forEach(function (ex) {
+        const on = detailExtraIds.indexOf(ex.id) !== -1;
+        html += '<label class="addon-opt"><input type="checkbox" name="detail-extra" value="' + ex.id + '"' + (on ? ' checked' : '') + '><span>' + escapeHtml(ex.nama) + escapeHtml(formatAddonDelta(ex.harga_delta)) + '</span></label>';
+      });
+      html += '</div>';
+    }
+    return html;
+  }
+
+  function syncDetailSelection() {
+    const choiceEl = document.querySelector('input[name="detail-choice"]:checked');
+    detailChoiceId = choiceEl ? Number(choiceEl.value) : 0;
+    detailExtraIds = [];
+    document.querySelectorAll('input[name="detail-extra"]:checked').forEach(function (el) {
+      detailExtraIds.push(Number(el.value));
+    });
+    const live = document.getElementById('detail-price-live');
+    if (live && detailItem) {
+      const line = buildLineFromItem(detailItem, detailChoiceId, detailExtraIds);
+      live.textContent = money(line.harga);
+    }
+  }
 
   function closeDetail() {
     document.getElementById('detail-overlay')?.classList.remove('open');
     document.getElementById('detail-sheet')?.classList.remove('open');
+    detailChoiceId = 0;
+    detailExtraIds = [];
   }
 
   function openDetail(data) {
     detailItem = data;
+    detailChoiceId = 0;
+    detailExtraIds = [];
     const title = document.getElementById('detail-title');
     const body = document.getElementById('detail-body');
     const addBtn = document.getElementById('detail-add');
@@ -222,11 +352,14 @@
         }).join('') + '</div>';
       }
     }
+    const addonHtml = itemHasAddons(data) ? renderAddonOptions(data) : '';
     if (body) {
       body.innerHTML = gallery +
         (data.desc ? '<p class="detail-desc">' + escapeHtml(data.desc) + '</p>' : '') +
-        '<p class="detail-price">' + escapeHtml(data.harga_l || '') + '</p>';
+        addonHtml +
+        (!itemHasAddons(data) ? '<p class="detail-price">' + escapeHtml(data.harga_l || money(data.harga)) + '</p>' : '');
     }
+    syncDetailSelection();
     if (addBtn) {
       addBtn.disabled = !!data.out;
     }
@@ -234,19 +367,35 @@
     document.getElementById('detail-sheet')?.classList.add('open');
   }
 
-  // Add buttons
-  document.querySelectorAll('[data-add-item]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      addToCart(Number(btn.dataset.addItem), btn.dataset.nama || '', Number(btn.dataset.harga) || 0);
+  function handleAddItem(item) {
+    if (!item || item.out) return;
+    if (itemHasAddons(item)) {
+      openDetail(item);
+      return;
+    }
+    addToCart(Number(item.id), item.nama || '', Number(item.harga) || 0);
+  }
+
+  document.querySelectorAll('[data-item]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      try {
+        handleAddItem(JSON.parse(btn.getAttribute('data-item') || '{}'));
+      } catch (err) { /* ignore */ }
     });
   });
 
   root.addEventListener('click', function (e) {
     const el = e.target.closest('[data-open-detail]');
-    if (!el || el.closest('[data-add-item]')) return;
+    if (!el || el.closest('[data-item]')) return;
     try {
       openDetail(JSON.parse(el.getAttribute('data-open-detail') || '{}'));
     } catch (err) { /* ignore */ }
+  });
+
+  document.getElementById('detail-body')?.addEventListener('change', function (e) {
+    if (e.target && (e.target.matches('input[name="detail-choice"]') || e.target.matches('input[name="detail-extra"]'))) {
+      syncDetailSelection();
+    }
   });
 
   document.querySelectorAll('img.menu-item-photo').forEach(function (img) {
@@ -266,7 +415,16 @@
   document.getElementById('btn-close-detail')?.addEventListener('click', closeDetail);
   document.getElementById('detail-add')?.addEventListener('click', function () {
     if (!detailItem || detailItem.out) return;
-    addToCart(Number(detailItem.id), detailItem.nama || '', Number(detailItem.harga) || 0);
+    if (itemHasAddons(detailItem)) {
+      const addons = detailItem.addons || {};
+      if (addons.choices && addons.choices.length && !detailChoiceId) {
+        alert(i18n.addon_choice_required || 'Pick an option');
+        return;
+      }
+      addLineToCart(buildLineFromItem(detailItem, detailChoiceId, detailExtraIds));
+    } else {
+      addToCart(Number(detailItem.id), detailItem.nama || '', Number(detailItem.harga) || 0);
+    }
     closeDetail();
   });
   document.getElementById('detail-body')?.addEventListener('click', function (e) {
@@ -299,16 +457,16 @@
     if (!(target instanceof HTMLElement)) return;
     const line = target.closest('.cart-line');
     if (!line) return;
-    const id = Number(line.dataset.id);
-    const item = findLine(id);
+    const lineKeyVal = line.dataset.key;
+    const item = findLine(lineKeyVal);
     if (!item) return;
     const action = target.dataset.action;
     if (action === 'inc') item.qty += 1;
     else if (action === 'dec') {
       item.qty -= 1;
-      if (item.qty <= 0) cart = cart.filter((i) => i.id !== id);
+      if (item.qty <= 0) cart = cart.filter(function (i) { return i.key !== lineKeyVal; });
     } else if (action === 'remove') {
-      cart = cart.filter((i) => i.id !== id);
+      cart = cart.filter(function (i) { return i.key !== lineKeyVal; });
     } else {
       return;
     }
@@ -321,7 +479,7 @@
     if (target.dataset.action !== 'note') return;
     const line = target.closest('.cart-line');
     if (!line) return;
-    const item = findLine(Number(line.dataset.id));
+    const item = findLine(line.dataset.key);
     if (item) {
       item.catatan = target.value.slice(0, 255);
       persist();
@@ -381,11 +539,7 @@
       const payload = {
         jenis_hidang: serveType,
         nama_pelanggan: guestName,
-        items: cart.map((i) => ({
-          menu_item_id: i.id,
-          qty: i.qty,
-          catatan: i.catatan || '',
-        })),
+        items: cart.map(cartItemPayload),
       };
       if (sessionToken) {
         payload.session = sessionToken;
@@ -511,11 +665,7 @@
           code: code || '',
           alamat: address,
           payment_method: pay,
-          items: cart.map((i) => ({
-            menu_item_id: i.id,
-            qty: i.qty,
-            catatan: i.catatan || '',
-          })),
+          items: cart.map(cartItemPayload),
         }),
       });
       const data = await res.json();
@@ -538,11 +688,7 @@
         phone: (checkoutPhone?.value || '').trim(),
         code: code || '',
         jenis_hidang: serveType,
-        items: cart.map((i) => ({
-          menu_item_id: i.id,
-          qty: i.qty,
-          catatan: i.catatan || '',
-        })),
+        items: cart.map(cartItemPayload),
       }),
     });
     const data = await res.json();

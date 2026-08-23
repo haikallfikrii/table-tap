@@ -150,15 +150,22 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
             foreach ($item['gallery'] ?? [] as $src) {
                 $photos[] = uploadUrl($src);
             }
+            $addons = $item['addons'] ?? ['choices' => [], 'extras' => []];
+            $hasAddons = !empty($addons['choices']) || !empty($addons['extras']);
+            $hasChoices = !empty($addons['choices']);
             $detail = [
                 'id' => (int) $item['id'],
                 'nama' => $item['nama'],
                 'desc' => (string) ($item['deskripsi'] ?? ''),
                 'harga' => (float) $item['harga'],
-                'harga_l' => formatMoney((float) $item['harga']),
+                'harga_l' => $hasChoices
+                    ? t('addon_price_from') . ' ' . formatMoney((float) $item['harga'])
+                    : formatMoney((float) $item['harga']),
                 'photos' => $photos,
                 'out' => $out,
+                'addons' => $addons,
             ];
+            $itemPayload = json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS);
             $searchText = mb_strtolower(
                 ($item['nama'] ?? '') . ' '
                 . ($item['nama_my'] ?? '') . ' '
@@ -169,27 +176,26 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
           ?>
             <article class="menu-item<?= $out ? ' out' : '' ?>" data-search="<?= e($searchText) ?>">
               <?php if (!empty($item['foto_url'])): ?>
-                <img class="menu-item-photo<?= $canGallery ? ' tap' : '' ?>" src="<?= e(uploadUrl($item['foto_url'])) ?>" alt="<?= e($item['nama']) ?>" loading="lazy"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>>
+                <img class="menu-item-photo<?= $canGallery ? ' tap' : '' ?>" src="<?= e(uploadUrl($item['foto_url'])) ?>" alt="<?= e($item['nama']) ?>" loading="lazy"<?= $canGallery ? ' data-open-detail=\'' . e($itemPayload) . '\'' : '' ?>>
               <?php else: ?>
-                <div class="menu-item-photo placeholder<?= $canGallery ? ' tap' : '' ?>" aria-hidden="true"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>><?= e($initial) ?></div>
+                <div class="menu-item-photo placeholder<?= $canGallery ? ' tap' : '' ?>" aria-hidden="true"<?= $canGallery ? ' data-open-detail=\'' . e($itemPayload) . '\'' : '' ?>><?= e($initial) ?></div>
               <?php endif; ?>
-              <div class="menu-item-body"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>>
+              <div class="menu-item-body"<?= $canGallery ? ' data-open-detail=\'' . e($itemPayload) . '\'' : '' ?>>
                 <h3><?= e($item['nama']) ?></h3>
                 <?php if ($item['deskripsi']): ?>
                   <p><?= e($item['deskripsi']) ?></p>
                 <?php endif; ?>
                 <span class="menu-item-price">
-                  <?= e(formatMoney($item['harga'])) ?>
+                  <?= e($detail['harga_l']) ?>
                   <?php if ($out): ?> · <?= e(t('out_of_stock')) ?><?php endif; ?>
                   <?php if ($canGallery): ?> · <?= e(t('menu_see_detail')) ?><?php endif; ?>
+                  <?php if ($hasAddons && !$canGallery): ?> · <?= e(t('menu_pick_options')) ?><?php endif; ?>
                 </span>
               </div>
               <button
                 type="button"
                 class="btn-icon"
-                data-add-item="<?= (int) $item['id'] ?>"
-                data-nama="<?= e($item['nama']) ?>"
-                data-harga="<?= e($item['harga']) ?>"
+                data-item='<?= e($itemPayload) ?>'
                 <?= $out ? 'disabled' : '' ?>
                 aria-label="<?= e(t('add_to_cart')) ?>"
               >+</button>
@@ -359,6 +365,20 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
   </div>
   <div class="cart-sheet-body" id="detail-body"></div>
   <div class="cart-sheet-footer">
+    <p class="detail-price" id="detail-price-live"></p>
+    <button type="button" class="btn btn-primary" id="detail-add" style="width:100%"><?= e(t('add_to_cart')) ?></button>
+  </div>
+</aside>
+<?php else: ?>
+<div class="sheet-overlay" id="detail-overlay"></div>
+<aside class="cart-sheet detail-sheet" id="detail-sheet" aria-label="<?= e(t('menu_pick_options')) ?>">
+  <div class="cart-sheet-header">
+    <h2 id="detail-title"><?= e(t('menu_pick_options')) ?></h2>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-close-detail"><?= e(t('close')) ?></button>
+  </div>
+  <div class="cart-sheet-body" id="detail-body"></div>
+  <div class="cart-sheet-footer">
+    <p class="detail-price" id="detail-price-live"></p>
     <button type="button" class="btn btn-primary" id="detail-add" style="width:100%"><?= e(t('add_to_cart')) ?></button>
   </div>
 </aside>
