@@ -134,6 +134,27 @@
     return res.json();
   }
 
+  function deliveryPayLabel(state) {
+    const map = {
+      paid: i18n.paid || 'Paid',
+      duitnow_wait_proof: i18n.delivery_pay_wait_proof || 'Awaiting proof',
+      duitnow_review: i18n.delivery_pay_proof_sent || 'Proof sent',
+      cod_pending: i18n.delivery_pay_cod || 'COD pending',
+      cod_held: i18n.cod_held_waiting || 'COD held',
+      counter_pending: i18n.delivery_pay_counter || 'Counter unpaid',
+    };
+    return map[state] || state;
+  }
+
+  function deliveryPayBadgeClass(state) {
+    if (state === 'paid') return 'badge-lunas';
+    if (state === 'duitnow_review' || state === 'cod_held') return 'badge-delivery-action';
+    if (state === 'duitnow_wait_proof') return 'badge-delivery-wait';
+    return 'badge-delivery-pending';
+  }
+
+  let lastDeliveryStates = {};
+
   function receiptSection(order) {
     const label = esc(i18n.receipt || 'Receipt');
     if (order.status_bayar !== 'lunas') {
@@ -170,9 +191,14 @@
       '<span class="badge badge-' + esc(order.status_order) + '">' +
         esc(statusLabel(order.status_order)) +
       '</span>';
-    const payStatus = unpaid
-      ? '<span class="badge badge-belum_bayar">' + esc(i18n.unpaid || 'Unpaid') + '</span>'
-      : '<span class="badge badge-lunas">' + esc(i18n.paid || 'Paid') + '</span>';
+    const payStatus = order.jenis_hidang === 'delivery'
+      ? (function () {
+          const st = order.payment_state || (unpaid ? 'counter_pending' : 'paid');
+          return '<span class="badge ' + deliveryPayBadgeClass(st) + '">' + esc(deliveryPayLabel(st)) + '</span>';
+        })()
+      : (unpaid
+        ? '<span class="badge badge-belum_bayar">' + esc(i18n.unpaid || 'Unpaid') + '</span>'
+        : '<span class="badge badge-lunas">' + esc(i18n.paid || 'Paid') + '</span>');
     let method = '';
     if (order.payment_method === 'cod') {
       method = '<span class="badge badge-info">' + esc(i18n.pay_cod || 'COD') + '</span>';
@@ -202,7 +228,7 @@
 
     const canSplit = unpaid && (o.items || []).length > 1 && o.jenis_hidang !== 'delivery';
     let paidBtn = '';
-    if (unpaid && (o.payment_method === 'counter' || !o.payment_method)) {
+    if (unpaid && o.jenis_hidang !== 'delivery' && (o.payment_method === 'counter' || !o.payment_method)) {
       paidBtn =
         '<button type="button" class="btn btn-success btn-sm" data-mark-paid="' + o.id + '">' +
           esc(i18n.mark_paid || 'Mark paid') + '</button>';
@@ -241,6 +267,11 @@
             esc(i18n.mark_paid_manual || i18n.mark_paid || 'Mark paid') + '</button>';
       }
     }
+    if (unpaid && o.jenis_hidang === 'delivery' && (o.payment_method === 'counter' || !o.payment_method)) {
+      payExtra =
+        '<button type="button" class="btn btn-success btn-sm" data-mark-paid="' + o.id + '">' +
+          esc(i18n.mark_paid || 'Mark paid') + '</button>';
+    }
 
     const deliveryMeta =
       (o.alamat ? '<div class="order-meta">' + esc(i18n.address || 'Address') + ': ' + esc(o.alamat) + '</div>' : '') +
@@ -266,7 +297,11 @@
       : '';
 
     return (
-      '<article class="order-card' + (unpaid ? ' unpaid' : '') + (isNew ? ' new-flash' : '') + '" data-order-id="' + o.id + '">' +
+      '<article class="order-card' +
+        (unpaid && o.jenis_hidang !== 'delivery' ? ' unpaid' : '') +
+        (o.jenis_hidang === 'delivery' && o.needs_payment_attention ? ' delivery-needs-action' : '') +
+        (isNew ? ' new-flash' : '') +
+        '" data-order-id="' + o.id + '">' +
         '<div class="order-card-header">' +
           '<div>' +
             '<div class="order-meta">#' + o.id + ' · ' + esc(o.waktu_order) +
@@ -300,16 +335,28 @@
     const elOrders = document.getElementById('stat-orders');
     const elUnpaid = document.getElementById('stat-unpaid');
     const elTotal = document.getElementById('stat-total');
+    const elDelivery = document.getElementById('stat-delivery');
+    const elDeliverySub = document.getElementById('stat-delivery-sub');
     if (elOrders) elOrders.textContent = String(stats.active_orders || 0);
     if (elUnpaid) elUnpaid.textContent = String(stats.unpaid_orders || 0);
     if (elTotal) elTotal.textContent = money(stats.grand_total || 0);
+    if (elDelivery) elDelivery.textContent = String(stats.delivery_active || 0);
+    if (elDeliverySub) {
+      const need = Number(stats.delivery_needs_action || 0);
+      elDeliverySub.textContent = need > 0
+        ? (need + ' ' + (i18n.delivery_needs_action || 'needs action'))
+        : '';
+    }
+    document.getElementById('stat-delivery-card')?.classList.toggle('has-alert', Number(stats.delivery_needs_action || 0) > 0);
 
     let tables = Array.isArray(data.tables) ? data.tables.slice() : [];
+    const deliveryOrders = Array.isArray(data.delivery_orders) ? data.delivery_orders.slice() : [];
     latestOrders = Array.isArray(data.orders) ? data.orders.slice() : [];
 
     if (tables.length === 0 && latestOrders.length > 0) {
       const map = {};
       latestOrders.forEach(function (o) {
+        if (o.jenis_hidang === 'delivery') return;
         const key = String(o.nomor_meja);
         if (!map[key]) {
           map[key] = { nomor_meja: o.nomor_meja, orders: [], table_total: 0, has_unpaid: false };
@@ -323,37 +370,72 @@
       tables = Object.keys(map).map(function (k) { return map[k]; });
     }
 
-    if (tables.length === 0) {
+    const newSet = new Set(data.new_order_ids || []);
+    let html = '';
+
+    if (deliveryOrders.length > 0) {
+      const deliveryHtml = deliveryOrders.map(function (o) {
+        return renderOrderCard(o, newSet);
+      }).join('');
+      html +=
+        '<section class="kasir-delivery-panel" id="delivery">' +
+          '<header class="kasir-delivery-head">' +
+            '<div>' +
+              '<h2 class="kasir-section-title">' + esc(i18n.delivery || 'Delivery') + '</h2>' +
+              '<p class="order-meta">' + esc(i18n.delivery_needs_action || 'Payment tracking') + '</p>' +
+            '</div>' +
+            (Number(stats.delivery_needs_action || 0) > 0
+              ? '<span class="kasir-delivery-alert">' + Number(stats.delivery_needs_action) + ' ' +
+                  esc(i18n.delivery_needs_action || 'needs action') + '</span>'
+              : '') +
+          '</header>' +
+          '<div class="kasir-delivery-orders">' + deliveryHtml + '</div>' +
+        '</section>';
+    }
+
+    if (tables.length === 0 && deliveryOrders.length === 0) {
       root.innerHTML = '<div class="empty-state">' + esc(i18n.no_orders || 'No orders') + '</div>';
       return;
     }
 
-    const newSet = new Set(data.new_order_ids || []);
-
-    root.innerHTML = tables.map(function (t) {
-      const ordersHtml = (t.orders || []).map(function (o) {
-        return renderOrderCard(o, newSet);
-      }).join('');
-      return (
-        '<section class="kasir-table-group' + (t.has_unpaid ? ' has-unpaid' : '') + '">' +
-          '<header class="kasir-table-head">' +
-            '<div>' +
-              '<div class="table-num">' + esc(tableTitle(t.nomor_meja)) + '</div>' +
-              '<div class="order-meta">' +
-                esc((t.orders || []).length + ' ' + (i18n.ops_orders_n || 'orders')) +
+    if (tables.length > 0) {
+      html += '<div class="table-grid kasir-tables-panel">' + tables.map(function (t) {
+        const ordersHtml = (t.orders || []).map(function (o) {
+          return renderOrderCard(o, newSet);
+        }).join('');
+        return (
+          '<section class="kasir-table-group' + (t.has_unpaid ? ' has-unpaid' : '') + '">' +
+            '<header class="kasir-table-head">' +
+              '<div>' +
+                '<div class="table-num">' + esc(tableTitle(t.nomor_meja)) + '</div>' +
+                '<div class="order-meta">' +
+                  esc((t.orders || []).length + ' ' + (i18n.ops_orders_n || 'orders')) +
+                '</div>' +
               '</div>' +
-            '</div>' +
-            (t.has_unpaid
-              ? '<div class="kasir-table-due">' +
-                  '<div class="order-meta">' + esc(i18n.table_unpaid || 'Table unpaid') + '</div>' +
-                  '<div class="order-total">' + money(t.table_total) + '</div>' +
-                '</div>'
-              : '') +
-          '</header>' +
-          '<div class="kasir-table-orders">' + ordersHtml + '</div>' +
-        '</section>'
-      );
-    }).join('');
+              (t.has_unpaid
+                ? '<div class="kasir-table-due">' +
+                    '<div class="order-meta">' + esc(i18n.table_unpaid_only || i18n.table_unpaid || 'Table unpaid') + '</div>' +
+                    '<div class="order-total">' + money(t.table_total) + '</div>' +
+                  '</div>'
+                : '') +
+            '</header>' +
+            '<div class="kasir-table-orders">' + ordersHtml + '</div>' +
+          '</section>'
+        );
+      }).join('') + '</div>';
+    }
+
+    root.innerHTML = html;
+
+    deliveryOrders.forEach(function (o) {
+      const prev = lastDeliveryStates[o.id];
+      if (sinceId > 0 && o.payment_state === 'duitnow_review' && prev !== 'duitnow_review' && window.TableTapSound) {
+        TableTapSound.configure(data.sound || {});
+        TableTapSound.beep();
+        setTimeout(function () { TableTapSound.beep(); }, 320);
+      }
+      lastDeliveryStates[o.id] = o.payment_state;
+    });
   }
 
   function openSplitModal(orderId) {
@@ -570,6 +652,12 @@
         } else {
           TableTapSound.startAlarm();
         }
+      }
+      if ((data.new_delivery_ids || []).length > 0 && sinceId > 0) {
+        TableTapSound.configure(data.sound || {});
+        TableTapSound.beep();
+        setTimeout(function () { TableTapSound.beep(); }, 180);
+        setTimeout(function () { TableTapSound.beep(); }, 420);
       }
       if (typeof data.max_id === 'number') {
         sinceId = Math.max(sinceId, data.max_id);

@@ -291,6 +291,78 @@ body.admin {
   color: var(--accent);
 }
 
+.badge-delivery-action {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-delivery-wait {
+  background: #e8f4fd;
+  color: #0b6ea8;
+}
+
+.badge-delivery-pending {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+.kasir-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.kasir-delivery-panel {
+  background: linear-gradient(135deg, #fff8f0 0%, #fff 100%);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.kasir-delivery-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.kasir-section-title {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.kasir-delivery-alert {
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.kasir-delivery-orders {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.order-card.delivery-needs-action {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(232, 93, 4, 0.15);
+}
+
+.stat-card-delivery.has-alert {
+  border-color: var(--accent);
+  background: #fff8f0;
+}
+
+.stat-card-delivery.has-alert .value {
+  color: var(--accent);
+}
+
 /* Cards */
 .table-grid {
   display: grid;

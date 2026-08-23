@@ -319,10 +319,14 @@ function ownerOpsSnapshot(int $shopId, ?array $shop = null): array
     $pay = db()->prepare(
         "SELECT COUNT(*) AS n, COALESCE(SUM(total_harga), 0) AS amt
          FROM orders
-         WHERE shop_id = ? AND status_bayar = 'belum_bayar' AND status_order != 'dibatalkan'"
+         WHERE shop_id = ? AND status_bayar = 'belum_bayar' AND status_order != 'dibatalkan'
+           AND (jenis_hidang IS NULL OR jenis_hidang != 'delivery')"
     );
     $pay->execute([$shopId]);
     $payRow = $pay->fetch() ?: ['n' => 0, 'amt' => 0];
+
+    require_once __DIR__ . '/delivery.php';
+    $delivery = deliveryOpsSnapshot($shopId, $shop);
 
     return [
         'fulfillment' => $pickup ? 'self_pickup' : 'waiter',
@@ -335,5 +339,6 @@ function ownerOpsSnapshot(int $shopId, ?array $shop = null): array
             'amount' => (float) $payRow['amt'],
             'amount_fmt' => formatMoney((float) $payRow['amt']),
         ],
+        'delivery' => $delivery,
     ];
 }

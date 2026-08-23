@@ -297,6 +297,98 @@ function attachOrderDeliveryMeta(
     ]);
 }
 
+function isDeliveryOrder(array $order): bool
+{
+    return ($order['jenis_hidang'] ?? '') === 'delivery';
+}
+
+/** Kasir-facing payment stage for delivery orders. */
+function deliveryPaymentState(array $order): string
+{
+    if (($order['status_bayar'] ?? '') === 'lunas') {
+        return 'paid';
+    }
+    $method = (string) ($order['payment_method'] ?? 'counter');
+    $proof = (string) ($order['payment_proof_status'] ?? 'none');
+    if ($method === 'duitnow') {
+        return $proof === 'uploaded' ? 'duitnow_review' : 'duitnow_wait_proof';
+    }
+    if ($method === 'cod') {
+        return $proof === 'uploaded' ? 'cod_held' : 'cod_pending';
+    }
+    return 'counter_pending';
+}
+
+function deliveryNeedsKasirAttention(array $order): bool
+{
+    if (!isDeliveryOrder($order)) {
+        return false;
+    }
+    return deliveryPaymentState($order) !== 'paid';
+}
+
+/** Active delivery orders for kasir / owner dashboards. */
+function deliveryOpsSnapshot(int $shopId, ?array $shop = null): array
+{
+    $empty = [
+        'enabled' => false,
+        'orders' => 0,
+        'needs_action' => 0,
+        'waiting_proof' => 0,
+        'review_proof' => 0,
+        'amount' => 0.0,
+        'amount_fmt' => formatMoney(0),
+    ];
+    if (!orderDeliveryColumnsExist()) {
+        return $empty;
+    }
+    $shop = $shop ?? findShopById($shopId);
+    if (!$shop || !shopDeliveryEnabled($shop)) {
+        return $empty;
+    }
+
+    $stmt = db()->prepare(
+        "SELECT status_bayar, payment_method, payment_proof_status, total_harga
+         FROM orders
+         WHERE shop_id = ? AND jenis_hidang = 'delivery' AND status_order != 'dibatalkan'
+           AND (
+             status_order IN ('menunggu', 'diproses')
+             OR status_bayar = 'belum_bayar'
+             OR (status_bayar = 'lunas' AND waktu_lunas >= DATE_SUB(NOW(), INTERVAL 4 HOUR))
+           )"
+    );
+    $stmt->execute([$shopId]);
+    $rows = $stmt->fetchAll();
+
+    $needs = 0;
+    $waitProof = 0;
+    $review = 0;
+    $amount = 0.0;
+    foreach ($rows as $row) {
+        $state = deliveryPaymentState($row);
+        if ($state === 'paid') {
+            continue;
+        }
+        $needs++;
+        $amount += (float) ($row['total_harga'] ?? 0);
+        if ($state === 'duitnow_wait_proof') {
+            $waitProof++;
+        } elseif ($state === 'duitnow_review') {
+            $review++;
+        }
+    }
+
+    return [
+        'enabled' => true,
+        'orders' => count($rows),
+        'needs_action' => $needs,
+        'waiting_proof' => $waitProof,
+        'review_proof' => $review,
+        'amount' => round($amount, 2),
+        'amount_fmt' => formatMoney($amount),
+    ];
+}
+
 function orderNeedsPaymentHold(array $order, ?array $shop): bool
 {
     if (!orderDeliveryColumnsExist()) {
