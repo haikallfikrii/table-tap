@@ -10,6 +10,7 @@
   const sessionToken = root.dataset.session || '';
   const sessionUrl = root.dataset.sessionUrl || '';
   const cafeBrowse = root.dataset.cafeBrowse === '1';
+  const deliveryMode = root.dataset.delivery === '1';
   const shopSlug = root.dataset.shop || '';
   const shopToken = root.dataset.shopToken || '';
   const cafeVerify = root.dataset.cafeVerify || 'email';
@@ -21,7 +22,9 @@
   const fulfillment = root.dataset.fulfillment || 'waiter';
   const staffMode = root.dataset.staff === '1';
   const staffFrom = root.dataset.from || 'waiter';
-  const cartKey = sessionToken || (cafeBrowse ? 'shop_' + shopSlug : meja);
+  let payMethods = { counter: true, cod: false, duitnow: false };
+  try { payMethods = JSON.parse(root.dataset.payMethods || '{}'); } catch (e) { /* ignore */ }
+  const cartKey = sessionToken || (cafeBrowse ? ((deliveryMode ? 'del_' : 'shop_') + shopSlug) : meja);
   const cartStore = (staffMode ? 'tt_staff_cart_' : 'tt_cart_') + cartKey;
   const serveStore = (staffMode ? 'tt_staff_serve_' : 'tt_serve_') + cartKey;
   const nameStore = (staffMode ? 'tt_staff_name_' : 'tt_name_') + cartKey;
@@ -34,7 +37,7 @@
 
   /** @type {Array<{id:number,nama:string,harga:number,qty:number,catatan:string}>} */
   let cart = [];
-  let serveType = 'dine_in';
+  let serveType = deliveryMode ? 'delivery' : 'dine_in';
 
   try {
     const saved = sessionStorage.getItem(cartStore);
@@ -419,11 +422,29 @@
   const checkoutSheet = document.getElementById('checkout-sheet');
   const checkoutOverlay = document.getElementById('checkout-overlay');
   const checkoutEmail = document.getElementById('checkout-email');
+  const checkoutPhone = document.getElementById('checkout-phone');
+  const checkoutAddress = document.getElementById('checkout-address');
   const checkoutName = document.getElementById('checkout-name');
   const checkoutOtp = document.getElementById('checkout-otp');
   const checkoutStepDetails = document.getElementById('checkout-step-details');
   const checkoutStepOtp = document.getElementById('checkout-step-otp');
   const checkoutOtpSent = document.getElementById('checkout-otp-sent');
+  const duitnowPreview = document.getElementById('duitnow-preview');
+
+  function selectedPayMethod() {
+    const el = document.querySelector('input[name="pay_method"]:checked');
+    return el ? el.value : 'cod';
+  }
+
+  function syncDuitnowPreview() {
+    if (!duitnowPreview) return;
+    duitnowPreview.hidden = selectedPayMethod() !== 'duitnow';
+  }
+
+  document.querySelectorAll('input[name="pay_method"]').forEach(function (el) {
+    el.addEventListener('change', syncDuitnowPreview);
+  });
+  syncDuitnowPreview();
 
   function openCheckoutSheet() {
     document.getElementById('cart-sheet')?.classList.remove('open');
@@ -433,7 +454,7 @@
     if (checkoutStepDetails) checkoutStepDetails.hidden = false;
     if (checkoutStepOtp) checkoutStepOtp.hidden = true;
     if (checkoutOtp) checkoutOtp.value = '';
-    (checkoutName || checkoutEmail)?.focus();
+    (checkoutName || checkoutPhone || checkoutEmail)?.focus();
   }
 
   function closeCheckoutSheet() {
@@ -448,10 +469,52 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   }
 
+  function validPhone(v) {
+    const d = String(v || '').replace(/\D/g, '');
+    return d.length >= 9 && d.length <= 15;
+  }
+
   async function runCafeCheckout(code) {
     const guestName = checkoutGuestName();
-    if (fulfillment === 'self_pickup' && guestName.length < 2) {
+    if ((fulfillment === 'self_pickup' || deliveryMode) && guestName.length < 2) {
       throw new Error(i18n.guest_name_required || 'Enter your name');
+    }
+    if (deliveryMode) {
+      const address = (checkoutAddress?.value || '').trim();
+      if (address.length < 8) {
+        throw new Error(i18n.address_required || 'Enter address');
+      }
+      if (cafeVerify === 'phone' && !validPhone(checkoutPhone?.value || '')) {
+        throw new Error(i18n.phone_required || 'Enter phone');
+      }
+      const pay = selectedPayMethod();
+      if (!payMethods[pay]) {
+        throw new Error(i18n.pay_method_required || 'Select payment');
+      }
+      const res = await fetch(checkoutUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          shop: shopSlug,
+          token: shopToken,
+          nama_pelanggan: guestName,
+          email: (checkoutEmail?.value || '').trim(),
+          phone: (checkoutPhone?.value || '').trim(),
+          code: code || '',
+          alamat: address,
+          payment_method: pay,
+          items: cart.map((i) => ({
+            menu_item_id: i.id,
+            qty: i.qty,
+            catatan: i.catatan || '',
+          })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || i18n.order_failed);
+      clearCartStorage();
+      window.location.href = data.redirect;
+      return;
     }
     const res = await fetch(checkoutUrl, {
       method: 'POST',
@@ -479,10 +542,23 @@
   document.getElementById('btn-checkout-send')?.addEventListener('click', async function () {
     const name = checkoutGuestName();
     const email = (checkoutEmail?.value || '').trim();
-    if (fulfillment === 'self_pickup' && name.length < 2) {
+    if ((fulfillment === 'self_pickup' || deliveryMode) && name.length < 2) {
       alert(i18n.guest_name_required || 'Enter name');
       checkoutName?.focus();
       return;
+    }
+    if (deliveryMode) {
+      const address = (checkoutAddress?.value || '').trim();
+      if (address.length < 8) {
+        alert(i18n.address_required || 'Enter address');
+        checkoutAddress?.focus();
+        return;
+      }
+      if (cafeVerify === 'phone' && !validPhone(checkoutPhone?.value || '')) {
+        alert(i18n.phone_required || 'Enter phone');
+        checkoutPhone?.focus();
+        return;
+      }
     }
     if (cafeVerify === 'email') {
       if (!validEmail(email)) {

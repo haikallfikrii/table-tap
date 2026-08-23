@@ -7,6 +7,7 @@
 
   const pollUrl = root.dataset.pollUrl;
   const paidUrl = root.dataset.paidUrl;
+  const confirmUrl = root.dataset.confirmUrl || '';
   const splitUrl = root.dataset.splitUrl || '';
   const pickupUrl = root.dataset.pickupUrl;
   const receiptUrlBase = root.dataset.receiptUrl || '';
@@ -162,7 +163,9 @@
   function statusBadges(order, unpaid) {
     const serve = order.jenis_hidang === 'takeaway'
       ? '<span class="badge badge-serve-bungkus">' + esc(i18n.takeaway || 'Takeaway') + '</span>'
-      : '<span class="badge badge-serve-sini">' + esc(i18n.dine_in || 'Dine in') + '</span>';
+      : (order.jenis_hidang === 'delivery'
+        ? '<span class="badge badge-serve-bungkus">' + esc(i18n.delivery || 'Delivery') + '</span>'
+        : '<span class="badge badge-serve-sini">' + esc(i18n.dine_in || 'Dine in') + '</span>');
     const orderStatus =
       '<span class="badge badge-' + esc(order.status_order) + '">' +
         esc(statusLabel(order.status_order)) +
@@ -170,7 +173,13 @@
     const payStatus = unpaid
       ? '<span class="badge badge-belum_bayar">' + esc(i18n.unpaid || 'Unpaid') + '</span>'
       : '<span class="badge badge-lunas">' + esc(i18n.paid || 'Paid') + '</span>';
-    return serve + orderStatus + payStatus;
+    let method = '';
+    if (order.payment_method === 'cod') {
+      method = '<span class="badge badge-info">' + esc(i18n.pay_cod || 'COD') + '</span>';
+    } else if (order.payment_method === 'duitnow') {
+      method = '<span class="badge badge-info">' + esc(i18n.pay_duitnow || 'DuitNow') + '</span>';
+    }
+    return serve + orderStatus + payStatus + method;
   }
 
   function renderOrderCard(o, newSet) {
@@ -191,15 +200,44 @@
       );
     }).join('');
 
-    const canSplit = unpaid && (o.items || []).length > 1;
-    const paidBtn = unpaid
-      ? '<button type="button" class="btn btn-success btn-sm" data-mark-paid="' + o.id + '">' +
-          esc(i18n.mark_paid || 'Mark paid') + '</button>'
-      : '';
+    const canSplit = unpaid && (o.items || []).length > 1 && o.jenis_hidang !== 'delivery';
+    let paidBtn = '';
+    if (unpaid && (o.payment_method === 'counter' || !o.payment_method)) {
+      paidBtn =
+        '<button type="button" class="btn btn-success btn-sm" data-mark-paid="' + o.id + '">' +
+          esc(i18n.mark_paid || 'Mark paid') + '</button>';
+    }
     const splitBtn = canSplit
       ? '<button type="button" class="btn btn-secondary btn-sm" data-split-bill="' + o.id + '">' +
           esc(i18n.split_bill || 'Split bill') + '</button>'
       : '';
+
+    let payExtra = '';
+    if (unpaid && o.payment_method === 'cod') {
+      payExtra =
+        '<button type="button" class="btn btn-success btn-sm" data-pay-action="cod_received" data-order="' + o.id + '">' +
+          esc(i18n.cod_received || 'Cash received') + '</button>';
+    }
+    if (unpaid && o.payment_method === 'duitnow') {
+      if (o.payment_proof_status === 'uploaded' && o.payment_proof_url) {
+        const proofHref = o.payment_proof_url.indexOf('http') === 0
+          ? o.payment_proof_url
+          : ('../' + o.payment_proof_url);
+        payExtra =
+          '<a class="btn btn-ghost btn-sm" href="' + esc(proofHref) + '" target="_blank" rel="noopener">' +
+            esc(i18n.proof_pending || 'View proof') + '</a>' +
+          '<button type="button" class="btn btn-success btn-sm" data-pay-action="confirm" data-order="' + o.id + '">' +
+            esc(i18n.confirm_proof || 'Confirm') + '</button>' +
+          '<button type="button" class="btn btn-secondary btn-sm" data-pay-action="reject" data-order="' + o.id + '">' +
+            esc(i18n.reject_proof || 'Reject') + '</button>';
+      } else {
+        payExtra = '<span class="order-meta">' + esc(i18n.proof_pending || 'Waiting for proof') + '</span>';
+      }
+    }
+
+    const deliveryMeta =
+      (o.alamat ? '<div class="order-meta">' + esc(i18n.address || 'Address') + ': ' + esc(o.alamat) + '</div>' : '') +
+      (o.phone ? '<div class="order-meta">' + esc(i18n.phone || 'Phone') + ': ' + esc(o.phone) + '</div>' : '');
 
     let pickupBtns = '';
     if (o.has_ready) {
@@ -232,19 +270,20 @@
           '</div>' +
           '<div class="order-card-badges">' + statusBadges(o, unpaid) + '</div>' +
         '</div>' +
-        '<ul class="order-items">' + itemsHtml + '</ul>' +
-        '<div class="order-card-footer">' +
-          '<div><div class="order-total">' + money(o.total_harga) + '</div>' + sstLine + '</div>' +
-          '<div class="order-card-actions">' +
-            (paidBtn || splitBtn
-              ? '<div class="order-card-pay">' + paidBtn + splitBtn + '</div>'
-              : '') +
-            pickupBtns +
-            receiptSection(o) +
-          '</div>' +
-        '</div>' +
-      '</article>'
-    );
+            '<ul class="order-items">' + itemsHtml + '</ul>' +
+            deliveryMeta +
+            '<div class="order-card-footer">' +
+              '<div><div class="order-total">' + money(o.total_harga) + '</div>' + sstLine + '</div>' +
+              '<div class="order-card-actions">' +
+                ((paidBtn || splitBtn || payExtra)
+                  ? '<div class="order-card-pay">' + paidBtn + splitBtn + payExtra + '</div>'
+                  : '') +
+                pickupBtns +
+                receiptSection(o) +
+              '</div>' +
+            '</div>' +
+          '</article>'
+        );
   }
 
   function render(data) {
@@ -577,6 +616,32 @@
     if (splitBtn) {
       const orderId = Number(splitBtn.getAttribute('data-split-bill'));
       if (orderId) openSplitModal(orderId);
+      return;
+    }
+
+    const payAct = e.target.closest('[data-pay-action][data-order]');
+    if (payAct && confirmUrl) {
+      const orderId = Number(payAct.getAttribute('data-order'));
+      const action = payAct.getAttribute('data-pay-action');
+      if (!orderId || !action) return;
+      payAct.disabled = true;
+      try {
+        const res = await fetch(confirmUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ order_id: orderId, action: action }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Failed');
+        if (action !== 'reject') {
+          await printPaidReceipt(orderId, data.receipt);
+        }
+        await poll();
+      } catch (err) {
+        alert(err.message || 'Error');
+        payAct.disabled = false;
+      }
       return;
     }
 

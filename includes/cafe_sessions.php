@@ -88,7 +88,16 @@ function shopCafeVerify(?array $shop): string
         return 'email';
     }
     $v = (string) ($shop['cafe_verify'] ?? 'email');
-    return $v === 'none' ? 'none' : 'email';
+    if (in_array($v, ['email', 'phone', 'none'], true)) {
+        return $v;
+    }
+    return 'email';
+}
+
+/** Alias used by delivery + cafe contact settings. */
+function shopContactVerify(?array $shop): string
+{
+    return shopCafeVerify($shop);
 }
 
 function cafeEntryUrl(string $slug, string $shopToken): string
@@ -344,10 +353,13 @@ function fetchActiveSessionOrders(array $session, string $lang): array
     $sessionId = (int) $session['id'];
     $hasGuestToken = orderGuestTokenColumnExists();
     $guestCol = $hasGuestToken ? ', guest_token' : '';
+    $payCol = function_exists('orderDeliveryColumnsExist') && orderDeliveryColumnsExist()
+        ? ', payment_method, payment_proof_url, payment_proof_status, status_bayar, phone, alamat'
+        : '';
 
     $stmt = db()->prepare(
         "SELECT id, subtotal, sst_rate, sst_jumlah, total_harga, status_order, waktu_order,
-                jenis_hidang, nama_pelanggan, pickup_alert{$guestCol}
+                jenis_hidang, nama_pelanggan, pickup_alert{$guestCol}{$payCol}
          FROM orders
          WHERE session_id = ? AND shop_id = ?
            AND status_bayar = 'belum_bayar'
@@ -442,7 +454,7 @@ function enableCafeModeForShop(int $shopId, string $verify = 'email'): void
     if (!orderingModeColumnExists()) {
         throw new RuntimeException('Cafe mode schema missing');
     }
-    if (!in_array($verify, ['email', 'none'], true)) {
+    if (!in_array($verify, ['email', 'phone', 'none'], true)) {
         $verify = 'email';
     }
     $shop = findShopById($shopId);

@@ -4,6 +4,7 @@
  * Table: ?meja=5&token=xxx
  * Cafe session: ?s=session_token
  * Cafe browse: ?shop=slug&token=shop_token
+ * Delivery browse: ?shop=slug&token=delivery_token&channel=delivery
  */
 
 declare(strict_types=1);
@@ -19,12 +20,16 @@ $shopSlug = trim((string) ($_GET['shop'] ?? ''));
 $shopToken = trim((string) ($_GET['token'] ?? ''));
 $nomorMeja = trim((string) ($_GET['meja'] ?? ''));
 $token = trim((string) ($_GET['token'] ?? ''));
+$channel = trim((string) ($_GET['channel'] ?? ''));
 
 $session = null;
 $table = null;
 $cafeMode = false;
 $cafeBrowseMode = false;
+$deliveryMode = false;
 $cafeVerify = 'email';
+$payMethods = ['counter' => true, 'cod' => false, 'duitnow' => false];
+$duitnowQrUrl = '';
 
 if ($sessionToken !== '') {
     $session = findSessionByToken($sessionToken);
@@ -32,14 +37,30 @@ if ($sessionToken !== '') {
         $cafeMode = true;
         $table = sessionAsTableContext($session);
         $cafeVerify = shopCafeVerify($session);
+        if ($channel === 'delivery' || (($table['nomor_meja'] ?? '') === DELIVERY_TABLE_NUMBER)) {
+            $deliveryMode = true;
+        }
     }
 } elseif ($shopSlug !== '' && $shopToken !== '' && $nomorMeja === '') {
-    $shopRow = findShopByAccess($shopSlug, $shopToken);
-    if ($shopRow) {
-        $cafeBrowseMode = true;
-        $cafeMode = true;
-        $table = shopAsBrowseContext($shopRow);
-        $cafeVerify = shopCafeVerify($shopRow);
+    if ($channel === 'delivery') {
+        $deliveryShop = findShopByDeliveryAccess($shopSlug, $shopToken);
+        if ($deliveryShop) {
+            $deliveryMode = true;
+            $cafeBrowseMode = true;
+            $cafeMode = true;
+            $table = shopAsDeliveryContext($deliveryShop);
+            $cafeVerify = shopCafeVerify($deliveryShop);
+            $payMethods = shopPayMethods($deliveryShop);
+            $duitnowQrUrl = (string) ($deliveryShop['duitnow_qr_url'] ?? '');
+        }
+    } else {
+        $shopRow = findShopByAccess($shopSlug, $shopToken);
+        if ($shopRow) {
+            $cafeBrowseMode = true;
+            $cafeMode = true;
+            $table = shopAsBrowseContext($shopRow);
+            $cafeVerify = shopCafeVerify($shopRow);
+        }
     }
 } elseif ($nomorMeja !== '' && $token !== '') {
     $table = findTableByAccess($nomorMeja, $token);
@@ -49,13 +70,15 @@ $brand = $table ? shopBrand($table) : ($config['app_name'] ?? 'TableTap');
 $menu = $table ? getMenuGrouped((int) $table['shop_id'], $lang) : [];
 $sstEnabled = $table && (int) ($table['sst_enabled'] ?? 0) === 1;
 $sstRate = $table ? (float) ($table['sst_rate'] ?? 0) : 0;
-$selfPickup = $table && shopFulfillment($table) === 'self_pickup';
+$selfPickup = $table && !$deliveryMode && shopFulfillment($table) === 'self_pickup';
 $canGallery = $table && shopHasFeature($table, 'menu_gallery');
 $staffMode = false;
 $staffBackUrl = '';
 $staffFrom = '';
 $submitUrl = baseUrl('public/api/submit_order.php');
-$checkoutUrl = baseUrl('public/api/cafe_checkout.php');
+$checkoutUrl = $deliveryMode
+    ? baseUrl('public/api/delivery_checkout.php')
+    : baseUrl('public/api/cafe_checkout.php');
 $sendOtpUrl = baseUrl('public/api/cafe_send_otp.php');
 
 if ($cafeMode && $session && !$cafeBrowseMode) {
@@ -103,12 +126,13 @@ $i18nJs = [
     'sst'           => t('sst'),
     'dine_in'       => t('dine_in'),
     'takeaway'      => t('takeaway'),
+    'delivery'      => t('delivery'),
     'serving_type'  => t('serving_type'),
     'menu_search_ph' => t('menu_search_ph'),
     'menu_search_empty' => t('menu_search_empty'),
     'cafe_link_copied' => t('cafe_link_copied'),
-    'cafe_checkout_title' => t('cafe_checkout_title'),
-    'cafe_checkout_hint' => t('cafe_checkout_hint'),
+    'cafe_checkout_title' => $deliveryMode ? t('delivery_checkout_title') : t('cafe_checkout_title'),
+    'cafe_checkout_hint' => $deliveryMode ? t('delivery_checkout_hint') : t('cafe_checkout_hint'),
     'cafe_email' => t('cafe_email'),
     'cafe_email_ph' => t('cafe_email_ph'),
     'cafe_send_code' => t('cafe_send_code'),
@@ -121,7 +145,22 @@ $i18nJs = [
     'cafe_spam_note' => t('cafe_spam_note'),
     'guest_name' => t('guest_name'),
     'guest_name_ph' => t('guest_name_ph'),
+    'phone' => t('phone'),
+    'phone_ph' => t('phone_ph'),
+    'phone_required' => t('phone_required'),
+    'address' => t('address'),
+    'address_ph' => t('address_ph'),
+    'address_required' => t('address_required'),
+    'pay_method' => t('pay_method'),
+    'pay_cod' => t('pay_cod'),
+    'pay_duitnow' => t('pay_duitnow'),
+    'pay_counter' => t('pay_counter'),
+    'pay_method_required' => t('pay_method_required'),
 ];
+
+if ($deliveryMode) {
+    $pageSubtitle = t('delivery_order_title');
+}
 
 if (!$table):
 ?>
@@ -141,7 +180,7 @@ if (!$table):
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
     </div>
     <h1><?= e($config['app_name']) ?></h1>
-    <p><?= e($sessionToken !== '' ? t('cafe_session_expired') : t('invalid_table')) ?></p>
+    <p><?= e($sessionToken !== '' ? t('cafe_session_expired') : ($channel === 'delivery' ? t('delivery_invalid_link') : t('invalid_table'))) ?></p>
   </div>
   <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
 </body>

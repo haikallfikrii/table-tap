@@ -78,6 +78,16 @@ $i18n = [
     'print_test_ok' => t('print_test_ok'),
     'print_test_item' => t('print_test_item'),
     'print_failed'  => t('print_failed'),
+    'delivery'      => t('delivery'),
+    'pay_cod'       => t('pay_cod'),
+    'pay_duitnow'   => t('pay_duitnow'),
+    'pay_counter'   => t('pay_counter'),
+    'cod_received'  => t('cod_received'),
+    'confirm_proof' => t('confirm_proof'),
+    'reject_proof'  => t('reject_proof'),
+    'proof_pending' => t('proof_pending'),
+    'address'       => t('address'),
+    'phone'         => t('phone'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
@@ -107,6 +117,7 @@ $i18n = [
 <div id="orders-root" class="table-grid"
      data-poll-url="<?= e(baseUrl('admin/api/orders_poll.php')) ?>"
      data-paid-url="<?= e(baseUrl('admin/api/mark_paid.php')) ?>"
+     data-confirm-url="<?= e(baseUrl('admin/api/confirm_payment.php')) ?>"
      data-split-url="<?= e(baseUrl('admin/api/split_bill.php')) ?>"
      data-pickup-url="<?= e(baseUrl('admin/api/pickup_action.php')) ?>"
      data-receipt-url="<?= e(baseUrl('admin/receipt.php')) ?>"

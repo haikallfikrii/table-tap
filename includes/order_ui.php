@@ -4,7 +4,10 @@ $staffMode = $staffMode ?? false;
 $staffBackUrl = $staffBackUrl ?? '';
 $submitUrl = $submitUrl ?? baseUrl('public/api/submit_order.php');
 $cafeBrowseMode = $cafeBrowseMode ?? false;
+$deliveryMode = $deliveryMode ?? false;
 $cafeVerify = $cafeVerify ?? 'email';
+$payMethods = $payMethods ?? ['counter' => true, 'cod' => false, 'duitnow' => false];
+$duitnowQrUrl = $duitnowQrUrl ?? '';
 $shopSlug = $shopSlug ?? '';
 $shopTokenParam = $shopToken ?? '';
 $checkoutUrl = $checkoutUrl ?? '';
@@ -16,11 +19,11 @@ $sessionOrderUrl = $sessionOrderUrl ?? '';
 $prefillGuestName = $prefillGuestName ?? '';
 $activeOrders = $activeOrders ?? [];
 $trackOrdersUrl = $trackOrdersUrl ?? '';
-$pageSubtitle = $cafeBrowseMode
-    ? t('cafe_browse_sub')
+$pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
+    ? ($deliveryMode ? t('delivery_browse_sub') : t('cafe_browse_sub'))
     : ($cafeMode && $sessionToken !== ''
         ? t('cafe_session_label', (string) ($prefillGuestName ?: '—'))
-        : ($cafeMode ? t('cafe_order_title') : t('table') . ' ' . $table['nomor_meja'] . ($staffMode ? ' · ' . t('staff_order') : '')));
+        : ($cafeMode ? t('cafe_order_title') : t('table') . ' ' . $table['nomor_meja'] . ($staffMode ? ' · ' . t('staff_order') : ''))));
 ?>
 <!DOCTYPE html>
 <html lang="<?= e($lang === 'en' ? 'en' : 'ms') ?>">
@@ -28,7 +31,7 @@ $pageSubtitle = $cafeBrowseMode
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#e85d04">
-  <title><?= e($brand) ?> — <?= e($cafeMode ? t('cafe_order_title') : t('table') . ' ' . $table['nomor_meja']) ?></title>
+  <title><?= e($brand) ?> — <?= e($deliveryMode ? t('delivery_order_title') : ($cafeMode ? t('cafe_order_title') : t('table') . ' ' . $table['nomor_meja'])) ?></title>
   <?php
   require_once dirname(__DIR__) . '/includes/seo.php';
   seoFaviconLinks();
@@ -44,15 +47,18 @@ $pageSubtitle = $cafeBrowseMode
 <?php endif; ?>
 <div
   id="order-app"
-  class="customer-app<?= $staffMode ? ' staff-mode' : '' ?><?= $cafeMode ? ' cafe-mode' : '' ?>"
+  class="customer-app<?= $staffMode ? ' staff-mode' : '' ?><?= $cafeMode ? ' cafe-mode' : '' ?><?= $deliveryMode ? ' delivery-mode' : '' ?>"
   data-meja="<?= e($table['nomor_meja']) ?>"
   data-token="<?= e($staffMode || $cafeMode ? '' : $table['token_akses']) ?>"
   data-session="<?= e($sessionToken) ?>"
   data-session-url="<?= e($sessionOrderUrl) ?>"
   data-cafe-browse="<?= $cafeBrowseMode ? '1' : '0' ?>"
+  data-delivery="<?= $deliveryMode ? '1' : '0' ?>"
   data-shop="<?= e($shopSlug) ?>"
   data-shop-token="<?= e($shopTokenParam) ?>"
   data-cafe-verify="<?= e($cafeVerify) ?>"
+  data-pay-methods="<?= e(json_encode($payMethods)) ?>"
+  data-duitnow-qr="<?= e($duitnowQrUrl) ?>"
   data-checkout-url="<?= e($checkoutUrl) ?>"
   data-send-otp-url="<?= e($sendOtpUrl) ?>"
   data-prefill-name="<?= e($prefillGuestName) ?>"
@@ -209,7 +215,7 @@ $pageSubtitle = $cafeBrowseMode
       <span><?= e(t('total')) ?></span>
       <span id="cart-sheet-total">RM 0.00</span>
     </div>
-    <div class="serve-toggle" role="group" aria-label="<?= e(t('serving_type')) ?>">
+    <div class="serve-toggle" role="group" aria-label="<?= e(t('serving_type')) ?>"<?= $deliveryMode ? ' hidden' : '' ?>>
       <button type="button" class="serve-opt on" data-serve="dine_in"><?= e(t('dine_in')) ?></button>
       <button type="button" class="serve-opt" data-serve="takeaway"><?= e(t('takeaway')) ?></button>
     </div>
@@ -230,26 +236,58 @@ $pageSubtitle = $cafeBrowseMode
 
 <?php if ($cafeBrowseMode): ?>
 <div class="sheet-overlay" id="checkout-overlay"></div>
-<aside class="cart-sheet cafe-checkout-sheet" id="checkout-sheet" aria-label="<?= e(t('cafe_checkout_title')) ?>">
+<aside class="cart-sheet cafe-checkout-sheet" id="checkout-sheet" aria-label="<?= e($deliveryMode ? t('delivery_checkout_title') : t('cafe_checkout_title')) ?>">
   <div class="cart-sheet-header">
-    <h2><?= e(t('cafe_checkout_title')) ?></h2>
+    <h2><?= e($deliveryMode ? t('delivery_checkout_title') : t('cafe_checkout_title')) ?></h2>
     <button type="button" class="btn btn-ghost btn-sm" id="btn-close-checkout"><?= e(t('close')) ?></button>
   </div>
   <div class="cart-sheet-body">
-    <p class="order-meta"><?= e(t('cafe_checkout_hint')) ?></p>
+    <p class="order-meta"><?= e($deliveryMode ? t('delivery_checkout_hint') : t('cafe_checkout_hint')) ?></p>
     <div class="form-group" id="checkout-step-details">
-      <?php if ($selfPickup): ?>
       <label for="checkout-name"><?= e(t('guest_name')) ?></label>
       <input type="text" id="checkout-name" maxlength="40" autocomplete="name" placeholder="<?= e(t('guest_name_ph')) ?>">
+
+      <?php if ($deliveryMode): ?>
+      <label for="checkout-address" style="margin-top:12px"><?= e(t('address')) ?></label>
+      <textarea id="checkout-address" rows="3" maxlength="500" placeholder="<?= e(t('address_ph')) ?>"></textarea>
       <?php endif; ?>
+
       <?php if ($cafeVerify === 'email'): ?>
       <label for="checkout-email" style="margin-top:12px"><?= e(t('cafe_email')) ?></label>
       <input type="email" id="checkout-email" maxlength="255" autocomplete="email" placeholder="<?= e(t('cafe_email_ph')) ?>">
       <p class="order-meta cafe-spam-note"><?= e(t('cafe_spam_note')) ?></p>
-      <?php elseif (!$selfPickup): ?>
-      <label for="checkout-name"><?= e(t('guest_name')) ?> <span class="order-meta">(<?= e(t('optional')) ?>)</span></label>
-      <input type="text" id="checkout-name" maxlength="40" autocomplete="name" placeholder="<?= e(t('guest_name_ph')) ?>">
+      <?php elseif ($cafeVerify === 'phone'): ?>
+      <label for="checkout-phone" style="margin-top:12px"><?= e(t('phone')) ?></label>
+      <input type="tel" id="checkout-phone" maxlength="20" autocomplete="tel" placeholder="<?= e(t('phone_ph')) ?>" inputmode="tel">
       <?php endif; ?>
+
+      <?php if ($deliveryMode): ?>
+      <fieldset class="pay-method-fieldset" style="margin-top:14px">
+        <legend><?= e(t('pay_method')) ?></legend>
+        <?php
+          $firstPay = null;
+          foreach (['cod' => 'pay_cod', 'duitnow' => 'pay_duitnow', 'counter' => 'pay_counter'] as $code => $labelKey) {
+              if (empty($payMethods[$code])) {
+                  continue;
+              }
+              if ($firstPay === null) {
+                  $firstPay = $code;
+              }
+              ?>
+          <label class="pay-method-opt">
+            <input type="radio" name="pay_method" value="<?= e($code) ?>" <?= $firstPay === $code ? 'checked' : '' ?>>
+            <span><?= e(t($labelKey)) ?></span>
+          </label>
+        <?php } ?>
+      </fieldset>
+      <?php if (!empty($payMethods['duitnow']) && $duitnowQrUrl !== ''): ?>
+        <div class="duitnow-preview" id="duitnow-preview" hidden>
+          <p class="order-meta"><?= e(t('duitnow_scan_hint')) ?></p>
+          <img src="<?= e(baseUrl($duitnowQrUrl)) ?>" alt="DuitNow QR" width="200" height="200" style="max-width:200px;margin:8px auto;display:block;border-radius:8px">
+        </div>
+      <?php endif; ?>
+      <?php endif; ?>
+
       <button type="button" class="btn btn-primary" id="btn-checkout-send" style="width:100%;margin-top:16px">
         <?= e($cafeVerify === 'email' ? t('cafe_send_code') : t('cafe_confirm_order')) ?>
       </button>
