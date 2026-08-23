@@ -143,6 +143,11 @@ $trackI18n = [
     'dine_in'         => t('dine_in'),
     'takeaway'        => t('takeaway'),
     'delivery'        => t('delivery_order_title'),
+    'proof_upload_hint' => t('proof_upload_hint'),
+    'proof_upload_btn' => t('proof_upload_btn'),
+    'proof_waiting_kasir' => t('proof_waiting_kasir'),
+    'duitnow_scan_hint' => t('duitnow_scan_hint'),
+    'download_qr'     => t('download_qr'),
 ];
 
 $stage = $focusOrder ? (string) ($focusOrder['stage'] ?? 'queue') : 'queue';
@@ -200,6 +205,11 @@ $trackSubtitle = $deliveryMode
     : ($cafeMode
         ? t('cafe_session_label', (string) ($session['nama_pelanggan'] ?? '—'))
         : t('table') . ' ' . ($table['nomor_meja'] ?? ''));
+$shopRow = $table ? findShopById((int) ($table['shop_id'] ?? 0)) : null;
+$duitnowQrAbs = ($shopRow && !empty($shopRow['duitnow_qr_url']))
+    ? baseUrl((string) $shopRow['duitnow_qr_url'])
+    : '';
+$proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
 ?>
 <!DOCTYPE html>
 <html lang="<?= e($lang === 'en' ? 'en' : 'ms') ?>">
@@ -221,7 +231,7 @@ $trackSubtitle = $deliveryMode
     <p><?= e($sessionToken !== '' ? t('cafe_session_expired') : t('invalid_table')) ?></p>
   </div>
 <?php else: ?>
-  <div class="confirm-page tracking" id="track-app" data-fulfillment="<?= e($selfPickup ? 'self_pickup' : ($deliveryMode ? 'delivery' : 'waiter')) ?>" data-stage="<?= e($stage) ?>" data-focus-order="<?= (int) $orderId ?>" data-meja="<?= e($table['nomor_meja']) ?>" data-token="<?= e($table['token_akses']) ?>" data-session="<?= e($cafeMode ? $sessionToken : '') ?>"<?= $selfPickup ? ' data-collect-url="' . e(baseUrl('public/api/collect_order.php')) . '"' : '' ?> data-poll-url="<?= e($pollUrl) ?>" data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>" data-lang="<?= e($lang) ?>" data-i18n="<?= e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) ?>">
+  <div class="confirm-page tracking" id="track-app" data-fulfillment="<?= e($selfPickup ? 'self_pickup' : ($deliveryMode ? 'delivery' : 'waiter')) ?>" data-stage="<?= e($stage) ?>" data-focus-order="<?= (int) $orderId ?>" data-meja="<?= e($table['nomor_meja']) ?>" data-token="<?= e($table['token_akses']) ?>" data-session="<?= e($cafeMode ? $sessionToken : '') ?>"<?= $selfPickup ? ' data-collect-url="' . e(baseUrl('public/api/collect_order.php')) . '"' : '' ?> data-poll-url="<?= e($pollUrl) ?>" data-proof-url="<?= e($proofUploadUrl) ?>" data-duitnow-qr="<?= e($duitnowQrAbs) ?>" data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>" data-lang="<?= e($lang) ?>" data-i18n="<?= e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) ?>">
     <div class="lang-toggle" style="position:absolute;top:16px;right:16px">
       <button type="button" data-set-lang="my" class="<?= $lang === 'my' ? 'active' : '' ?>"><?= e(t('lang_my')) ?></button>
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
@@ -327,13 +337,26 @@ $trackSubtitle = $deliveryMode
               && $ordGuestToken !== '';
           $proofWaiting = (($ord['payment_method'] ?? '') === 'duitnow')
               && (($ord['payment_proof_status'] ?? '') === 'uploaded');
+          $showDuitnowQr = (($ord['payment_method'] ?? '') === 'duitnow')
+              && (($ord['status_bayar'] ?? 'belum_bayar') !== 'lunas')
+              && $duitnowQrAbs !== ''
+              && in_array(($ord['payment_proof_status'] ?? 'none'), ['none', 'rejected'], true);
         ?>
+        <?php if ($showDuitnowQr): ?>
+        <div class="duitnow-pay-block">
+          <p class="order-meta"><?= e(t('duitnow_scan_hint')) ?></p>
+          <div class="duitnow-pay-visual">
+            <img class="duitnow-pay-qr" src="<?= e($duitnowQrAbs) ?>" alt="DuitNow QR" width="220" height="220" loading="eager" decoding="async">
+          </div>
+          <a class="btn btn-secondary btn-sm duitnow-download" href="<?= e($duitnowQrAbs) ?>" download="duitnow-qr.png" target="_blank" rel="noopener"><?= e(t('download_qr')) ?></a>
+        </div>
+        <?php endif; ?>
         <?php if ($needsProof): ?>
-        <form class="proof-upload-form" method="post" enctype="multipart/form-data" action="<?= e(baseUrl('public/api/upload_payment_proof.php')) ?>" style="margin-top:12px">
+        <form class="proof-upload-form" method="post" enctype="multipart/form-data" action="<?= e($proofUploadUrl) ?>" style="margin-top:12px">
           <input type="hidden" name="order_id" value="<?= $oid ?>">
           <input type="hidden" name="gt" value="<?= e($ordGuestToken) ?>">
           <p class="order-meta"><?= e(t('proof_upload_hint')) ?></p>
-          <input type="file" name="proof" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+          <input type="file" name="proof" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" required>
           <button type="submit" class="btn btn-primary btn-sm" style="width:100%;margin-top:8px"><?= e(t('proof_upload_btn')) ?></button>
         </form>
         <?php elseif ($proofWaiting): ?>
@@ -364,21 +387,21 @@ $trackSubtitle = $deliveryMode
 <script src="<?= e(assetUrl('js/track.js')) ?>"></script>
 <?php endif; ?>
 <script>
-document.querySelectorAll('.proof-upload-form').forEach(function (form) {
-  form.addEventListener('submit', async function (e) {
-    e.preventDefault();
-    var btn = form.querySelector('button[type="submit"]');
-    if (btn) btn.disabled = true;
-    try {
-      var res = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
-      var data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Failed');
-      window.location.reload();
-    } catch (err) {
-      alert(err.message || 'Upload failed');
-      if (btn) btn.disabled = false;
-    }
-  });
+document.addEventListener('submit', async function (e) {
+  const form = e.target.closest('.proof-upload-form');
+  if (!form) return;
+  e.preventDefault();
+  var btn = form.querySelector('button[type="submit"]');
+  if (btn) btn.disabled = true;
+  try {
+    var res = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
+    var data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Failed');
+    window.location.reload();
+  } catch (err) {
+    alert(err.message || 'Upload failed');
+    if (btn) btn.disabled = false;
+  }
 });
 </script>
 </body>

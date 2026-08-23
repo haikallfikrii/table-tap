@@ -81,9 +81,6 @@ $ogDesc = t('delivery_share_desc', $brand);
       <img src="<?= e($qrImg) ?>" alt="QR <?= e($brand) ?>" width="240" height="240">
     </div>
     <a class="btn btn-primary" style="width:100%" href="<?= e($menuUrl) ?>"><?= e(t('delivery_start_order')) ?></a>
-    <p class="delivery-landing-link">
-      <a href="<?= e($menuUrl) ?>"><?= e($menuUrl) ?></a>
-    </p>
   </div>
   <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
 </body>

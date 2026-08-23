@@ -49,6 +49,8 @@ jsonResponse([
     'focus_order_id' => $focusOrderId,
     'focus_stage' => $focusStage,
     'fulfillment' => shopFulfillment($shop),
+    'duitnow_qr_url' => !empty($shop['duitnow_qr_url']) ? baseUrl((string) $shop['duitnow_qr_url']) : '',
+    'proof_upload_url' => baseUrl('public/api/upload_payment_proof.php'),
     'orders' => $orders,
     'sound' => shopSoundSettings($shop),
 ]);

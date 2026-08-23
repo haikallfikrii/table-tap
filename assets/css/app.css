@@ -1744,6 +1744,53 @@ a {
   border-radius: var(--radius-sm);
 }
 
+.duitnow-preview.is-collapsed,
+.duitnow-preview[hidden] {
+  display: none !important;
+}
+
+.duitnow-pay-block {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.duitnow-pay-visual {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0;
+}
+
+.duitnow-pay-qr {
+  display: block;
+  width: min(220px, 100%);
+  height: auto;
+  max-width: 100%;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.duitnow-download {
+  display: inline-flex;
+  margin-top: 8px;
+}
+
+.delivery-serve-note {
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--info-soft);
+  color: var(--info);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+  text-align: center;
+}
+
+.serve-toggle[hidden] {
+  display: none !important;
+}
+
 .proof-upload-form input[type="file"] {
   width: 100%;
   font-size: 0.85rem;

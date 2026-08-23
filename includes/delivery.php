@@ -259,7 +259,8 @@ function orderNeedsPaymentHold(array $order, ?array $shop): bool
         if (!shopHoldKitchenUntilPaid($shop)) {
             return false;
         }
-        return $proof !== 'confirmed';
+        // Cook once customer uploads proof; kasir still confirms payment separately.
+        return !in_array($proof, ['uploaded', 'confirmed'], true);
     }
     // delivery + pay-at-counter: hold until kasir marks paid
     if ($method === 'counter' && shopHoldKitchenUntilPaid($shop)) {
