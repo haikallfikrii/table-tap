@@ -98,6 +98,7 @@ return [
     'duitnow_scan_hint' => 'Imbas QR DuitNow, transfer, kemudian upload bukti di halaman status.',
     'cod_received'      => 'Tunai diterima',
     'confirm_proof'     => 'Sahkan bayaran',
+    'mark_paid_manual'  => 'Tandai lunas (buka dapur)',
     'reject_proof'      => 'Tolak bukti',
     'proof_pending'     => 'Menunggu bukti',
     'proof_upload_hint' => 'Upload tangkapan skrin / PDF bukti DuitNow.',

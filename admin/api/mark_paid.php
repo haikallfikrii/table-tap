@@ -42,14 +42,18 @@ if (!$order) {
 $alreadyPaid = $order['status_bayar'] === 'lunas';
 
 if (!$alreadyPaid) {
-    $upd = $pdo->prepare(
-        "UPDATE orders
+    $updSql = "UPDATE orders
          SET status_bayar = 'lunas',
              status_order = CASE WHEN status_order = 'menunggu' THEN 'diproses' ELSE status_order END,
-             waktu_lunas = ?
-         WHERE id = ? AND shop_id = ?"
-    );
-    $upd->execute([appNow(), $orderId, $shopId]);
+             waktu_lunas = ?";
+    $params = [appNow()];
+    if (orderDeliveryColumnsExist()) {
+        $updSql .= ", payment_proof_status = 'confirmed'";
+    }
+    $updSql .= ' WHERE id = ? AND shop_id = ?';
+    $params[] = $orderId;
+    $params[] = $shopId;
+    $pdo->prepare($updSql)->execute($params);
 }
 
 if ($email !== '') {
