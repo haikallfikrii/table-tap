@@ -460,9 +460,51 @@ a {
 }
 
 .detail-price {
-  font-weight: 800;
   font-size: 1.15rem;
-  margin: 0;
+  font-weight: 800;
+  margin: 0 0 12px;
+  color: var(--accent);
+}
+
+.addon-group {
+  margin: 16px 0;
+}
+
+.addon-group-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+}
+
+.addon-req {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--accent);
+}
+
+.addon-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.addon-opt input {
+  flex-shrink: 0;
+}
+
+.addon-opt:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .menu-item-body h3 {

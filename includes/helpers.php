@@ -423,11 +423,21 @@ function createShopOrder(
         $guestName = '';
     }
 
+    require_once __DIR__ . '/menu_addons.php';
+
     $normalized = [];
     foreach ($items as $row) {
         $menuId = (int) ($row['menu_item_id'] ?? 0);
         $qty = (int) ($row['qty'] ?? 0);
         $catatan = trim((string) ($row['catatan'] ?? ''));
+        $addonIds = [];
+        if (isset($row['addon_ids']) && is_array($row['addon_ids'])) {
+            $addonIds = array_values(array_unique(array_filter(
+                array_map('intval', $row['addon_ids']),
+                static fn(int $id): bool => $id > 0
+            )));
+            sort($addonIds);
+        }
         if ($menuId <= 0 || $qty <= 0) {
             continue;
         }
@@ -436,16 +446,18 @@ function createShopOrder(
         } elseif (strlen($catatan) > 255) {
             $catatan = substr($catatan, 0, 255);
         }
-        if (isset($normalized[$menuId])) {
-            $normalized[$menuId]['qty'] += $qty;
+        $lineKey = $menuId . ':' . implode(',', $addonIds);
+        if (isset($normalized[$lineKey])) {
+            $normalized[$lineKey]['qty'] += $qty;
             if ($catatan !== '') {
-                $normalized[$menuId]['catatan'] = $catatan;
+                $normalized[$lineKey]['catatan'] = $catatan;
             }
         } else {
-            $normalized[$menuId] = [
+            $normalized[$lineKey] = [
                 'menu_item_id' => $menuId,
                 'qty' => $qty,
                 'catatan' => $catatan,
+                'addon_ids' => $addonIds,
             ];
         }
     }
@@ -463,7 +475,10 @@ function createShopOrder(
 
     $pdo = db();
     $placeholders = implode(',', array_fill(0, count($normalized), '?'));
-    $ids = array_keys($normalized);
+    $ids = array_values(array_unique(array_map(
+        static fn(array $line): int => (int) $line['menu_item_id'],
+        $normalized
+    )));
     require_once __DIR__ . '/stations.php';
     $stationCols = menuStationColumnExists();
     $menuSql = $stationCols
@@ -482,7 +497,8 @@ function createShopOrder(
 
     $subtotal = 0.0;
     $lines = [];
-    foreach ($normalized as $menuId => $line) {
+    foreach ($normalized as $line) {
+        $menuId = (int) $line['menu_item_id'];
         if (!isset($menuById[$menuId])) {
             jsonError('Menu item not found');
         }
@@ -490,7 +506,12 @@ function createShopOrder(
         if (!(int) $m['is_active'] || $m['status_stok'] === 'habis') {
             jsonError('Item unavailable: ' . $m['nama_my']);
         }
-        $harga = (float) $m['harga'];
+        $picked = validateMenuAddonsForItem($shopId, $menuId, $line['addon_ids'] ?? []);
+        $harga = round((float) $m['harga'] + addonPriceDelta($picked), 2);
+        $addonMy = formatOrderAddonNames($picked, 'my');
+        $addonEn = formatOrderAddonNames($picked, 'en');
+        $namaMy = $addonMy !== '' ? $m['nama_my'] . ' (' . $addonMy . ')' : $m['nama_my'];
+        $namaEn = $addonEn !== '' ? $m['nama_en'] . ' (' . $addonEn . ')' : $m['nama_en'];
         $qty = (int) $line['qty'];
         $subtotal += $harga * $qty;
         $stationId = null;
@@ -506,8 +527,8 @@ function createShopOrder(
             'qty' => $qty,
             'catatan' => $line['catatan'] !== '' ? $line['catatan'] : null,
             'harga_saat_order' => $harga,
-            'nama_saat_order_my' => $m['nama_my'],
-            'nama_saat_order_en' => $m['nama_en'],
+            'nama_saat_order_my' => $namaMy,
+            'nama_saat_order_en' => $namaEn,
             'kategori_saat_order' => $m['kategori'],
             'station_id_saat_order' => $stationId,
         ];
@@ -681,6 +702,7 @@ function createShopOrder(
 function getMenuGrouped(int $shopId, string $lang = 'my'): array
 {
     require_once __DIR__ . '/menu_categories.php';
+    require_once __DIR__ . '/menu_addons.php';
 
     $useCategories = menuCategoriesTableExists() && menuCategoryColumnExists();
     if ($useCategories) {
@@ -720,10 +742,13 @@ function getMenuGrouped(int $shopId, string $lang = 'my'): array
         }
     }
 
+    $addonMap = menuAddonsGroupedByItem($shopId, $ids, true);
+
     $itemRows = [];
     foreach ($items as $item) {
         $item['nama'] = $lang === 'en' ? $item['nama_en'] : $item['nama_my'];
         $item['deskripsi'] = $lang === 'en' ? $item['deskripsi_en'] : $item['deskripsi_my'];
+        $item['addons'] = menuAddonsForCustomer($addonMap[(int) $item['id']] ?? [], $lang);
         $photos = [];
         if (!empty($item['foto_url'])) {
             $photos[] = $item['foto_url'];

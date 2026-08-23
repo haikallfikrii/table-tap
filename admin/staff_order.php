@@ -86,6 +86,10 @@ $i18nJs = [
     'dine_in'       => t('dine_in'),
     'takeaway'      => t('takeaway'),
     'serving_type'  => t('serving_type'),
+    'addon_pick' => t('addon_pick'),
+    'addon_extras' => t('addon_extras'),
+    'addon_required' => t('addon_required'),
+    'addon_choice_required' => t('addon_choice_required'),
 ];
 
 require dirname(__DIR__) . '/includes/order_ui.php';
