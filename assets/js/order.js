@@ -443,16 +443,6 @@
     const show = selectedPayMethod() === 'duitnow';
     duitnowPreview.classList.toggle('is-collapsed', !show);
     duitnowPreview.setAttribute('aria-hidden', show ? 'false' : 'true');
-    if (!show) return;
-    const img = duitnowPreview.querySelector('.duitnow-pay-qr');
-    if (!img) return;
-    const url = img.getAttribute('src') || img.dataset.src || '';
-    if (!url) return;
-    // Safari iOS: re-assign src after panel becomes visible
-    if (!img.complete || img.naturalWidth === 0) {
-      img.src = url;
-      img.decode?.().catch(function () { /* ignore */ });
-    }
   }
 
   document.querySelectorAll('input[name="pay_method"]').forEach(function (el) {

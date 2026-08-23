@@ -1746,22 +1746,24 @@ a {
 
 .duitnow-preview.is-collapsed,
 .duitnow-preview[hidden] {
-  visibility: hidden;
-  height: 0;
-  max-height: 0;
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-  margin: 0;
-  padding: 0;
   opacity: 0;
   pointer-events: none;
 }
 
 .duitnow-preview:not(.is-collapsed) {
-  visibility: visible;
+  position: static;
+  left: auto;
+  width: auto;
   height: auto;
-  max-height: none;
   opacity: 1;
   pointer-events: auto;
+  overflow: visible;
 }
 
 .duitnow-pay-block {

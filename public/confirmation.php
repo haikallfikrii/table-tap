@@ -60,7 +60,22 @@ if ($sessionToken !== '') {
             $deliveryMode = true;
         }
         $selfPickup = !$deliveryMode && shopFulfillment($table) === 'self_pickup';
-        $allOrders = fetchActiveCustomerOrders($table, $lang);
+        $scopeEmail = '';
+        if ($deliveryMode || (($table['nomor_meja'] ?? '') === DELIVERY_TABLE_NUMBER)) {
+            $deliveryMode = true;
+            $selfPickup = false;
+            if ($orderId > 0) {
+                $scopeEmail = findOrderCustomerEmail($orderId, (int) $table['shop_id']);
+            }
+            // Prefer guest token from URL; also group same customer's multi-orders via email
+            $allOrders = fetchActiveCustomerOrders($table, $lang, $guestTokenParam !== '' ? $guestTokenParam : null, $scopeEmail !== '' ? $scopeEmail : null);
+            // Fallback: single order by gt if email lookup empty but gt present
+            if ($allOrders === [] && $guestTokenParam !== '') {
+                $allOrders = fetchActiveCustomerOrders($table, $lang, $guestTokenParam, null);
+            }
+        } else {
+            $allOrders = fetchActiveCustomerOrders($table, $lang);
+        }
         if ($orderId <= 0 && $allOrders !== []) {
             $orderId = (int) $allOrders[0]['order_id'];
         }
@@ -187,7 +202,12 @@ $pollUrl = '';
 if ($cafeMode && $sessionToken !== '') {
     $pollUrl = baseUrl('public/api/session_orders.php?s=' . urlencode($sessionToken) . '&focus=' . $orderId);
 } elseif ($table) {
-    $pollUrl = baseUrl('public/api/table_orders.php?meja=' . urlencode($nomorMeja) . '&token=' . urlencode($token) . '&focus=' . $orderId);
+    $pollUrl = baseUrl(
+        'public/api/table_orders.php?meja=' . urlencode($nomorMeja)
+        . '&token=' . urlencode($token)
+        . '&focus=' . $orderId
+        . ($guestTokenParam !== '' ? '&gt=' . urlencode($guestTokenParam) : '')
+    );
 }
 $orderAgainUrl = '';
 if ($cafeMode && $sessionToken !== '') {
@@ -206,9 +226,11 @@ $trackSubtitle = $deliveryMode
         ? t('cafe_session_label', (string) ($session['nama_pelanggan'] ?? '—'))
         : t('table') . ' ' . ($table['nomor_meja'] ?? ''));
 $shopRow = $table ? findShopById((int) ($table['shop_id'] ?? 0)) : null;
+$duitnowQrData = $shopRow ? shopDuitnowQrDataUri($shopRow) : '';
 $duitnowQrAbs = ($shopRow && !empty($shopRow['duitnow_qr_url']))
-    ? baseUrl((string) $shopRow['duitnow_qr_url'])
+    ? shopDuitnowQrProxyUrl((int) $shopRow['id'])
     : '';
+$duitnowQrDisplay = $duitnowQrData !== '' ? $duitnowQrData : $duitnowQrAbs;
 $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
 ?>
 <!DOCTYPE html>
@@ -223,9 +245,6 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
   seoFaviconLinks();
   ?>
   <link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
-  <?php if ($duitnowQrAbs !== ''): ?>
-  <link rel="preload" as="image" href="<?= e($duitnowQrAbs) ?>">
-  <?php endif; ?>
 </head>
 <body>
 <?php if (!$focusOrder || !$table): ?>
@@ -234,7 +253,7 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
     <p><?= e($sessionToken !== '' ? t('cafe_session_expired') : t('invalid_table')) ?></p>
   </div>
 <?php else: ?>
-  <div class="confirm-page tracking" id="track-app" data-fulfillment="<?= e($selfPickup ? 'self_pickup' : ($deliveryMode ? 'delivery' : 'waiter')) ?>" data-stage="<?= e($stage) ?>" data-focus-order="<?= (int) $orderId ?>" data-meja="<?= e($table['nomor_meja']) ?>" data-token="<?= e($table['token_akses']) ?>" data-session="<?= e($cafeMode ? $sessionToken : '') ?>"<?= $selfPickup ? ' data-collect-url="' . e(baseUrl('public/api/collect_order.php')) . '"' : '' ?> data-poll-url="<?= e($pollUrl) ?>" data-proof-url="<?= e($proofUploadUrl) ?>" data-duitnow-qr="<?= e($duitnowQrAbs) ?>" data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>" data-lang="<?= e($lang) ?>" data-i18n="<?= e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) ?>">
+  <div class="confirm-page tracking" id="track-app" data-fulfillment="<?= e($selfPickup ? 'self_pickup' : ($deliveryMode ? 'delivery' : 'waiter')) ?>" data-stage="<?= e($stage) ?>" data-focus-order="<?= (int) $orderId ?>" data-meja="<?= e($table['nomor_meja']) ?>" data-token="<?= e($table['token_akses']) ?>" data-guest-token="<?= e($guestTokenParam) ?>" data-session="<?= e($cafeMode ? $sessionToken : '') ?>"<?= $selfPickup ? ' data-collect-url="' . e(baseUrl('public/api/collect_order.php')) . '"' : '' ?> data-poll-url="<?= e($pollUrl) ?>" data-proof-url="<?= e($proofUploadUrl) ?>" data-duitnow-qr="<?= e($duitnowQrAbs) ?>" data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>" data-lang="<?= e($lang) ?>" data-i18n="<?= e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) ?>">
     <div class="lang-toggle" style="position:absolute;top:16px;right:16px">
       <button type="button" data-set-lang="my" class="<?= $lang === 'my' ? 'active' : '' ?>"><?= e(t('lang_my')) ?></button>
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
@@ -342,16 +361,16 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
               && (($ord['payment_proof_status'] ?? '') === 'uploaded');
           $showDuitnowQr = (($ord['payment_method'] ?? '') === 'duitnow')
               && (($ord['status_bayar'] ?? 'belum_bayar') !== 'lunas')
-              && $duitnowQrAbs !== ''
+              && $duitnowQrDisplay !== ''
               && in_array(($ord['payment_proof_status'] ?? 'none'), ['none', 'rejected'], true);
         ?>
         <?php if ($showDuitnowQr): ?>
         <div class="duitnow-pay-block">
           <p class="order-meta"><?= e(t('duitnow_scan_hint')) ?></p>
           <div class="duitnow-pay-visual">
-            <img class="duitnow-pay-qr" src="<?= e($duitnowQrAbs) ?>" alt="DuitNow QR" width="220" height="220" decoding="sync">
+            <img class="duitnow-pay-qr" src="<?= e($duitnowQrDisplay) ?>" alt="DuitNow QR" width="220" height="220" decoding="sync">
           </div>
-          <a class="btn btn-secondary btn-sm duitnow-download" href="<?= e($duitnowQrAbs) ?>" download="duitnow-qr.png" target="_blank" rel="noopener"><?= e(t('download_qr')) ?></a>
+          <a class="btn btn-secondary btn-sm duitnow-download" href="<?= e($duitnowQrAbs !== '' ? $duitnowQrAbs : $duitnowQrDisplay) ?>" download="duitnow-qr.png" target="_blank" rel="noopener"><?= e(t('download_qr')) ?></a>
         </div>
         <?php endif; ?>
         <?php if ($needsProof): ?>
