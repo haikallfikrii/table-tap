@@ -244,7 +244,9 @@
 
     const deliveryMeta =
       (o.alamat ? '<div class="order-meta">' + esc(i18n.address || 'Address') + ': ' + esc(o.alamat) + '</div>' : '') +
-      (o.phone ? '<div class="order-meta">' + esc(i18n.phone || 'Phone') + ': ' + esc(o.phone) + '</div>' : '');
+      (o.phone
+        ? '<div class="order-meta">' + esc(i18n.phone || 'Phone') + ': <a href="tel:' + esc(String(o.phone).replace(/[^\d+]/g, '')) + '">' + esc(o.phone) + '</a></div>'
+        : '');
 
     let pickupBtns = '';
     if (o.has_ready) {

@@ -56,7 +56,7 @@ if ($sessionToken !== '') {
             $payMethods = shopPayMethods($deliveryShop);
             $duitnowQrUrl = (string) ($deliveryShop['duitnow_qr_url'] ?? '');
             $duitnowQrData = shopDuitnowQrDataUri($deliveryShop);
-            $duitnowQrProxy = shopDuitnowQrProxyUrl((int) $deliveryShop['id']);
+            $duitnowQrProxy = shopDuitnowQrProxyUrl((int) $deliveryShop['id'], $deliveryShop);
             $deliveryRequirePhone = shopDeliveryRequirePhone($deliveryShop);
         }
     } else {
