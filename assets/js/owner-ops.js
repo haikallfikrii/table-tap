@@ -49,6 +49,21 @@
     setText('ops-unpaid-amt', u.amount_fmt || 'RM 0.00');
     setBusy('ops-card-unpaid', u.orders || 0);
     document.getElementById('ops-card-unpaid')?.classList.toggle('is-alert', Number(u.orders) > 0);
+
+    const d = ops.delivery || {};
+    if (d.enabled) {
+      setText('ops-delivery-n', d.orders || 0);
+      const sub = document.getElementById('ops-delivery-sub');
+      if (sub) {
+        if (Number(d.needs_action) > 0) {
+          sub.textContent = (d.needs_action || 0) + ' needs action · ' + (d.amount_fmt || '');
+        } else {
+          sub.textContent = 'Payment & proof — separate from tables';
+        }
+      }
+      setBusy('ops-card-delivery', d.needs_action || d.orders || 0);
+      document.getElementById('ops-card-delivery')?.classList.toggle('is-alert', Number(d.needs_action) > 0);
+    }
   }
 
   async function poll() {

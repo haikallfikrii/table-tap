@@ -84,7 +84,7 @@ foreach ($orders as $o) {
         }
     }
     $customerEmail = trim((string) ($o['customer_email'] ?? ''));
-    $resultOrders[] = [
+    $row = [
         'id' => $id,
         'table_id' => (int) $o['table_id'],
         'nomor_meja' => $o['nomor_meja'],
@@ -112,10 +112,32 @@ foreach ($orders as $o) {
         'total_harga' => (float) $o['total_harga'],
         'items' => $items,
     ];
+    if ($row['jenis_hidang'] === 'delivery') {
+        $row['payment_state'] = deliveryPaymentState($row);
+        $row['needs_payment_attention'] = deliveryNeedsKasirAttention($row);
+    }
+    $resultOrders[] = $row;
+}
+
+$deliveryOrders = [];
+$tableOrders = [];
+foreach ($resultOrders as $o) {
+    if ($o['jenis_hidang'] === 'delivery') {
+        $deliveryOrders[] = $o;
+    } else {
+        $tableOrders[] = $o;
+    }
+}
+
+$newDeliveryIds = [];
+foreach ($deliveryOrders as $o) {
+    if (in_array((int) $o['id'], $newIds, true)) {
+        $newDeliveryIds[] = (int) $o['id'];
+    }
 }
 
 $byTable = [];
-foreach ($resultOrders as $o) {
+foreach ($tableOrders as $o) {
     $key = $o['nomor_meja'];
     if (!isset($byTable[$key])) {
         $byTable[$key] = [
@@ -151,10 +173,16 @@ uksort($byTable, static function (string $a, string $b) use ($byTable): int {
 
 $grandTotal = 0.0;
 $unpaidCount = 0;
-foreach ($resultOrders as $o) {
+$deliveryNeedsAction = 0;
+foreach ($tableOrders as $o) {
     if ($o['status_bayar'] === 'belum_bayar') {
         $grandTotal += $o['total_harga'];
         $unpaidCount++;
+    }
+}
+foreach ($deliveryOrders as $o) {
+    if (!empty($o['needs_payment_attention'])) {
+        $deliveryNeedsAction++;
     }
 }
 
@@ -163,13 +191,17 @@ jsonResponse([
     'server_time' => date('c'),
     'max_id' => $maxId,
     'new_order_ids' => $newIds,
+    'new_delivery_ids' => $newDeliveryIds,
     'fulfillment' => shopFulfillment($shop),
     'sound' => shopSoundSettings($shop),
     'stats' => [
-        'active_orders' => count($resultOrders),
+        'active_orders' => count($tableOrders),
         'unpaid_orders' => $unpaidCount,
         'grand_total' => round($grandTotal, 2),
+        'delivery_active' => count($deliveryOrders),
+        'delivery_needs_action' => $deliveryNeedsAction,
     ],
     'orders' => $resultOrders,
+    'delivery_orders' => $deliveryOrders,
     'tables' => array_values($byTable),
 ]);

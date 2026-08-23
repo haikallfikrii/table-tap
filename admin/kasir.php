@@ -90,6 +90,13 @@ $i18n = [
     'proof_pending' => t('proof_pending'),
     'address'       => t('address'),
     'phone'         => t('phone'),
+    'delivery_monitor' => t('delivery_monitor'),
+    'delivery_needs_action' => t('delivery_needs_action'),
+    'delivery_pay_wait_proof' => t('delivery_pay_wait_proof'),
+    'delivery_pay_proof_sent' => t('delivery_pay_proof_sent'),
+    'delivery_pay_cod' => t('delivery_pay_cod'),
+    'delivery_pay_counter' => t('delivery_pay_counter'),
+    'table_unpaid_only' => t('table_unpaid_only'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
@@ -103,20 +110,25 @@ $i18n = [
 
 <div class="stat-row">
   <div class="stat-card">
-    <div class="label"><?= e(t('orders_active')) ?></div>
+    <div class="label"><?= e(t('orders_active')) ?> · <?= e(t('table')) ?></div>
     <div class="value" id="stat-orders">0</div>
   </div>
+  <div class="stat-card stat-card-delivery" id="stat-delivery-card">
+    <div class="label"><?= e(t('delivery_monitor')) ?></div>
+    <div class="value" id="stat-delivery">0</div>
+    <div class="order-meta" id="stat-delivery-sub"></div>
+  </div>
   <div class="stat-card">
-    <div class="label"><?= e(t('unpaid')) ?></div>
+    <div class="label"><?= e(t('table_unpaid_only')) ?></div>
     <div class="value" id="stat-unpaid">0</div>
   </div>
   <div class="stat-card">
-    <div class="label"><?= e(t('grand_total')) ?></div>
+    <div class="label"><?= e(t('grand_total')) ?> · <?= e(t('table')) ?></div>
     <div class="value" id="stat-total">RM 0.00</div>
   </div>
 </div>
 
-<div id="orders-root" class="table-grid"
+<div id="orders-root" class="kasir-layout"
      data-poll-url="<?= e(baseUrl('admin/api/orders_poll.php')) ?>"
      data-paid-url="<?= e(baseUrl('admin/api/mark_paid.php')) ?>"
      data-confirm-url="<?= e(baseUrl('admin/api/confirm_payment.php')) ?>"

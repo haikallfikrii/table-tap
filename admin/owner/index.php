@@ -124,6 +124,20 @@ function ownerOpsChip(string $label, int $n, string $id, string $mod = ''): void
     <div class="ops-value"><span id="ops-unpaid-n"><?= (int) $ops['unpaid']['orders'] ?></span></div>
     <div class="ops-sub" id="ops-unpaid-amt"><?= e($ops['unpaid']['amount_fmt']) ?></div>
   </a>
+  <?php if (!empty($ops['delivery']['enabled'])): ?>
+  <a class="ops-card<?= ($ops['delivery']['needs_action'] ?? 0) > 0 ? ' is-busy is-alert' : '' ?>" id="ops-card-delivery" href="<?= e(baseUrl('admin/kasir.php#delivery')) ?>">
+    <div class="ops-kicker"><?= e(t('ops_delivery')) ?></div>
+    <div class="ops-value"><span id="ops-delivery-n"><?= (int) ($ops['delivery']['orders'] ?? 0) ?></span></div>
+    <div class="ops-sub" id="ops-delivery-sub">
+      <?php if (($ops['delivery']['needs_action'] ?? 0) > 0): ?>
+        <?= (int) $ops['delivery']['needs_action'] ?> <?= e(t('delivery_needs_action')) ?>
+        · <?= e($ops['delivery']['amount_fmt'] ?? '') ?>
+      <?php else: ?>
+        <?= e(t('ops_delivery_hint')) ?>
+      <?php endif; ?>
+    </div>
+  </a>
+  <?php endif; ?>
 </div>
 
 <div class="table-grid">
