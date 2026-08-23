@@ -239,6 +239,13 @@ function orderNeedsPaymentHold(array $order, ?array $shop): bool
     if (!orderDeliveryColumnsExist()) {
         return false;
     }
+
+    // Hold rules apply to delivery channel only — dine-in/takeaway always go to kitchen.
+    $jenis = (string) ($order['jenis_hidang'] ?? 'dine_in');
+    if ($jenis !== 'delivery') {
+        return false;
+    }
+
     $method = (string) ($order['payment_method'] ?? 'counter');
     $bayar = (string) ($order['status_bayar'] ?? 'belum_bayar');
     $proof = (string) ($order['payment_proof_status'] ?? 'none');
@@ -254,7 +261,7 @@ function orderNeedsPaymentHold(array $order, ?array $shop): bool
         }
         return $proof !== 'confirmed';
     }
-    // counter / unpaid delivery: hold if shop says so
+    // delivery + pay-at-counter: hold until kasir marks paid
     if ($method === 'counter' && shopHoldKitchenUntilPaid($shop)) {
         return true;
     }
