@@ -107,7 +107,9 @@ function isValidAddress(string $address): bool
 function ensureDeliveryTable(int $shopId): array
 {
     $pdo = db();
-    $stmt = $pdo->prepare('SELECT * FROM tables WHERE shop_id = ? AND nomor_meja = ? LIMIT 1');
+    $stmt = $pdo->prepare(
+        "SELECT * FROM tables WHERE shop_id = ? AND nomor_meja = ? AND status = 'aktif' LIMIT 1"
+    );
     $stmt->execute([$shopId, DELIVERY_TABLE_NUMBER]);
     $row = $stmt->fetch();
     if ($row) {
@@ -115,8 +117,8 @@ function ensureDeliveryTable(int $shopId): array
     }
     $token = generateToken(16);
     $pdo->prepare(
-        'INSERT INTO tables (shop_id, nomor_meja, token_akses, is_active) VALUES (?, ?, ?, 1)'
-    )->execute([$shopId, DELIVERY_TABLE_NUMBER, $token]);
+        'INSERT INTO tables (shop_id, nomor_meja, token_akses, status) VALUES (?, ?, ?, ?)'
+    )->execute([$shopId, DELIVERY_TABLE_NUMBER, $token, 'aktif']);
     $stmt->execute([$shopId, DELIVERY_TABLE_NUMBER]);
     $row = $stmt->fetch();
     if (!$row) {
