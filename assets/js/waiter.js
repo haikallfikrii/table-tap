@@ -1,5 +1,5 @@
 /**
- * Waiter dashboard — pickup ready items, mark delivered
+ * Waiter dashboard — pickup ready items, mark delivered, hold COD cash
  */
 (function () {
   const root = document.getElementById('waiter-root');
@@ -7,6 +7,7 @@
 
   const pollUrl = root.dataset.pollUrl;
   const updateUrl = root.dataset.updateUrl;
+  const payUrl = root.dataset.payUrl || '';
   const interval = Number(root.dataset.interval) || 3000;
   const lang = root.dataset.lang || 'my';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
@@ -29,6 +30,9 @@
   }
 
   function tableTitle(num) {
+    if (String(num) === 'Delivery') {
+      return i18n.delivery || 'Delivery';
+    }
     return (i18n.table_n || 'Table %s').replace('%s', String(num));
   }
 
@@ -53,6 +57,16 @@
     if (!waveDone) {
       TableTapSound.startAlarm(function () { waveDone = true; });
     }
+  }
+
+  function serveBadge(it) {
+    if (it.jenis_hidang === 'delivery') {
+      return { label: i18n.delivery || 'Delivery', cls: 'delivery' };
+    }
+    if (it.jenis_hidang === 'takeaway') {
+      return { label: i18n.takeaway || 'Takeaway', cls: 'bungkus' };
+    }
+    return { label: i18n.dine_in || 'Dine in', cls: 'sini' };
   }
 
   function render(items, newIds) {
@@ -83,20 +97,49 @@
           '</button>';
       }
 
-      const hidang = it.jenis_hidang === 'takeaway'
-        ? (i18n.takeaway || 'Takeaway')
-        : (i18n.dine_in || 'Dine in');
-      const hidangClass = it.jenis_hidang === 'takeaway' ? ' takeaway' : ' dine-in';
+      const badge = serveBadge(it);
+      const hidangClass = it.jenis_hidang === 'takeaway'
+        ? ' takeaway'
+        : (it.jenis_hidang === 'delivery' ? ' delivery' : ' dine-in');
+
+      let deliveryMeta = '';
+      if (it.jenis_hidang === 'delivery') {
+        if (it.alamat) {
+          deliveryMeta += '<div class="order-meta">' + esc(i18n.address || 'Address') + ': ' + esc(it.alamat) + '</div>';
+        }
+        if (it.phone) {
+          deliveryMeta += '<div class="order-meta">' + esc(i18n.phone || 'Phone') + ': ' + esc(it.phone) + '</div>';
+        }
+        if (it.payment_method === 'cod' && it.status_bayar !== 'lunas') {
+          if (it.payment_proof_status === 'uploaded') {
+            deliveryMeta +=
+              '<div class="order-meta" style="color:var(--warning)">' +
+                esc(i18n.cod_held_waiting || 'Cash held — waiting kasir') +
+              '</div>';
+          } else {
+            actions +=
+              '<button type="button" class="btn btn-secondary" style="width:100%;margin-top:8px" data-cod-held="' + it.order_id + '">' +
+                esc(i18n.cod_held_btn || 'COD cash received') +
+              '</button>';
+          }
+        } else if (it.payment_method === 'cod' && it.status_bayar === 'lunas') {
+          deliveryMeta +=
+            '<div class="order-meta" style="color:var(--success)">' +
+              esc(i18n.cod_paid || 'Paid') +
+            '</div>';
+        }
+      }
 
       return (
         '<article class="kitchen-card ' + esc(it.status_item) + hidangClass + (newSet.has(it.id) ? ' new-flash' : '') + '">' +
           '<div class="kitchen-table">' + esc(tableTitle(it.nomor_meja)) + '</div>' +
-          '<div class="serve-badge ' + (it.jenis_hidang === 'takeaway' ? 'bungkus' : 'sini') + '">' + esc(hidang) + '</div>' +
+          '<div class="serve-badge ' + badge.cls + '">' + esc(badge.label) + '</div>' +
           '<div class="kitchen-qty">×' + it.qty + '</div>' +
           '<h2 class="kitchen-item-name">' + esc(it.nama) + '</h2>' +
           (it.nama_pelanggan ? '<div class="order-meta">' + esc(it.nama_pelanggan) + '</div>' : '') +
           '<div class="order-meta">' + esc(kat) + '</div>' +
           note +
+          deliveryMeta +
           '<div class="order-meta" style="margin:8px 0 14px">#' + it.order_id + ' · ' + esc(it.waktu_order) + '</div>' +
           actions +
         '</article>'
@@ -131,6 +174,27 @@
   }
 
   root.addEventListener('click', async (e) => {
+    const codBtn = e.target.closest('[data-cod-held]');
+    if (codBtn && payUrl) {
+      const orderId = Number(codBtn.getAttribute('data-cod-held'));
+      codBtn.disabled = true;
+      try {
+        const res = await fetch(payUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ order_id: orderId, action: 'cod_held' }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Failed');
+        await poll();
+      } catch (err) {
+        alert(err.message || 'Error');
+        codBtn.disabled = false;
+      }
+      return;
+    }
+
     const btn = e.target.closest('[data-status][data-id]');
     if (!btn) return;
     const id = Number(btn.getAttribute('data-id'));

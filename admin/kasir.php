@@ -83,6 +83,7 @@ $i18n = [
     'pay_duitnow'   => t('pay_duitnow'),
     'pay_counter'   => t('pay_counter'),
     'cod_received'  => t('cod_received'),
+    'cod_held_waiting' => t('cod_held_waiting'),
     'confirm_proof' => t('confirm_proof'),
     'reject_proof'  => t('reject_proof'),
     'proof_pending' => t('proof_pending'),

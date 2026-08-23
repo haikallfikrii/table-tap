@@ -34,6 +34,13 @@ $i18n = [
     'minuman_title'    => t('minuman_title'),
     'dine_in'          => t('dine_in'),
     'takeaway'         => t('takeaway'),
+    'delivery'         => t('delivery_order_title'),
+    'address'          => t('address'),
+    'phone'            => t('phone'),
+    'pay_cod'          => t('pay_cod'),
+    'cod_held_btn'     => t('cod_held_btn'),
+    'cod_held_waiting' => t('cod_held_waiting'),
+    'cod_paid'         => t('paid'),
 ];
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
@@ -46,6 +53,7 @@ $i18n = [
 <div id="waiter-root" class="kitchen-grid"
      data-poll-url="<?= e(baseUrl('admin/api/waiter_poll.php')) ?>"
      data-update-url="<?= e(baseUrl('admin/api/item_status.php')) ?>"
+     data-pay-url="<?= e(baseUrl('admin/api/confirm_payment.php')) ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 3000) ?>"
      data-lang="<?= e($lang) ?>"
      data-i18n="<?= e(json_encode($i18n, JSON_UNESCAPED_UNICODE)) ?>">

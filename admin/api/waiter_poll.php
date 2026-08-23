@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 require_once dirname(__DIR__, 2) . '/includes/stations.php';
+require_once dirname(__DIR__, 2) . '/includes/delivery.php';
 
 requireLoginApi(['waiter', 'owner']);
 $shopId = requireShopIdApi();
@@ -28,11 +29,15 @@ if (shopFulfillment($shop) === 'self_pickup') {
 }
 
 $stationCol = orderStationColumnExists() ? ', oi.station_id_saat_order' : '';
+$payCol = orderDeliveryColumnsExist()
+    ? ', o.payment_method, o.status_bayar, o.payment_proof_status, o.alamat, o.phone'
+    : '';
 $stmt = $pdo->prepare(
     "SELECT oi.id, oi.order_id, oi.qty, oi.catatan, oi.status_item,
             oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order
             {$stationCol},
             o.waktu_order, o.jenis_hidang, o.nama_pelanggan, t.nomor_meja
+            {$payCol}
      FROM order_items oi
      INNER JOIN orders o ON o.id = oi.order_id
      INNER JOIN tables t ON t.id = o.table_id
@@ -82,8 +87,15 @@ foreach ($items as $it) {
         'nama' => $lang === 'en' ? $it['nama_saat_order_en'] : $it['nama_saat_order_my'],
         'nomor_meja' => $it['nomor_meja'],
         'waktu_order' => $it['waktu_order'],
-        'jenis_hidang' => ($it['jenis_hidang'] ?? 'dine_in') === 'takeaway' ? 'takeaway' : 'dine_in',
+        'jenis_hidang' => ($it['jenis_hidang'] ?? 'dine_in') === 'takeaway'
+            ? 'takeaway'
+            : ((($it['jenis_hidang'] ?? '') === 'delivery') ? 'delivery' : 'dine_in'),
         'nama_pelanggan' => $it['nama_pelanggan'] ?? '',
+        'payment_method' => (string) ($it['payment_method'] ?? ''),
+        'status_bayar' => (string) ($it['status_bayar'] ?? ''),
+        'payment_proof_status' => (string) ($it['payment_proof_status'] ?? 'none'),
+        'alamat' => (string) ($it['alamat'] ?? ''),
+        'phone' => (string) ($it['phone'] ?? ''),
     ];
 }
 

@@ -30,6 +30,7 @@ $deliveryMode = false;
 $cafeVerify = 'email';
 $payMethods = ['counter' => true, 'cod' => false, 'duitnow' => false];
 $duitnowQrUrl = '';
+$deliveryRequirePhone = false;
 
 if ($sessionToken !== '') {
     $session = findSessionByToken($sessionToken);
@@ -52,6 +53,7 @@ if ($sessionToken !== '') {
             $cafeVerify = shopCafeVerify($deliveryShop);
             $payMethods = shopPayMethods($deliveryShop);
             $duitnowQrUrl = (string) ($deliveryShop['duitnow_qr_url'] ?? '');
+            $deliveryRequirePhone = shopDeliveryRequirePhone($deliveryShop);
         }
     } else {
         $shopRow = findShopByAccess($shopSlug, $shopToken);

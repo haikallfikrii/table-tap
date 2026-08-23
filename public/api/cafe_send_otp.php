@@ -1,6 +1,6 @@
 <?php
 /**
- * Send email OTP for cafe session.
+ * Send email OTP for cafe / delivery checkout.
  * POST JSON: { shop, token, email, nama_pelanggan, lang }
  */
 
@@ -22,15 +22,18 @@ if ($slug === '' || $token === '') {
     jsonError('Invalid request', 403);
 }
 
+$viaDelivery = false;
 $shop = findShopByAccess($slug, $token);
 if (!$shop) {
     $shop = findShopByDeliveryAccess($slug, $token);
+    $viaDelivery = (bool) $shop;
 }
 if (!$shop) {
     jsonError('Invalid shop access', 403);
 }
 
-if (shopCafeVerify($shop) !== 'email') {
+$needsEmail = $viaDelivery || shopRequiresEmailVerify($shop);
+if (!$needsEmail) {
     jsonError('Verification not required', 400);
 }
 

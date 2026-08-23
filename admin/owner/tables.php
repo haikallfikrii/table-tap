@@ -27,6 +27,11 @@ $cafeEntryUrl = '';
 if ($isCafeMode && orderingModeColumnExists()) {
     $cafeEntryUrl = cafeEntryUrl((string) $shop['slug'], ensureShopToken($shop));
 }
+$isDelivery = shopDeliveryEnabled($shop);
+$deliveryEntryUrl = '';
+if ($isDelivery && deliveryColumnsExist()) {
+    $deliveryEntryUrl = deliveryEntryUrl((string) $shop['slug'], ensureDeliveryToken($shop));
+}
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -112,6 +117,24 @@ if ($isCafeMode && $cafeEntryUrl === '') {
     </form>
     <?php
       $qrActions = ob_get_clean();
+      require dirname(__DIR__, 2) . '/includes/admin_qr_card.php';
+    ?>
+  </div>
+</section>
+<?php endif; ?>
+
+<?php if ($isDelivery && $deliveryEntryUrl !== ''): ?>
+<section class="tables-section">
+  <h2 class="section-title"><?= e(t('delivery_qr_card_title')) ?></h2>
+  <p class="section-desc"><?= e(t('delivery_qr_card_hint')) ?></p>
+  <div class="table-grid">
+    <?php
+      $qrTitle = shopBrand($shop);
+      $qrHint = t('delivery_share_desc', shopBrand($shop));
+      $qrUrl = $deliveryEntryUrl;
+      $qrBadge = t('delivery_order_title');
+      $qrId = 'qr-delivery-tables';
+      $qrActions = '<a class="btn btn-ghost btn-sm" href="' . e($deliveryEntryUrl) . '" target="_blank" rel="noopener">' . e(t('delivery_open_landing')) . '</a>';
       require dirname(__DIR__, 2) . '/includes/admin_qr_card.php';
     ?>
   </div>

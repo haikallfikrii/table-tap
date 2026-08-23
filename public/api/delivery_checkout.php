@@ -1,7 +1,7 @@
 <?php
 /**
- * Delivery checkout — create order with address + phone/email + payment method.
- * POST JSON: { shop, token, nama_pelanggan, phone?, email?, code?, alamat, payment_method, items }
+ * Delivery checkout — create order with address + email OTP + optional phone + payment.
+ * POST JSON: { shop, token, nama_pelanggan, phone?, email, code, alamat, payment_method, items }
  */
 
 declare(strict_types=1);
@@ -33,7 +33,6 @@ if (!$shop) {
 
 $methods = shopPayMethods($shop);
 if (!isset($methods[$paymentMethod]) || !$methods[$paymentMethod]) {
-    // pick first enabled
     $paymentMethod = 'cod';
     foreach (['cod', 'duitnow', 'counter'] as $m) {
         if (!empty($methods[$m])) {
@@ -43,26 +42,22 @@ if (!isset($methods[$paymentMethod]) || !$methods[$paymentMethod]) {
     }
 }
 
-$verifyMode = shopContactVerify($shop);
-$normalizedEmail = null;
-$phone = '';
+// Delivery always requires email OTP
+if ($code === '') {
+    jsonError(t('cafe_otp_required'), 400);
+}
+$contactHash = verifyEmailOtp((int) $shop['id'], $email, $code);
+if ($contactHash === null) {
+    jsonError(t('cafe_otp_invalid'), 400);
+}
+$normalizedEmail = normalizeEmail($email);
 
-if ($verifyMode === 'email') {
-    if ($code === '') {
-        jsonError(t('cafe_otp_required'), 400);
-    }
-    $contactHash = verifyEmailOtp((int) $shop['id'], $email, $code);
-    if ($contactHash === null) {
-        jsonError(t('cafe_otp_invalid'), 400);
-    }
-    $normalizedEmail = normalizeEmail($email);
-} elseif ($verifyMode === 'phone') {
+$phone = '';
+if (shopDeliveryRequirePhone($shop) || $phoneRaw !== '') {
     $phone = normalizePhone($phoneRaw) ?? '';
-    if ($phone === '') {
+    if (shopDeliveryRequirePhone($shop) && $phone === '') {
         jsonError(t('phone_required'), 400);
     }
-} elseif ($phoneRaw !== '') {
-    $phone = normalizePhone($phoneRaw) ?? '';
 }
 
 if (!isValidAddress($alamat)) {

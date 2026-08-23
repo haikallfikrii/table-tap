@@ -198,6 +198,7 @@ function shopAsDeliveryContext(array $shop): array
         'pay_counter' => (int) ($shop['pay_counter'] ?? 1),
         'duitnow_qr_url' => (string) ($shop['duitnow_qr_url'] ?? ''),
         'hold_kitchen_until_paid' => (int) ($shop['hold_kitchen_until_paid'] ?? 1),
+        'delivery_require_phone' => (int) ($shop['delivery_require_phone'] ?? 0),
         'channel' => 'delivery',
     ];
 }

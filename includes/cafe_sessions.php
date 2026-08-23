@@ -88,7 +88,7 @@ function shopCafeVerify(?array $shop): string
         return 'email';
     }
     $v = (string) ($shop['cafe_verify'] ?? 'email');
-    if (in_array($v, ['email', 'phone', 'none'], true)) {
+    if (in_array($v, ['email', 'phone', 'email_phone', 'none'], true)) {
         return $v;
     }
     return 'email';
@@ -98,6 +98,40 @@ function shopCafeVerify(?array $shop): string
 function shopContactVerify(?array $shop): string
 {
     return shopCafeVerify($shop);
+}
+
+function shopRequiresEmailVerify(?array $shop): bool
+{
+    return in_array(shopCafeVerify($shop), ['email', 'email_phone'], true);
+}
+
+function shopRequiresPhone(?array $shop, bool $forDelivery = false): bool
+{
+    $v = shopCafeVerify($shop);
+    if ($v === 'phone' || $v === 'email_phone') {
+        return true;
+    }
+    if ($forDelivery && function_exists('deliveryColumnsExist') && deliveryColumnsExist()) {
+        return (int) ($shop['delivery_require_phone'] ?? 0) === 1;
+    }
+    return false;
+}
+
+/** Delivery always uses email OTP; phone is optional/required by shop flag or verify mode. */
+function deliveryRequiresEmailOtp(): bool
+{
+    return true;
+}
+
+function shopDeliveryRequirePhone(?array $shop): bool
+{
+    if (!$shop || !function_exists('deliveryColumnsExist') || !deliveryColumnsExist()) {
+        return false;
+    }
+    if ((int) ($shop['delivery_require_phone'] ?? 0) === 1) {
+        return true;
+    }
+    return shopRequiresPhone($shop, true);
 }
 
 function cafeEntryUrl(string $slug, string $shopToken): string
@@ -454,7 +488,7 @@ function enableCafeModeForShop(int $shopId, string $verify = 'email'): void
     if (!orderingModeColumnExists()) {
         throw new RuntimeException('Cafe mode schema missing');
     }
-    if (!in_array($verify, ['email', 'phone', 'none'], true)) {
+    if (!in_array($verify, ['email', 'phone', 'email_phone', 'none'], true)) {
         $verify = 'email';
     }
     $shop = findShopById($shopId);

@@ -37,6 +37,7 @@ $i18n = [
     'status_item_selesai'  => t('status_item_selesai'),
     'dine_in'          => t('dine_in'),
     'takeaway'         => t('takeaway'),
+    'delivery'         => t('delivery_order_title'),
     'printer_connect'  => t('printer_connect'),
     'printer_disconnect' => t('printer_disconnect'),
     'printer_connected' => t('printer_connected'),

@@ -2,7 +2,7 @@
 -- Pro delivery: QR channel, COD / DuitNow proof, contact phone option.
 
 ALTER TABLE shops
-  MODIFY COLUMN cafe_verify ENUM('email','phone','none') NOT NULL DEFAULT 'email';
+  MODIFY COLUMN cafe_verify ENUM('email','phone','email_phone','none') NOT NULL DEFAULT 'email';
 
 ALTER TABLE shops
   ADD COLUMN delivery_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER cafe_verify,
@@ -11,7 +11,8 @@ ALTER TABLE shops
   ADD COLUMN pay_cod TINYINT(1) NOT NULL DEFAULT 1 AFTER pay_counter,
   ADD COLUMN pay_duitnow TINYINT(1) NOT NULL DEFAULT 1 AFTER pay_cod,
   ADD COLUMN duitnow_qr_url VARCHAR(255) DEFAULT NULL AFTER pay_duitnow,
-  ADD COLUMN hold_kitchen_until_paid TINYINT(1) NOT NULL DEFAULT 1 AFTER duitnow_qr_url;
+  ADD COLUMN hold_kitchen_until_paid TINYINT(1) NOT NULL DEFAULT 1 AFTER duitnow_qr_url,
+  ADD COLUMN delivery_require_phone TINYINT(1) NOT NULL DEFAULT 0 AFTER hold_kitchen_until_paid;
 
 ALTER TABLE orders
   MODIFY COLUMN jenis_hidang ENUM('dine_in','takeaway','delivery') NOT NULL DEFAULT 'dine_in';

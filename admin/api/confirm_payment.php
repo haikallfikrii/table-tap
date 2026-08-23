@@ -1,7 +1,10 @@
 <?php
 /**
- * Kasir confirms / rejects DuitNow proof, or marks COD cash received.
- * POST JSON: { order_id, action: confirm|reject|cod_received }
+ * Kasir / waiter payment actions for delivery.
+ * POST JSON: { order_id, action: confirm|reject|cod_received|cod_held }
+ *
+ * - cod_held: waiter received cash, awaiting kasir confirm (proof_status=uploaded)
+ * - cod_received / confirm: kasir finalizes payment
  */
 
 declare(strict_types=1);
@@ -10,18 +13,24 @@ require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 require_once dirname(__DIR__, 2) . '/includes/receipt.php';
 
-requireLoginApi(['kasir', 'owner']);
-$shopId = requireShopIdApi();
 requirePost();
-
 $body = readJsonBody();
 $orderId = (int) ($body['order_id'] ?? 0);
 $action = (string) ($body['action'] ?? '');
-$lang = currentLang();
 
-if ($orderId <= 0 || !in_array($action, ['confirm', 'reject', 'cod_received'], true)) {
+if ($orderId <= 0 || !in_array($action, ['confirm', 'reject', 'cod_received', 'cod_held'], true)) {
     jsonError('Invalid request');
 }
+
+if ($action === 'cod_held') {
+    requireLoginApi(['waiter', 'kasir', 'owner']);
+} else {
+    requireLoginApi(['kasir', 'owner']);
+}
+
+$shopId = requireShopIdApi();
+$lang = currentLang();
+
 if (!orderDeliveryColumnsExist()) {
     jsonError('Not available', 400);
 }
@@ -41,6 +50,30 @@ if (!$order) {
 
 $method = (string) ($order['payment_method'] ?? 'counter');
 $already = ($order['status_bayar'] ?? '') === 'lunas';
+
+if ($action === 'cod_held') {
+    if ($method !== 'cod') {
+        jsonError('Not a COD order', 400);
+    }
+    if ($already) {
+        jsonResponse([
+            'ok' => true,
+            'order_id' => $orderId,
+            'already' => true,
+            'status_bayar' => 'lunas',
+            'payment_proof_status' => 'confirmed',
+        ]);
+    }
+    $pdo->prepare(
+        "UPDATE orders SET payment_proof_status = 'uploaded' WHERE id = ? AND shop_id = ?"
+    )->execute([$orderId, $shopId]);
+    jsonResponse([
+        'ok' => true,
+        'order_id' => $orderId,
+        'payment_proof_status' => 'uploaded',
+        'cod_held' => true,
+    ]);
+}
 
 if ($action === 'reject') {
     if ($method !== 'duitnow') {

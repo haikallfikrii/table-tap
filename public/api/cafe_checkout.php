@@ -1,7 +1,7 @@
 <?php
 /**
  * Cafe checkout — verify (optional OTP), create session, submit order in one step.
- * POST JSON: { shop, token, nama_pelanggan, email?, code?, items, jenis_hidang }
+ * POST JSON: { shop, token, nama_pelanggan, email?, phone?, code?, items, jenis_hidang }
  */
 
 declare(strict_types=1);
@@ -16,6 +16,7 @@ $slug = trim((string) ($body['shop'] ?? ''));
 $token = trim((string) ($body['token'] ?? ''));
 $email = trim((string) ($body['email'] ?? ''));
 $code = trim((string) ($body['code'] ?? ''));
+$phoneRaw = trim((string) ($body['phone'] ?? ''));
 $nama = trim((string) ($body['nama_pelanggan'] ?? ''));
 $items = $body['items'] ?? [];
 $jenisHidang = (($body['jenis_hidang'] ?? '') === 'takeaway') ? 'takeaway' : 'dine_in';
@@ -33,8 +34,9 @@ $verifyMode = shopCafeVerify($shop);
 $selfPickup = shopFulfillment($shop) === 'self_pickup';
 $contactHash = null;
 $normalizedEmail = null;
+$phone = '';
 
-if ($verifyMode === 'email') {
+if ($verifyMode === 'email' || $verifyMode === 'email_phone') {
     if ($code === '') {
         jsonError(t('cafe_otp_required'), 400);
     }
@@ -47,6 +49,13 @@ if ($verifyMode === 'email') {
     $normalizedEmail = normalizeEmail($email);
     if ($normalizedEmail !== null) {
         $contactHash = hashContact($normalizedEmail);
+    }
+}
+
+if ($verifyMode === 'phone' || $verifyMode === 'email_phone') {
+    $phone = normalizePhone($phoneRaw) ?? '';
+    if ($phone === '') {
+        jsonError(t('phone_required'), 400);
     }
 }
 
@@ -80,6 +89,12 @@ $created = createShopOrder(
 
 $orderId = $created['order_id'];
 $guestToken = (string) ($created['guest_token'] ?? '');
+
+// Store phone on order when collected (cafe)
+if ($phone !== '' && orderDeliveryColumnsExist()) {
+    db()->prepare('UPDATE orders SET phone = ? WHERE id = ? AND shop_id = ?')
+        ->execute([$phone, $orderId, (int) $shop['id']]);
+}
 
 jsonResponse([
     'ok' => true,

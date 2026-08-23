@@ -285,12 +285,12 @@ function ensureAppSchema(PDO $pdo): void
             }
         }
 
-        // Contact verify: allow phone collect (no SMS OTP in v1)
+        // Contact verify: allow phone collect + email+phone combo
         $cafeVerifyCol = $pdo->query("SHOW COLUMNS FROM shops WHERE Field = 'cafe_verify'")->fetch();
-        if ($cafeVerifyCol && stripos((string) ($cafeVerifyCol['Type'] ?? ''), 'phone') === false) {
+        if ($cafeVerifyCol && stripos((string) ($cafeVerifyCol['Type'] ?? ''), 'email_phone') === false) {
             $pdo->exec(
                 "ALTER TABLE shops
-                 MODIFY COLUMN cafe_verify ENUM('email','phone','none') NOT NULL DEFAULT 'email'"
+                 MODIFY COLUMN cafe_verify ENUM('email','phone','email_phone','none') NOT NULL DEFAULT 'email'"
             );
         }
 
@@ -305,6 +305,14 @@ function ensureAppSchema(PDO $pdo): void
                  ADD COLUMN pay_duitnow TINYINT(1) NOT NULL DEFAULT 1 AFTER pay_cod,
                  ADD COLUMN duitnow_qr_url VARCHAR(255) DEFAULT NULL AFTER pay_duitnow,
                  ADD COLUMN hold_kitchen_until_paid TINYINT(1) NOT NULL DEFAULT 1 AFTER duitnow_qr_url"
+            );
+        }
+
+        $delPhone = $pdo->query("SHOW COLUMNS FROM shops LIKE 'delivery_require_phone'")->fetch();
+        if (!$delPhone && $pdo->query("SHOW COLUMNS FROM shops LIKE 'delivery_enabled'")->fetch()) {
+            $pdo->exec(
+                'ALTER TABLE shops
+                 ADD COLUMN delivery_require_phone TINYINT(1) NOT NULL DEFAULT 0 AFTER hold_kitchen_until_paid'
             );
         }
 
