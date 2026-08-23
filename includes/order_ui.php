@@ -42,6 +42,9 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
   seoFaviconLinks();
   ?>
   <link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
+  <?php if (!empty($payMethods['duitnow']) && $duitnowQrUrl !== ''): ?>
+  <link rel="preload" as="image" href="<?= e(baseUrl($duitnowQrUrl)) ?>">
+  <?php endif; ?>
 </head>
 <body>
 <?php if ($staffMode): ?>
@@ -302,10 +305,10 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
       <?php if (!empty($payMethods['duitnow']) && $duitnowQrUrl !== ''):
         $duitnowQrAbs = baseUrl($duitnowQrUrl);
       ?>
-        <div class="duitnow-preview is-collapsed" id="duitnow-preview">
+        <div class="duitnow-preview is-collapsed" id="duitnow-preview" aria-hidden="true">
           <p class="order-meta"><?= e(t('duitnow_scan_hint')) ?></p>
           <div class="duitnow-pay-visual">
-            <img class="duitnow-pay-qr" src="" data-src="<?= e($duitnowQrAbs) ?>" alt="DuitNow QR" width="220" height="220" loading="lazy" decoding="async">
+            <img class="duitnow-pay-qr" src="<?= e($duitnowQrAbs) ?>" alt="DuitNow QR" width="220" height="220" decoding="sync">
           </div>
           <a class="btn btn-secondary btn-sm duitnow-download" href="<?= e($duitnowQrAbs) ?>" download="duitnow-qr.png" target="_blank" rel="noopener"><?= e(t('download_qr')) ?></a>
         </div>

@@ -106,7 +106,7 @@ return [
     'proof_uploaded'    => 'Proof uploaded',
     'proof_upload_required' => 'Please choose a proof file',
     'proof_too_large'   => 'File too large',
-    'proof_invalid_type'=> 'Use JPG, PNG, WEBP or PDF',
+    'proof_invalid_type'=> 'Use JPG, PNG, HEIC (screenshot) or PDF',
     'proof_upload_failed' => 'Upload failed',
     'proof_not_needed'  => 'Proof not required',
     'already_paid'      => 'Already paid',

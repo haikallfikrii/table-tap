@@ -1,6 +1,6 @@
 <?php
 /**
- * Guest uploads DuitNow payment proof (image or PDF).
+ * Guest uploads DuitNow payment proof (screenshot image or PDF).
  * POST multipart: order_id, gt (guest_token), proof file
  */
 
@@ -47,19 +47,35 @@ if (($file['size'] ?? 0) > max($max, 5 * 1024 * 1024)) {
     jsonError(t('proof_too_large'), 400);
 }
 
+$originalName = (string) ($file['name'] ?? '');
+$extFromName = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
 $finfo = new finfo(FILEINFO_MIME_TYPE);
-$mime = $finfo->file($file['tmp_name']);
-$allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-if (!in_array($mime, $allowed, true)) {
-    jsonError(t('proof_invalid_type'), 400);
-}
-$ext = match ($mime) {
+$mime = $finfo->file($file['tmp_name']) ?: 'application/octet-stream';
+
+$allowed = [
     'image/jpeg' => 'jpg',
     'image/png' => 'png',
     'image/webp' => 'webp',
+    'image/heic' => 'heic',
+    'image/heif' => 'heif',
     'application/pdf' => 'pdf',
-    default => 'bin',
-};
+];
+
+$ext = $allowed[$mime] ?? null;
+if ($ext === null && $mime === 'application/octet-stream') {
+    $ext = match ($extFromName) {
+        'jpg', 'jpeg' => 'jpg',
+        'png' => 'png',
+        'webp' => 'webp',
+        'heic', 'heif' => 'heic',
+        'pdf' => 'pdf',
+        default => null,
+    };
+}
+if ($ext === null) {
+    jsonError(t('proof_invalid_type'), 400);
+}
 
 $dir = dirname(__DIR__, 2) . '/assets/uploads/proofs';
 if (!is_dir($dir)) {

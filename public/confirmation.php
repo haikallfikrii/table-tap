@@ -223,6 +223,9 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
   seoFaviconLinks();
   ?>
   <link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
+  <?php if ($duitnowQrAbs !== ''): ?>
+  <link rel="preload" as="image" href="<?= e($duitnowQrAbs) ?>">
+  <?php endif; ?>
 </head>
 <body>
 <?php if (!$focusOrder || !$table): ?>
@@ -346,7 +349,7 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
         <div class="duitnow-pay-block">
           <p class="order-meta"><?= e(t('duitnow_scan_hint')) ?></p>
           <div class="duitnow-pay-visual">
-            <img class="duitnow-pay-qr" src="<?= e($duitnowQrAbs) ?>" alt="DuitNow QR" width="220" height="220" loading="eager" decoding="async">
+            <img class="duitnow-pay-qr" src="<?= e($duitnowQrAbs) ?>" alt="DuitNow QR" width="220" height="220" decoding="sync">
           </div>
           <a class="btn btn-secondary btn-sm duitnow-download" href="<?= e($duitnowQrAbs) ?>" download="duitnow-qr.png" target="_blank" rel="noopener"><?= e(t('download_qr')) ?></a>
         </div>
@@ -356,7 +359,7 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
           <input type="hidden" name="order_id" value="<?= $oid ?>">
           <input type="hidden" name="gt" value="<?= e($ordGuestToken) ?>">
           <p class="order-meta"><?= e(t('proof_upload_hint')) ?></p>
-          <input type="file" name="proof" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" required>
+          <input type="file" name="proof" accept="image/*,application/pdf,.pdf" required>
           <button type="submit" class="btn btn-primary btn-sm" style="width:100%;margin-top:8px"><?= e(t('proof_upload_btn')) ?></button>
         </form>
         <?php elseif ($proofWaiting): ?>
