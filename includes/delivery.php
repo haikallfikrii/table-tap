@@ -204,6 +204,66 @@ function shopAsDeliveryContext(array $shop): array
 }
 
 /**
+ * Absolute filesystem path to shop DuitNow QR image, or null.
+ */
+function shopDuitnowQrPath(?array $shop): ?string
+{
+    if (!$shop) {
+        return null;
+    }
+    $rel = trim((string) ($shop['duitnow_qr_url'] ?? ''));
+    if ($rel === '') {
+        return null;
+    }
+    $rel = ltrim(str_replace(['..', '\\'], '', $rel), '/');
+    $path = dirname(__DIR__) . '/' . $rel;
+    if (!is_file($path) || !is_readable($path)) {
+        return null;
+    }
+    return $path;
+}
+
+/**
+ * Safari-safe inline data URI for DuitNow QR (best for iPhone).
+ * Returns empty string if missing or too large (>900KB).
+ */
+function shopDuitnowQrDataUri(?array $shop): string
+{
+    $path = shopDuitnowQrPath($shop);
+    if ($path === null) {
+        return '';
+    }
+    $size = filesize($path);
+    if ($size === false || $size <= 0 || $size > 900 * 1024) {
+        return '';
+    }
+    $raw = file_get_contents($path);
+    if ($raw === false || $raw === '') {
+        return '';
+    }
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = $finfo->buffer($raw) ?: 'image/png';
+    if (!str_starts_with($mime, 'image/')) {
+        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $mime = match ($ext) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'webp' => 'image/webp',
+            'gif' => 'image/gif',
+            default => 'image/png',
+        };
+    }
+    return 'data:' . $mime . ';base64,' . base64_encode($raw);
+}
+
+/**
+ * Public URL that streams the DuitNow QR with correct Content-Type (Safari-friendly).
+ */
+function shopDuitnowQrProxyUrl(int $shopId): string
+{
+    return baseUrl('public/api/duitnow_qr.php?shop_id=' . $shopId . '&v=' . time());
+}
+
+/**
  * Attach delivery / payment meta after order create.
  */
 function attachOrderDeliveryMeta(

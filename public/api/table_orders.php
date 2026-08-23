@@ -1,7 +1,7 @@
 <?php
 /**
  * Customer active orders for a table (multi-order tracking).
- * GET: meja, token, lang, focus (optional order id)
+ * GET: meja, token, lang, focus (optional order id), gt (guest_token for delivery)
  */
 
 declare(strict_types=1);
@@ -12,6 +12,7 @@ $nomorMeja = trim((string) ($_GET['meja'] ?? ''));
 $token = trim((string) ($_GET['token'] ?? ''));
 $lang = ($_GET['lang'] ?? '') === 'en' ? 'en' : 'my';
 $focusOrderId = (int) ($_GET['focus'] ?? 0);
+$guestToken = trim((string) ($_GET['gt'] ?? ''));
 
 if ($nomorMeja === '' || $token === '') {
     jsonError('Invalid request', 400);
@@ -27,7 +28,25 @@ if (!$shop || ($shop['status'] ?? '') !== 'aktif') {
     jsonError('Tracking unavailable', 403);
 }
 
-$orders = fetchActiveCustomerOrders($table, $lang);
+$isDelivery = (($table['nomor_meja'] ?? '') === DELIVERY_TABLE_NUMBER);
+$scopeEmail = '';
+if ($isDelivery) {
+    if ($focusOrderId > 0) {
+        $scopeEmail = findOrderCustomerEmail($focusOrderId, (int) $table['shop_id']);
+    }
+    if ($guestToken === '' && $scopeEmail === '') {
+        jsonError('Guest token required', 403);
+    }
+    $orders = fetchActiveCustomerOrders(
+        $table,
+        $lang,
+        $guestToken !== '' ? $guestToken : null,
+        $scopeEmail !== '' ? $scopeEmail : null
+    );
+} else {
+    $orders = fetchActiveCustomerOrders($table, $lang);
+}
+
 if ($orders === []) {
     jsonError('No active orders', 404);
 }
@@ -49,7 +68,7 @@ jsonResponse([
     'focus_order_id' => $focusOrderId,
     'focus_stage' => $focusStage,
     'fulfillment' => shopFulfillment($shop),
-    'duitnow_qr_url' => !empty($shop['duitnow_qr_url']) ? baseUrl((string) $shop['duitnow_qr_url']) : '',
+    'duitnow_qr_url' => !empty($shop['duitnow_qr_url']) ? shopDuitnowQrProxyUrl((int) $shop['id']) : '',
     'proof_upload_url' => baseUrl('public/api/upload_payment_proof.php'),
     'orders' => $orders,
     'sound' => shopSoundSettings($shop),

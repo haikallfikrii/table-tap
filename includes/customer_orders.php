@@ -24,9 +24,13 @@ function generateOrderGuestToken(): string
     return bin2hex(random_bytes(16));
 }
 
-function assertTableOrderRateLimit(int $tableId, int $shopId): void
+function assertTableOrderRateLimit(int $tableId, int $shopId, ?string $jenisHidang = null): void
 {
-    // Anti double-tap: only unpaid orders in the last 30 seconds count (per table, all devices share QR).
+    // Shared virtual "Delivery" table must NOT block concurrent customers.
+    if ($jenisHidang === 'delivery') {
+        return;
+    }
+    // Anti double-tap: unpaid orders in the last 30 seconds (per physical table).
     $burst = db()->prepare(
         "SELECT COUNT(*) FROM orders
          WHERE table_id = ? AND shop_id = ?
@@ -36,6 +40,29 @@ function assertTableOrderRateLimit(int $tableId, int $shopId): void
     );
     $burst->execute([$tableId, $shopId]);
     if ((int) $burst->fetchColumn() >= 3) {
+        jsonError(t('order_rate_limited'), 429);
+    }
+}
+
+/**
+ * Soft anti-spam for delivery: same email can't hammer submit; different customers OK.
+ */
+function assertDeliveryContactRateLimit(int $shopId, string $email): void
+{
+    $email = strtolower(trim($email));
+    if ($email === '' || !orderCustomerEmailColumnExists()) {
+        return;
+    }
+    // Double-tap: 2+ in 8 seconds from same email
+    $burst = db()->prepare(
+        "SELECT COUNT(*) FROM orders
+         WHERE shop_id = ? AND customer_email = ?
+           AND jenis_hidang = 'delivery'
+           AND status_order != 'dibatalkan'
+           AND waktu_order >= DATE_SUB(NOW(), INTERVAL 8 SECOND)"
+    );
+    $burst->execute([$shopId, $email]);
+    if ((int) $burst->fetchColumn() >= 2) {
         jsonError(t('order_rate_limited'), 429);
     }
 }
@@ -61,26 +88,52 @@ function assertCartLimits(array $normalized): void
 }
 
 /** @return list<array<string, mixed>> */
-function fetchActiveCustomerOrders(array $table, string $lang): array
+function fetchActiveCustomerOrders(array $table, string $lang, ?string $guestToken = null, ?string $customerEmail = null): array
 {
     $shopId = (int) $table['shop_id'];
     $tableId = (int) $table['id'];
     $hasGuestToken = orderGuestTokenColumnExists();
+    $hasEmail = orderCustomerEmailColumnExists();
     $guestCol = $hasGuestToken ? ', guest_token' : '';
+    $emailCol = $hasEmail ? ', customer_email' : '';
     $payCol = orderDeliveryColumnsExist()
         ? ', payment_method, payment_proof_url, payment_proof_status, status_bayar, phone, alamat'
         : '';
 
-    $stmt = db()->prepare(
-        "SELECT id, subtotal, sst_rate, sst_jumlah, total_harga, status_order, waktu_order,
-                jenis_hidang, nama_pelanggan, pickup_alert{$guestCol}{$payCol}
-         FROM orders
-         WHERE table_id = ? AND shop_id = ?
-           AND status_bayar = 'belum_bayar'
-           AND status_order != 'dibatalkan'
-         ORDER BY id DESC"
-    );
-    $stmt->execute([$tableId, $shopId]);
+    $isDeliveryTable = (($table['nomor_meja'] ?? '') === DELIVERY_TABLE_NUMBER)
+        || (($table['channel'] ?? '') === 'delivery');
+
+    $sql = "SELECT id, subtotal, sst_rate, sst_jumlah, total_harga, status_order, waktu_order,
+                   jenis_hidang, nama_pelanggan, pickup_alert{$guestCol}{$emailCol}{$payCol}
+            FROM orders
+            WHERE table_id = ? AND shop_id = ?
+              AND status_bayar = 'belum_bayar'
+              AND status_order != 'dibatalkan'";
+    $params = [$tableId, $shopId];
+
+    // Delivery: isolate by guest_token and/or email so customers never see each other.
+    if ($isDeliveryTable) {
+        $guestToken = trim((string) $guestToken);
+        $customerEmail = $customerEmail !== null ? strtolower(trim($customerEmail)) : '';
+        if ($guestToken !== '' && $hasGuestToken && $customerEmail !== '' && $hasEmail) {
+            $sql .= ' AND (guest_token = ? OR customer_email = ?)';
+            $params[] = $guestToken;
+            $params[] = $customerEmail;
+        } elseif ($guestToken !== '' && $hasGuestToken) {
+            $sql .= ' AND guest_token = ?';
+            $params[] = $guestToken;
+        } elseif ($customerEmail !== '' && $hasEmail) {
+            $sql .= ' AND customer_email = ?';
+            $params[] = $customerEmail;
+        } else {
+            // No identity → return nothing rather than leaking all delivery orders
+            return [];
+        }
+    }
+
+    $sql .= ' ORDER BY id DESC';
+    $stmt = db()->prepare($sql);
+    $stmt->execute($params);
     $rows = $stmt->fetchAll();
     if ($rows === []) {
         return [];
@@ -109,6 +162,22 @@ function fetchActiveCustomerOrders(array $table, string $lang): array
         $orders[] = customerOrderPayload($row, $items, $fulfillment, $hasGuestToken);
     }
     return $orders;
+}
+
+/**
+ * Resolve email for a delivery order so multi-order tracking stays per customer.
+ */
+function findOrderCustomerEmail(int $orderId, int $shopId): string
+{
+    if (!orderCustomerEmailColumnExists() || $orderId <= 0) {
+        return '';
+    }
+    $stmt = db()->prepare(
+        'SELECT customer_email FROM orders WHERE id = ? AND shop_id = ? LIMIT 1'
+    );
+    $stmt->execute([$orderId, $shopId]);
+    $row = $stmt->fetch();
+    return strtolower(trim((string) ($row['customer_email'] ?? '')));
 }
 
 /** @param list<array<string, mixed>> $rows */
@@ -169,9 +238,10 @@ function customerOrderStage(array $order, array $items, string $fulfillment): st
     return trackStageFromItems($items, $fulfillment);
 }
 
-function findCustomerOrderForTable(array $table, int $orderId, string $lang): ?array
+function findCustomerOrderForTable(array $table, int $orderId, string $lang, ?string $guestToken = null): ?array
 {
-    foreach (fetchActiveCustomerOrders($table, $lang) as $order) {
+    $email = findOrderCustomerEmail($orderId, (int) $table['shop_id']);
+    foreach (fetchActiveCustomerOrders($table, $lang, $guestToken, $email !== '' ? $email : null) as $order) {
         if ((int) ($order['order_id'] ?? 0) === $orderId) {
             return $order;
         }

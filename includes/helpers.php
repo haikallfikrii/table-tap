@@ -334,7 +334,7 @@ function createShopOrder(
     if ($sessionId !== null && $sessionId > 0 && function_exists('assertSessionOrderRateLimit')) {
         assertSessionOrderRateLimit($sessionId, $shopId);
     } else {
-        assertTableOrderRateLimit((int) $table['id'], $shopId);
+        assertTableOrderRateLimit((int) $table['id'], $shopId, $jenisHidang);
     }
 
     $pdo = db();

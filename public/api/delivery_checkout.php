@@ -51,6 +51,10 @@ if ($contactHash === null) {
     jsonError(t('cafe_otp_invalid'), 400);
 }
 $normalizedEmail = normalizeEmail($email);
+if ($normalizedEmail === null) {
+    jsonError(t('cafe_email_invalid'), 400);
+}
+assertDeliveryContactRateLimit((int) $shop['id'], $normalizedEmail);
 
 $phone = '';
 if (shopDeliveryRequirePhone($shop) || $phoneRaw !== '') {

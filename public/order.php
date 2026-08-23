@@ -30,6 +30,8 @@ $deliveryMode = false;
 $cafeVerify = 'email';
 $payMethods = ['counter' => true, 'cod' => false, 'duitnow' => false];
 $duitnowQrUrl = '';
+$duitnowQrData = '';
+$duitnowQrProxy = '';
 $deliveryRequirePhone = false;
 
 if ($sessionToken !== '') {
@@ -53,6 +55,8 @@ if ($sessionToken !== '') {
             $cafeVerify = shopCafeVerify($deliveryShop);
             $payMethods = shopPayMethods($deliveryShop);
             $duitnowQrUrl = (string) ($deliveryShop['duitnow_qr_url'] ?? '');
+            $duitnowQrData = shopDuitnowQrDataUri($deliveryShop);
+            $duitnowQrProxy = shopDuitnowQrProxyUrl((int) $deliveryShop['id']);
             $deliveryRequirePhone = shopDeliveryRequirePhone($deliveryShop);
         }
     } else {

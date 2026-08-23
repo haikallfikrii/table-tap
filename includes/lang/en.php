@@ -136,7 +136,7 @@ return [
     'order_latest'      => 'Latest',
     'order_earlier'     => 'Earlier',
     'active_orders_banner' => '%d active orders — view status',
-    'order_rate_limited' => 'Too fast. Please wait a moment before submitting again.',
+    'order_rate_limited' => 'Too fast for the same order. Please wait a moment and try again.',
     'order_unpaid_limit' => 'Too many unpaid orders at this table. Please pay at the counter first.',
     'cart_qty_too_high' => 'Quantity too high for one item.',
     'cart_too_many_items' => 'Too many different items in one order.',

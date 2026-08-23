@@ -8,6 +8,8 @@ $deliveryMode = $deliveryMode ?? false;
 $cafeVerify = $cafeVerify ?? 'email';
 $payMethods = $payMethods ?? ['counter' => true, 'cod' => false, 'duitnow' => false];
 $duitnowQrUrl = $duitnowQrUrl ?? '';
+$duitnowQrData = $duitnowQrData ?? '';
+$duitnowQrProxy = $duitnowQrProxy ?? '';
 $deliveryRequirePhone = $deliveryRequirePhone ?? false;
 $shopSlug = $shopSlug ?? '';
 $shopTokenParam = $shopToken ?? '';
@@ -42,9 +44,6 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
   seoFaviconLinks();
   ?>
   <link rel="stylesheet" href="<?= e(assetUrl('css/app.css')) ?>">
-  <?php if (!empty($payMethods['duitnow']) && $duitnowQrUrl !== ''): ?>
-  <link rel="preload" as="image" href="<?= e(baseUrl($duitnowQrUrl)) ?>">
-  <?php endif; ?>
 </head>
 <body>
 <?php if ($staffMode): ?>
@@ -302,15 +301,16 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
           </label>
         <?php } ?>
       </fieldset>
-      <?php if (!empty($payMethods['duitnow']) && $duitnowQrUrl !== ''):
-        $duitnowQrAbs = baseUrl($duitnowQrUrl);
+      <?php if (!empty($payMethods['duitnow']) && ($duitnowQrData !== '' || $duitnowQrProxy !== '' || $duitnowQrUrl !== '')):
+        $qrSrc = $duitnowQrData !== '' ? $duitnowQrData : ($duitnowQrProxy !== '' ? $duitnowQrProxy : baseUrl($duitnowQrUrl));
+        $qrDl = $duitnowQrProxy !== '' ? $duitnowQrProxy : baseUrl($duitnowQrUrl);
       ?>
         <div class="duitnow-preview is-collapsed" id="duitnow-preview" aria-hidden="true">
           <p class="order-meta"><?= e(t('duitnow_scan_hint')) ?></p>
           <div class="duitnow-pay-visual">
-            <img class="duitnow-pay-qr" src="<?= e($duitnowQrAbs) ?>" alt="DuitNow QR" width="220" height="220" decoding="sync">
+            <img class="duitnow-pay-qr" src="<?= e($qrSrc) ?>" alt="DuitNow QR" width="220" height="220" decoding="sync">
           </div>
-          <a class="btn btn-secondary btn-sm duitnow-download" href="<?= e($duitnowQrAbs) ?>" download="duitnow-qr.png" target="_blank" rel="noopener"><?= e(t('download_qr')) ?></a>
+          <a class="btn btn-secondary btn-sm duitnow-download" href="<?= e($qrDl) ?>" download="duitnow-qr.png" target="_blank" rel="noopener"><?= e(t('download_qr')) ?></a>
         </div>
       <?php endif; ?>
       <?php endif; ?>
