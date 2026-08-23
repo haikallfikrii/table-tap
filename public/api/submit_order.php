@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/helpers.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
+require_once dirname(__DIR__, 2) . '/includes/shift.php';
 
 requirePost();
 
@@ -48,6 +49,7 @@ $shop = findShopById($shopId);
 if (!$shop || $shop['status'] !== 'aktif') {
     jsonError('Shop inactive', 403);
 }
+assertShopAcceptingOrders($shop);
 
 $created = createShopOrder(
     $table,

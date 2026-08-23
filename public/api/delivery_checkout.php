@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/helpers.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
+require_once dirname(__DIR__, 2) . '/includes/shift.php';
 
 requirePost();
 $body = readJsonBody();
@@ -30,6 +31,7 @@ $shop = findShopByDeliveryAccess($slug, $token);
 if (!$shop) {
     jsonError(t('delivery_invalid_link'), 403);
 }
+assertShopAcceptingOrders($shop);
 
 $methods = shopPayMethods($shop);
 if (!isset($methods[$paymentMethod]) || !$methods[$paymentMethod]) {
