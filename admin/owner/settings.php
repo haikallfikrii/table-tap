@@ -49,15 +49,27 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $orderingMode = 'table';
         }
         $cafeVerify = (string) ($_POST['cafe_verify'] ?? 'email');
-        if (!in_array($cafeVerify, ['email', 'none'], true)) {
+        if (!in_array($cafeVerify, ['email', 'phone', 'none'], true)) {
             $cafeVerify = 'email';
         }
         $regenShopToken = isset($_POST['regen_shop_token']);
+        $deliveryEnabled = isset($_POST['delivery_enabled']) ? 1 : 0;
+        $payCounter = isset($_POST['pay_counter']) ? 1 : 0;
+        $payCod = isset($_POST['pay_cod']) ? 1 : 0;
+        $payDuitnow = isset($_POST['pay_duitnow']) ? 1 : 0;
+        $holdKitchen = isset($_POST['hold_kitchen_until_paid']) ? 1 : 0;
+        $regenDeliveryToken = isset($_POST['regen_delivery_token']);
         if ($namaKedai === '') {
             throw new RuntimeException(t('shop_name') . ' required');
         }
         if ($sstRate < 0 || $sstRate > 100) {
             throw new RuntimeException('SST rate invalid');
+        }
+        if ($deliveryEnabled && !shopHasFeature($shop, 'delivery')) {
+            $deliveryEnabled = 0;
+        }
+        if ($deliveryEnabled && !$payCounter && !$payCod && !$payDuitnow) {
+            $payCod = 1;
         }
         $pdo->prepare(
             'UPDATE shops SET nama_kedai = ?, sst_enabled = ?, sst_rate = ?,
@@ -88,6 +100,49 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     ->execute([$newToken, $shopId]);
             }
         }
+
+        if (deliveryColumnsExist()) {
+            if ($deliveryEnabled) {
+                enableDeliveryForShop($shopId);
+            } else {
+                disableDeliveryForShop($shopId);
+            }
+            $pdo->prepare(
+                'UPDATE shops SET pay_counter = ?, pay_cod = ?, pay_duitnow = ?, hold_kitchen_until_paid = ?
+                 WHERE id = ?'
+            )->execute([$payCounter, $payCod, $payDuitnow, $holdKitchen, $shopId]);
+
+            if ($regenDeliveryToken && $deliveryEnabled) {
+                $pdo->prepare('UPDATE shops SET delivery_token = ? WHERE id = ?')
+                    ->execute([generateToken(24), $shopId]);
+            }
+
+            if (!empty($_FILES['duitnow_qr']['tmp_name'])) {
+                $file = $_FILES['duitnow_qr'];
+                if (($file['error'] ?? UPLOAD_ERR_OK) === UPLOAD_ERR_OK) {
+                    if (($file['size'] ?? 0) > ($config['upload_max_bytes'] ?? 2097152)) {
+                        throw new RuntimeException('QR file too large');
+                    }
+                    $finfo = new finfo(FILEINFO_MIME_TYPE);
+                    $mime = $finfo->file($file['tmp_name']);
+                    $allowed = ['image/jpeg', 'image/png', 'image/webp'];
+                    if (!in_array($mime, $allowed, true)) {
+                        throw new RuntimeException('Invalid QR image');
+                    }
+                    $ext = $mime === 'image/png' ? 'png' : ($mime === 'image/webp' ? 'webp' : 'jpg');
+                    $dir = dirname(__DIR__, 2) . '/assets/uploads/duitnow';
+                    if (!is_dir($dir)) {
+                        mkdir($dir, 0755, true);
+                    }
+                    $name = 'dn_' . $shopId . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+                    if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $name)) {
+                        throw new RuntimeException('Could not save QR');
+                    }
+                    $pdo->prepare('UPDATE shops SET duitnow_qr_url = ? WHERE id = ?')
+                        ->execute(['assets/uploads/duitnow/' . $name, $shopId]);
+                }
+            }
+        }
         startAppSession();
         $_SESSION['shop_name'] = $namaKedai;
 
@@ -99,11 +154,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
 $shop = getShopOrFail($shopId);
 $canSelfPickup = shopHasFeature($shop, 'self_pickup');
+$canDelivery = shopHasFeature($shop, 'delivery');
 $isCafeMode = shopIsCafeMode($shop);
+$isDelivery = shopDeliveryEnabled($shop);
 $cafeEntryUrl = '';
+$deliveryEntryUrl = '';
 if ($isCafeMode && orderingModeColumnExists()) {
     $shopToken = ensureShopToken($shop);
     $cafeEntryUrl = cafeEntryUrl((string) $shop['slug'], $shopToken);
+}
+if ($isDelivery && deliveryColumnsExist()) {
+    $dToken = ensureDeliveryToken($shop);
+    $deliveryEntryUrl = deliveryEntryUrl((string) $shop['slug'], $dToken);
 }
 $retentionLabel = $shop['retention_days'] === null
     ? t('retention_forever')
@@ -132,7 +194,7 @@ $retentionLabel = $shop['retention_days'] === null
 
 <div class="order-card settings-panel">
   <h2 style="margin-top:0"><?= e(t('shop_settings')) ?></h2>
-  <form method="post" class="settings-form">
+  <form method="post" class="settings-form" enctype="multipart/form-data">
     <div class="settings-block">
       <label class="settings-block-label"><?= e(t('shop_name')) ?></label>
       <input name="nama_kedai" required value="<?= e($shop['nama_kedai']) ?>">
@@ -213,12 +275,60 @@ $retentionLabel = $shop['retention_days'] === null
           </span>
         </label>
         <label class="option-card">
+          <input type="radio" name="cafe_verify" value="phone" <?= shopCafeVerify($shop) === 'phone' ? 'checked' : '' ?>>
+          <span class="option-card-body">
+            <strong><?= e(t('cafe_verify_phone')) ?></strong>
+            <span><?= e(t('cafe_verify_phone_short')) ?></span>
+          </span>
+        </label>
+        <label class="option-card">
           <input type="radio" name="cafe_verify" value="none" <?= shopCafeVerify($shop) === 'none' ? 'checked' : '' ?>>
           <span class="option-card-body">
             <strong><?= e(t('cafe_verify_none')) ?></strong>
             <span><?= e(t('cafe_verify_none_short')) ?></span>
           </span>
         </label>
+      </div>
+    </fieldset>
+    <?php endif; ?>
+
+    <?php if (deliveryColumnsExist()): ?>
+    <fieldset class="settings-fieldset">
+      <legend><?= e(t('delivery_settings')) ?></legend>
+      <p class="settings-fieldset-desc"><?= e(t('delivery_settings_hint')) ?></p>
+      <?php if (!$canDelivery): ?>
+        <p class="settings-upgrade-note"><?= e(t('delivery_upgrade')) ?></p>
+      <?php endif; ?>
+      <label class="settings-check<?= $canDelivery ? '' : ' is-disabled' ?>">
+        <input type="checkbox" name="delivery_enabled" value="1" <?= $isDelivery ? 'checked' : '' ?> <?= $canDelivery ? '' : 'disabled' ?>>
+        <span><?= e(t('delivery_enable')) ?></span>
+      </label>
+      <?php if ($isDelivery && $deliveryEntryUrl !== ''): ?>
+        <p class="settings-link-note" style="margin-top:12px">
+          <?= e(t('delivery_qr_url')) ?>:<br>
+          <a href="<?= e($deliveryEntryUrl) ?>" target="_blank" rel="noopener"><?= e($deliveryEntryUrl) ?></a>
+        </p>
+        <label class="settings-check" style="margin-top:8px">
+          <input type="checkbox" name="regen_delivery_token" value="1">
+          <span><?= e(t('regen_delivery_token')) ?></span>
+        </label>
+      <?php endif; ?>
+      <div class="settings-row" style="margin-top:14px;flex-wrap:wrap;gap:12px">
+        <label class="settings-check"><input type="checkbox" name="pay_cod" value="1" <?= (int) ($shop['pay_cod'] ?? 1) ? 'checked' : '' ?>> <span><?= e(t('pay_cod')) ?></span></label>
+        <label class="settings-check"><input type="checkbox" name="pay_duitnow" value="1" <?= (int) ($shop['pay_duitnow'] ?? 1) ? 'checked' : '' ?>> <span><?= e(t('pay_duitnow')) ?></span></label>
+        <label class="settings-check"><input type="checkbox" name="pay_counter" value="1" <?= (int) ($shop['pay_counter'] ?? 1) ? 'checked' : '' ?>> <span><?= e(t('pay_counter')) ?></span></label>
+      </div>
+      <label class="settings-check" style="margin-top:10px">
+        <input type="checkbox" name="hold_kitchen_until_paid" value="1" <?= (int) ($shop['hold_kitchen_until_paid'] ?? 1) ? 'checked' : '' ?>>
+        <span><?= e(t('hold_kitchen_until_paid')) ?></span>
+      </label>
+      <div class="settings-block" style="margin-top:14px">
+        <label class="settings-block-label"><?= e(t('duitnow_qr_upload')) ?></label>
+        <?php if (!empty($shop['duitnow_qr_url'])): ?>
+          <img src="<?= e(baseUrl((string) $shop['duitnow_qr_url'])) ?>" alt="DuitNow" style="width:120px;height:120px;object-fit:contain;border:1px solid var(--border);border-radius:8px;display:block;margin-bottom:8px">
+        <?php endif; ?>
+        <input type="file" name="duitnow_qr" accept="image/jpeg,image/png,image/webp">
+        <p class="order-meta"><?= e(t('duitnow_qr_hint')) ?></p>
       </div>
     </fieldset>
     <?php endif; ?>

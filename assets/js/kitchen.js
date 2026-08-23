@@ -50,9 +50,9 @@
   }
 
   function serveLabel(jenis) {
-    return jenis === 'takeaway'
-      ? (i18n.takeaway || 'Takeaway')
-      : (i18n.dine_in || 'Dine in');
+    if (jenis === 'takeaway') return i18n.takeaway || 'Takeaway';
+    if (jenis === 'delivery') return i18n.delivery || 'Delivery';
+    return i18n.dine_in || 'Dine in';
   }
 
   function applyAlarm(pending, newIds, sound) {

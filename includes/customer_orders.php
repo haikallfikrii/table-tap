@@ -67,10 +67,13 @@ function fetchActiveCustomerOrders(array $table, string $lang): array
     $tableId = (int) $table['id'];
     $hasGuestToken = orderGuestTokenColumnExists();
     $guestCol = $hasGuestToken ? ', guest_token' : '';
+    $payCol = orderDeliveryColumnsExist()
+        ? ', payment_method, payment_proof_url, payment_proof_status, status_bayar, phone, alamat'
+        : '';
 
     $stmt = db()->prepare(
         "SELECT id, subtotal, sst_rate, sst_jumlah, total_harga, status_order, waktu_order,
-                jenis_hidang, nama_pelanggan, pickup_alert{$guestCol}
+                jenis_hidang, nama_pelanggan, pickup_alert{$guestCol}{$payCol}
          FROM orders
          WHERE table_id = ? AND shop_id = ?
            AND status_bayar = 'belum_bayar'
@@ -145,6 +148,14 @@ function customerOrderPayload(array $order, array $items, string $fulfillment, b
     ];
     if ($includeGuestToken && orderGuestTokenColumnExists()) {
         $payload['guest_token'] = (string) ($order['guest_token'] ?? '');
+    }
+    if (orderDeliveryColumnsExist()) {
+        $payload['payment_method'] = (string) ($order['payment_method'] ?? 'counter');
+        $payload['payment_proof_url'] = (string) ($order['payment_proof_url'] ?? '');
+        $payload['payment_proof_status'] = (string) ($order['payment_proof_status'] ?? 'none');
+        $payload['status_bayar'] = (string) ($order['status_bayar'] ?? 'belum_bayar');
+        $payload['phone'] = (string) ($order['phone'] ?? '');
+        $payload['alamat'] = (string) ($order['alamat'] ?? '');
     }
     return $payload;
 }

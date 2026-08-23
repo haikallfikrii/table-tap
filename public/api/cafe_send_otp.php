@@ -24,6 +24,9 @@ if ($slug === '' || $token === '') {
 
 $shop = findShopByAccess($slug, $token);
 if (!$shop) {
+    $shop = findShopByDeliveryAccess($slug, $token);
+}
+if (!$shop) {
     jsonError('Invalid shop access', 403);
 }
 

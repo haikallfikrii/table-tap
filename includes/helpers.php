@@ -280,10 +280,18 @@ function createShopOrder(
         jsonError('Cart is empty');
     }
 
+    if ($jenisHidang === 'delivery') {
+        $jenisHidang = 'delivery';
+    } elseif ($jenisHidang === 'takeaway') {
+        $jenisHidang = 'takeaway';
+    } else {
+        $jenisHidang = 'dine_in';
+    }
+
     $shopId = (int) $table['shop_id'];
     $selfPickup = shopFulfillment($shop) === 'self_pickup';
     $guestName = normalizeCustomerName($guestName);
-    if ($selfPickup) {
+    if ($jenisHidang === 'delivery' || $selfPickup) {
         if (!isValidCustomerName($guestName)) {
             jsonError('Name required');
         }
@@ -709,3 +717,4 @@ function trackStageFromItems(array $items, string $fulfillment = 'waiter'): stri
 
 require_once __DIR__ . '/customer_orders.php';
 require_once __DIR__ . '/cafe_sessions.php';
+require_once __DIR__ . '/delivery.php';

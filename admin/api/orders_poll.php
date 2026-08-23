@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/shop.php';
 require_once dirname(__DIR__, 2) . '/includes/verification.php';
+require_once dirname(__DIR__, 2) . '/includes/delivery.php';
 
 $user = requireLoginApi(['kasir', 'owner']);
 $shopId = requireShopIdApi();
@@ -18,9 +19,12 @@ $pdo = db();
 $shop = findShopById($shopId);
 
 $emailCol = orderCustomerEmailColumnExists() ? ', o.customer_email' : '';
+$payCols = orderDeliveryColumnsExist()
+    ? ', o.phone, o.alamat, o.payment_method, o.payment_proof_url, o.payment_proof_status'
+    : '';
 $stmt = $pdo->prepare(
     "SELECT o.id, o.table_id, o.waktu_order, o.status_order, o.status_bayar, o.jenis_hidang,
-            o.nama_pelanggan, o.pickup_alert, o.sumber_order, o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga{$emailCol},
+            o.nama_pelanggan, o.pickup_alert, o.sumber_order, o.subtotal, o.sst_rate, o.sst_jumlah, o.total_harga{$emailCol}{$payCols},
             t.nomor_meja
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
@@ -87,8 +91,15 @@ foreach ($orders as $o) {
         'waktu_order' => $o['waktu_order'],
         'status_order' => $o['status_order'],
         'status_bayar' => $o['status_bayar'],
-        'jenis_hidang' => ($o['jenis_hidang'] ?? 'dine_in') === 'takeaway' ? 'takeaway' : 'dine_in',
+        'jenis_hidang' => ($o['jenis_hidang'] ?? 'dine_in') === 'takeaway'
+            ? 'takeaway'
+            : ((($o['jenis_hidang'] ?? '') === 'delivery') ? 'delivery' : 'dine_in'),
         'nama_pelanggan' => $o['nama_pelanggan'] ?? '',
+        'phone' => (string) ($o['phone'] ?? ''),
+        'alamat' => (string) ($o['alamat'] ?? ''),
+        'payment_method' => (string) ($o['payment_method'] ?? 'counter'),
+        'payment_proof_url' => (string) ($o['payment_proof_url'] ?? ''),
+        'payment_proof_status' => (string) ($o['payment_proof_status'] ?? 'none'),
         'customer_email_masked' => $customerEmail !== '' ? maskEmail($customerEmail) : '',
         'customer_email' => $customerEmail,
         'has_customer_email' => $customerEmail !== '',

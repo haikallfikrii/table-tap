@@ -272,6 +272,25 @@ $trackSubtitle = $cafeMode
           <?= e(t('i_collected')) ?> (#<?= $oid ?>)
         </button>
         <?php endif; ?>
+        <?php
+          $needsProof = (($ord['payment_method'] ?? '') === 'duitnow')
+              && (($ord['status_bayar'] ?? 'belum_bayar') !== 'lunas')
+              && in_array(($ord['payment_proof_status'] ?? 'none'), ['none', 'rejected'], true)
+              && $ordGuestToken !== '';
+          $proofWaiting = (($ord['payment_method'] ?? '') === 'duitnow')
+              && (($ord['payment_proof_status'] ?? '') === 'uploaded');
+        ?>
+        <?php if ($needsProof): ?>
+        <form class="proof-upload-form" method="post" enctype="multipart/form-data" action="<?= e(baseUrl('public/api/upload_payment_proof.php')) ?>" style="margin-top:12px">
+          <input type="hidden" name="order_id" value="<?= $oid ?>">
+          <input type="hidden" name="gt" value="<?= e($ordGuestToken) ?>">
+          <p class="order-meta"><?= e(t('proof_upload_hint')) ?></p>
+          <input type="file" name="proof" accept="image/jpeg,image/png,image/webp,application/pdf" required>
+          <button type="submit" class="btn btn-primary btn-sm" style="width:100%;margin-top:8px"><?= e(t('proof_upload_btn')) ?></button>
+        </form>
+        <?php elseif ($proofWaiting): ?>
+          <p class="order-meta" style="margin-top:8px"><?= e(t('proof_waiting_kasir')) ?></p>
+        <?php endif; ?>
       </article>
       <?php endforeach; ?>
     </div>
@@ -296,5 +315,23 @@ $trackSubtitle = $cafeMode
 <script src="<?= e(assetUrl('js/live-poll.js')) ?>"></script>
 <script src="<?= e(assetUrl('js/track.js')) ?>"></script>
 <?php endif; ?>
+<script>
+document.querySelectorAll('.proof-upload-form').forEach(function (form) {
+  form.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    try {
+      var res = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
+      var data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed');
+      window.location.reload();
+    } catch (err) {
+      alert(err.message || 'Upload failed');
+      if (btn) btn.disabled = false;
+    }
+  });
+});
+</script>
 </body>
 </html>

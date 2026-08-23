@@ -147,6 +147,7 @@ function shopHasFeature(?array $shop, string $feature): bool
         'menu_gallery'    => 3, // Pro
         'custom_stations' => 3, // Pro extra stations (Western, pastry, …)
         'custom_menu_categories' => 3, // Pro custom menu tabs for customers
+        'delivery'        => 3, // Pro delivery QR + COD / DuitNow
     ];
     $required = $need[$feature] ?? 99;
     return shopPackageRank($shop) >= $required;

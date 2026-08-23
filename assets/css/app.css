@@ -1495,6 +1495,39 @@ a {
   border-left: 3px solid var(--accent);
 }
 
+.pay-method-fieldset {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin: 0;
+}
+
+.pay-method-fieldset legend {
+  padding: 0 4px;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.pay-method-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.duitnow-preview {
+  margin-top: 10px;
+  padding: 10px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+}
+
+.proof-upload-form input[type="file"] {
+  width: 100%;
+  font-size: 0.85rem;
+}
+
 .customer-app.cafe-mode .brand-table {
   font-size: 0.85rem;
 }
