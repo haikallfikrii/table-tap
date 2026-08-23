@@ -235,7 +235,10 @@
           '<button type="button" class="btn btn-secondary btn-sm" data-pay-action="reject" data-order="' + o.id + '">' +
             esc(i18n.reject_proof || 'Reject') + '</button>';
       } else {
-        payExtra = '<span class="order-meta">' + esc(i18n.proof_pending || 'Waiting for proof') + '</span>';
+        payExtra =
+          '<span class="order-meta">' + esc(i18n.proof_pending || 'Waiting for proof') + '</span>' +
+          '<button type="button" class="btn btn-success btn-sm" data-pay-action="confirm" data-order="' + o.id + '">' +
+            esc(i18n.mark_paid_manual || i18n.mark_paid || 'Mark paid') + '</button>';
       }
     }
 

@@ -98,6 +98,7 @@ return [
     'duitnow_scan_hint' => 'Scan the DuitNow QR, transfer, then upload proof on the status page.',
     'cod_received'      => 'Cash received',
     'confirm_proof'     => 'Confirm payment',
+    'mark_paid_manual'  => 'Mark paid (release kitchen)',
     'reject_proof'      => 'Reject proof',
     'proof_pending'     => 'Waiting for proof',
     'proof_upload_hint' => 'Upload a screenshot / PDF of your DuitNow transfer.',

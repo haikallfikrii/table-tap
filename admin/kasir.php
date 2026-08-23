@@ -85,6 +85,7 @@ $i18n = [
     'cod_received'  => t('cod_received'),
     'cod_held_waiting' => t('cod_held_waiting'),
     'confirm_proof' => t('confirm_proof'),
+    'mark_paid_manual' => t('mark_paid_manual'),
     'reject_proof'  => t('reject_proof'),
     'proof_pending' => t('proof_pending'),
     'address'       => t('address'),
