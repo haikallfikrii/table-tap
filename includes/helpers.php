@@ -194,11 +194,135 @@ function chatlmWidgetHtml(): string
 
 function uploadPath(string $filename = ''): string
 {
-    $dir = dirname(__DIR__) . '/assets/uploads/menu';
+    $dir = storageUploadDir('menu');
+    return $filename === '' ? $dir : $dir . '/' . $filename;
+}
+
+function storageRoot(): string
+{
+    return dirname(__DIR__) . '/storage';
+}
+
+/** @param 'menu'|'duitnow'|'proofs' $bucket */
+function storageUploadDir(string $bucket): string
+{
+    static $buckets = ['menu', 'duitnow', 'proofs'];
+    if (!in_array($bucket, $buckets, true)) {
+        throw new InvalidArgumentException('Invalid upload bucket');
+    }
+    migrateLegacyUploadsOnce();
+    $dir = storageRoot() . '/uploads/' . $bucket;
     if (!is_dir($dir)) {
         mkdir($dir, 0755, true);
     }
-    return $filename === '' ? $dir : $dir . '/' . $filename;
+    return $dir;
+}
+
+/** DB-relative path for a file saved under storage/uploads/. */
+function storageUploadRel(string $bucket, string $filename): string
+{
+    return 'storage/uploads/' . $bucket . '/' . ltrim($filename, '/');
+}
+
+/**
+ * Copy legacy assets/uploads/* into storage/uploads/* once (survives git deploy).
+ */
+function migrateLegacyUploadsOnce(): void
+{
+    static $done = false;
+    if ($done) {
+        return;
+    }
+    $done = true;
+    $root = dirname(__DIR__);
+    foreach (['menu', 'duitnow', 'proofs'] as $bucket) {
+        $legacy = $root . '/assets/uploads/' . $bucket;
+        if (!is_dir($legacy)) {
+            continue;
+        }
+        $target = storageRoot() . '/uploads/' . $bucket;
+        if (!is_dir($target)) {
+            mkdir($target, 0755, true);
+        }
+        foreach (glob($legacy . '/*') ?: [] as $file) {
+            if (!is_file($file)) {
+                continue;
+            }
+            $dest = $target . '/' . basename($file);
+            if (!is_file($dest)) {
+                @copy($file, $dest);
+            }
+        }
+    }
+}
+
+/** Resolve DB-relative upload path to absolute filesystem path (storage + legacy). */
+function resolveUploadPath(?string $rel): ?string
+{
+    if ($rel === null) {
+        return null;
+    }
+    $rel = ltrim(str_replace(['..', '\\'], '', trim($rel)), '/');
+    if ($rel === '' || (!str_starts_with($rel, 'storage/uploads/') && !str_starts_with($rel, 'assets/uploads/'))) {
+        return null;
+    }
+    $root = dirname(__DIR__);
+    $path = $root . '/' . $rel;
+    if (is_file($path) && is_readable($path)) {
+        return $path;
+    }
+    if (str_starts_with($rel, 'assets/uploads/')) {
+        $altRel = 'storage/uploads/' . substr($rel, strlen('assets/uploads/'));
+        $altPath = $root . '/' . $altRel;
+        if (is_file($altPath) && is_readable($altPath)) {
+            return $altPath;
+        }
+    }
+    return null;
+}
+
+function uploadRelForPath(string $absPath): string
+{
+    $root = dirname(__DIR__) . '/';
+    $norm = str_replace('\\', '/', $absPath);
+    if (str_starts_with($norm, $root)) {
+        return ltrim(substr($norm, strlen($root)), '/');
+    }
+    return ltrim($norm, '/');
+}
+
+/** Public URL for menu/QR/proof uploads stored in DB. */
+function uploadUrl(?string $rel): string
+{
+    if ($rel === null || trim($rel) === '') {
+        return '';
+    }
+    $rel = ltrim(str_replace(['..', '\\'], '', trim($rel)), '/');
+    if ($rel === '') {
+        return '';
+    }
+    $path = resolveUploadPath($rel);
+    $publicRel = $path !== null ? uploadRelForPath($path) : $rel;
+    if (str_starts_with($publicRel, 'storage/uploads/')) {
+        $v = $path ? (string) filemtime($path) : (string) time();
+        return baseUrl('public/media.php?f=' . rawurlencode($publicRel) . '&v=' . $v);
+    }
+    if (str_starts_with($publicRel, 'assets/uploads/')) {
+        $url = baseUrl($publicRel);
+        if ($path) {
+            $url .= (str_contains($url, '?') ? '&' : '?') . 'v=' . filemtime($path);
+        }
+        return $url;
+    }
+    return baseUrl($rel);
+}
+
+function deleteUploadFile(?string $rel): void
+{
+    $path = resolveUploadPath($rel);
+    if ($path !== null && is_file($path)) {
+        @unlink($path);
+    }
 }
 
 /**

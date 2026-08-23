@@ -148,7 +148,7 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
             $initial = mb_strtoupper(mb_substr($item['nama'], 0, 1));
             $photos = [];
             foreach ($item['gallery'] ?? [] as $src) {
-                $photos[] = baseUrl($src);
+                $photos[] = uploadUrl($src);
             }
             $detail = [
                 'id' => (int) $item['id'],
@@ -169,7 +169,7 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
           ?>
             <article class="menu-item<?= $out ? ' out' : '' ?>" data-search="<?= e($searchText) ?>">
               <?php if (!empty($item['foto_url'])): ?>
-                <img class="menu-item-photo<?= $canGallery ? ' tap' : '' ?>" src="<?= e(baseUrl($item['foto_url'])) ?>" alt="<?= e($item['nama']) ?>" loading="lazy"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>>
+                <img class="menu-item-photo<?= $canGallery ? ' tap' : '' ?>" src="<?= e(uploadUrl($item['foto_url'])) ?>" alt="<?= e($item['nama']) ?>" loading="lazy"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>>
               <?php else: ?>
                 <div class="menu-item-photo placeholder<?= $canGallery ? ' tap' : '' ?>" aria-hidden="true"<?= $canGallery ? ' data-open-detail=\'' . e(json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_HEX_APOS)) . '\'' : '' ?>><?= e($initial) ?></div>
               <?php endif; ?>
