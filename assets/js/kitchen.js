@@ -46,6 +46,7 @@
   }
 
   function tableTitle(num) {
+    if (String(num) === 'Delivery') return i18n.delivery || 'Delivery';
     return (i18n.table_n || 'Table %s').replace('%s', String(num));
   }
 
@@ -112,12 +113,17 @@
       }
 
       const hidang = serveLabel(it.jenis_hidang);
-      const hidangClass = it.jenis_hidang === 'takeaway' ? ' takeaway' : ' dine-in';
+      const hidangClass = it.jenis_hidang === 'takeaway'
+        ? ' takeaway'
+        : (it.jenis_hidang === 'delivery' ? ' delivery' : ' dine-in');
+      const badgeCls = it.jenis_hidang === 'takeaway'
+        ? 'bungkus'
+        : (it.jenis_hidang === 'delivery' ? 'delivery' : 'sini');
 
       return (
         '<article class="kitchen-card ' + esc(it.status_item) + hidangClass + (newSet.has(it.id) ? ' new-flash' : '') + '">' +
           '<div class="kitchen-table">' + esc(tableTitle(it.nomor_meja)) + '</div>' +
-          '<div class="serve-badge ' + (it.jenis_hidang === 'takeaway' ? 'bungkus' : 'sini') + '">' + esc(hidang) + '</div>' +
+          '<div class="serve-badge ' + badgeCls + '">' + esc(hidang) + '</div>' +
           '<div class="kitchen-qty">×' + it.qty + '</div>' +
           '<h2 class="kitchen-item-name">' + esc(it.nama) + '</h2>' +
           (it.nama_pelanggan ? '<div class="order-meta">' + esc(it.nama_pelanggan) + '</div>' : '') +

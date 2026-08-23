@@ -14,6 +14,8 @@
   const shopSlug = root.dataset.shop || '';
   const shopToken = root.dataset.shopToken || '';
   const cafeVerify = root.dataset.cafeVerify || 'email';
+  const needsOtp = root.dataset.needsOtp === '1' || cafeVerify === 'email' || cafeVerify === 'email_phone';
+  const requirePhone = root.dataset.requirePhone === '1' || cafeVerify === 'phone' || cafeVerify === 'email_phone';
   const checkoutUrl = root.dataset.checkoutUrl || '';
   const sendOtpUrl = root.dataset.sendOtpUrl || '';
   const prefillName = (root.dataset.prefillName || '').trim();
@@ -484,8 +486,11 @@
       if (address.length < 8) {
         throw new Error(i18n.address_required || 'Enter address');
       }
-      if (cafeVerify === 'phone' && !validPhone(checkoutPhone?.value || '')) {
+      if (requirePhone && !validPhone(checkoutPhone?.value || '')) {
         throw new Error(i18n.phone_required || 'Enter phone');
+      }
+      if (!validEmail((checkoutEmail?.value || '').trim())) {
+        throw new Error(i18n.cafe_email_invalid || 'Invalid email');
       }
       const pay = selectedPayMethod();
       if (!payMethods[pay]) {
@@ -516,6 +521,9 @@
       window.location.href = data.redirect;
       return;
     }
+    if (requirePhone && !validPhone(checkoutPhone?.value || '')) {
+      throw new Error(i18n.phone_required || 'Enter phone');
+    }
     const res = await fetch(checkoutUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -524,6 +532,7 @@
         token: shopToken,
         nama_pelanggan: guestName,
         email: (checkoutEmail?.value || '').trim(),
+        phone: (checkoutPhone?.value || '').trim(),
         code: code || '',
         jenis_hidang: serveType,
         items: cart.map((i) => ({
@@ -554,13 +563,17 @@
         checkoutAddress?.focus();
         return;
       }
-      if (cafeVerify === 'phone' && !validPhone(checkoutPhone?.value || '')) {
+      if (requirePhone && !validPhone(checkoutPhone?.value || '')) {
         alert(i18n.phone_required || 'Enter phone');
         checkoutPhone?.focus();
         return;
       }
+    } else if (requirePhone && !validPhone(checkoutPhone?.value || '')) {
+      alert(i18n.phone_required || 'Enter phone');
+      checkoutPhone?.focus();
+      return;
     }
-    if (cafeVerify === 'email') {
+    if (needsOtp) {
       if (!validEmail(email)) {
         alert(i18n.cafe_email_invalid || 'Invalid email');
         checkoutEmail?.focus();

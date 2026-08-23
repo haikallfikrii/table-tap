@@ -49,11 +49,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $orderingMode = 'table';
         }
         $cafeVerify = (string) ($_POST['cafe_verify'] ?? 'email');
-        if (!in_array($cafeVerify, ['email', 'phone', 'none'], true)) {
+        if (!in_array($cafeVerify, ['email', 'phone', 'email_phone', 'none'], true)) {
             $cafeVerify = 'email';
         }
         $regenShopToken = isset($_POST['regen_shop_token']);
         $deliveryEnabled = isset($_POST['delivery_enabled']) ? 1 : 0;
+        $deliveryRequirePhone = isset($_POST['delivery_require_phone']) ? 1 : 0;
         $payCounter = isset($_POST['pay_counter']) ? 1 : 0;
         $payCod = isset($_POST['pay_cod']) ? 1 : 0;
         $payDuitnow = isset($_POST['pay_duitnow']) ? 1 : 0;
@@ -111,6 +112,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 'UPDATE shops SET pay_counter = ?, pay_cod = ?, pay_duitnow = ?, hold_kitchen_until_paid = ?
                  WHERE id = ?'
             )->execute([$payCounter, $payCod, $payDuitnow, $holdKitchen, $shopId]);
+
+            $phoneCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'delivery_require_phone'")->fetch();
+            if ($phoneCol) {
+                $pdo->prepare('UPDATE shops SET delivery_require_phone = ? WHERE id = ?')
+                    ->execute([$deliveryRequirePhone, $shopId]);
+            }
 
             if ($regenDeliveryToken && $deliveryEnabled) {
                 $pdo->prepare('UPDATE shops SET delivery_token = ? WHERE id = ?')
@@ -282,6 +289,13 @@ $retentionLabel = $shop['retention_days'] === null
           </span>
         </label>
         <label class="option-card">
+          <input type="radio" name="cafe_verify" value="email_phone" <?= shopCafeVerify($shop) === 'email_phone' ? 'checked' : '' ?>>
+          <span class="option-card-body">
+            <strong><?= e(t('cafe_verify_email_phone')) ?></strong>
+            <span><?= e(t('cafe_verify_email_phone_short')) ?></span>
+          </span>
+        </label>
+        <label class="option-card">
           <input type="radio" name="cafe_verify" value="none" <?= shopCafeVerify($shop) === 'none' ? 'checked' : '' ?>>
           <span class="option-card-body">
             <strong><?= e(t('cafe_verify_none')) ?></strong>
@@ -304,15 +318,27 @@ $retentionLabel = $shop['retention_days'] === null
         <span><?= e(t('delivery_enable')) ?></span>
       </label>
       <?php if ($isDelivery && $deliveryEntryUrl !== ''): ?>
-        <p class="settings-link-note" style="margin-top:12px">
-          <?= e(t('delivery_qr_url')) ?>:<br>
-          <a href="<?= e($deliveryEntryUrl) ?>" target="_blank" rel="noopener"><?= e($deliveryEntryUrl) ?></a>
-        </p>
+        <div class="table-grid" style="margin-top:14px">
+          <?php
+            $qrTitle = t('delivery_qr_card_title');
+            $qrHint = t('delivery_qr_card_hint');
+            $qrUrl = $deliveryEntryUrl;
+            $qrBadge = t('delivery_order_title');
+            $qrId = 'qr-delivery-entry';
+            $qrActions = '<a class="btn btn-ghost btn-sm" href="' . e($deliveryEntryUrl) . '" target="_blank" rel="noopener">' . e(t('delivery_open_landing')) . '</a>';
+            require dirname(__DIR__, 2) . '/includes/admin_qr_card.php';
+          ?>
+        </div>
         <label class="settings-check" style="margin-top:8px">
           <input type="checkbox" name="regen_delivery_token" value="1">
           <span><?= e(t('regen_delivery_token')) ?></span>
         </label>
       <?php endif; ?>
+      <label class="settings-check" style="margin-top:12px">
+        <input type="checkbox" name="delivery_require_phone" value="1" <?= (int) ($shop['delivery_require_phone'] ?? 0) ? 'checked' : '' ?>>
+        <span><?= e(t('delivery_require_phone')) ?></span>
+      </label>
+      <p class="order-meta"><?= e(t('delivery_require_phone_hint')) ?></p>
       <div class="settings-row" style="margin-top:14px;flex-wrap:wrap;gap:12px">
         <label class="settings-check"><input type="checkbox" name="pay_cod" value="1" <?= (int) ($shop['pay_cod'] ?? 1) ? 'checked' : '' ?>> <span><?= e(t('pay_cod')) ?></span></label>
         <label class="settings-check"><input type="checkbox" name="pay_duitnow" value="1" <?= (int) ($shop['pay_duitnow'] ?? 1) ? 'checked' : '' ?>> <span><?= e(t('pay_duitnow')) ?></span></label>

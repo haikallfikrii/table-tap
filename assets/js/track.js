@@ -182,7 +182,9 @@
     const gt = order.guest_token || '';
     const items = order.items || [];
     const label = isFocus ? (i18n.order_latest || 'Latest') : (i18n.order_earlier || 'Earlier');
-    const jenis = order.jenis_hidang === 'takeaway' ? (i18n.takeaway || 'Takeaway') : (i18n.dine_in || 'Dine in');
+    const jenis = order.jenis_hidang === 'delivery'
+      ? (i18n.delivery || 'Delivery')
+      : (order.jenis_hidang === 'takeaway' ? (i18n.takeaway || 'Takeaway') : (i18n.dine_in || 'Dine in'));
     const total = order.total_formatted || order.total_harga || '';
     const name = order.nama_pelanggan ? '<span class="track-order-name">' + esc(order.nama_pelanggan) + '</span>' : '';
 

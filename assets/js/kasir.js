@@ -214,7 +214,11 @@
 
     let payExtra = '';
     if (unpaid && o.payment_method === 'cod') {
+      const heldNote = o.payment_proof_status === 'uploaded'
+        ? '<span class="order-meta" style="color:var(--warning)">' + esc(i18n.cod_held_waiting || 'Cash held by waiter') + '</span>'
+        : '';
       payExtra =
+        heldNote +
         '<button type="button" class="btn btn-success btn-sm" data-pay-action="cod_received" data-order="' + o.id + '">' +
           esc(i18n.cod_received || 'Cash received') + '</button>';
     }
