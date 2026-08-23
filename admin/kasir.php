@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/i18n.php';
+require_once dirname(__DIR__) . '/includes/shift.php';
 
 requireLogin(['kasir', 'owner']);
 
@@ -102,8 +103,11 @@ $i18n = [
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
 <?php require dirname(__DIR__) . '/includes/staff_order_flash.php'; ?>
 
-<p style="margin:0 0 16px">
+<p style="margin:0 0 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
   <a class="btn btn-primary" href="<?= e(baseUrl('admin/staff_order.php?from=kasir')) ?>"><?= e(t('staff_order')) ?></a>
+  <?php if (shiftColumnsExist()): ?>
+    <a class="btn btn-secondary" href="<?= e(baseUrl('admin/owner/shift.php')) ?>"><?= e(t('shift_kasir_link')) ?></a>
+  <?php endif; ?>
 </p>
 
 <p class="print-status" id="print-status"><?= e(t('kasir_printer_hint')) ?></p>

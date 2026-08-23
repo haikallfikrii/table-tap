@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 2) . '/includes/helpers.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
+require_once dirname(__DIR__, 2) . '/includes/shift.php';
 
 requirePost();
 $body = readJsonBody();
@@ -29,6 +30,7 @@ $shop = findShopByAccess($slug, $token);
 if (!$shop) {
     jsonError('Invalid shop access', 403);
 }
+assertShopAcceptingOrders($shop);
 
 $verifyMode = shopCafeVerify($shop);
 $selfPickup = shopFulfillment($shop) === 'self_pickup';
