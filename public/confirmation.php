@@ -159,6 +159,8 @@ $trackI18n = [
     'takeaway'        => t('takeaway'),
     'delivery'        => t('delivery_order_title'),
     'proof_upload_hint' => t('proof_upload_hint'),
+    'proof_choose_file' => t('proof_choose_file'),
+    'proof_no_file' => t('proof_no_file'),
     'proof_upload_btn' => t('proof_upload_btn'),
     'proof_upload_required' => t('proof_upload_required'),
     'proof_upload_failed' => t('proof_upload_failed'),
@@ -381,8 +383,9 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
           <input type="hidden" name="order_id" value="<?= $oid ?>">
           <input type="hidden" name="gt" value="<?= e($ordGuestToken) ?>">
           <p class="order-meta"><?= e(t('proof_upload_hint')) ?></p>
-          <input type="file" name="proof" accept="image/*,application/pdf,.pdf" required>
-          <button type="submit" class="btn btn-primary btn-sm" style="width:100%;margin-top:8px"><?= e(t('proof_upload_btn')) ?></button>
+          <button type="button" class="btn btn-secondary btn-sm proof-pick-btn"><?= e(t('proof_choose_file')) ?></button>
+          <p class="proof-file-name order-meta"><?= e(t('proof_no_file')) ?></p>
+          <button type="submit" class="btn btn-primary btn-sm proof-upload-submit" style="width:100%;margin-top:8px" disabled><?= e(t('proof_upload_btn')) ?></button>
         </form>
         <?php elseif ($proofWaiting): ?>
           <p class="order-meta proof-waiting" style="margin-top:8px"><?= e(t('proof_waiting_kasir')) ?></p>
@@ -395,6 +398,7 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
     <a class="btn btn-primary" href="<?= e($orderAgainUrl) ?>">
       <?= e(t('order_again')) ?>
     </a>
+    <input type="file" id="proof-file-input" class="proof-file-input-hidden" accept="image/*,application/pdf,.pdf" tabindex="-1" aria-hidden="true">
   </div>
 <?php endif; ?>
 <?php if ($focusOrder && $table && $stage !== 'done'): ?>

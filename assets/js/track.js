@@ -18,15 +18,45 @@
   const proofUploadUrl = root.dataset.proofUrl || '';
   let duitnowQrUrl = root.dataset.duitnowQr || '';
   let proofUploading = false;
+  let proofInteractionLock = false;
+  let proofPendingOrderId = '';
+  let proofPendingGt = '';
+  const proofFileInput = document.getElementById('proof-file-input');
 
-  function hasActiveProofInput() {
+  function hasGlobalProofFile() {
+    return !!(proofFileInput && proofFileInput.files && proofFileInput.files.length > 0);
+  }
+
+  function shouldFreezeProofUi() {
+    return proofUploading || proofInteractionLock || hasGlobalProofFile();
+  }
+
+  function proofFormOrderId(form) {
+    const el = form.querySelector('[name="order_id"]');
+    return el ? String(el.value || '') : '';
+  }
+
+  function proofFormGuestToken(form) {
+    const el = form.querySelector('[name="gt"]');
+    return el ? String(el.value || '') : '';
+  }
+
+  function syncProofFileLabels() {
     const list = document.getElementById('track-orders-list');
-    if (!list) return false;
-    const inputs = list.querySelectorAll('.proof-upload-form input[type="file"]');
-    for (let i = 0; i < inputs.length; i++) {
-      if (inputs[i].files && inputs[i].files.length > 0) return true;
-    }
-    return proofUploading;
+    if (!list) return;
+    const hasFile = hasGlobalProofFile();
+    const fileName = hasFile ? proofFileInput.files[0].name : '';
+    list.querySelectorAll('.proof-upload-form').forEach(function (form) {
+      const oid = proofFormOrderId(form);
+      const label = form.querySelector('.proof-file-name');
+      const submit = form.querySelector('.proof-upload-submit');
+      const active = hasFile && oid !== '' && oid === proofPendingOrderId;
+      if (label) {
+        label.textContent = active ? fileName : (i18n.proof_no_file || 'No file selected');
+        label.classList.toggle('is-selected', active);
+      }
+      if (submit) submit.disabled = !active;
+    });
   }
 
   function paymentProofKey(order) {
@@ -232,8 +262,11 @@
         '<input type="hidden" name="order_id" value="' + esc(String(order.order_id || '')) + '">' +
         '<input type="hidden" name="gt" value="' + esc(gt) + '">' +
         '<p class="order-meta">' + esc(i18n.proof_upload_hint || 'Upload proof') + '</p>' +
-        '<input type="file" name="proof" accept="image/*,application/pdf,.pdf" required>' +
-        '<button type="submit" class="btn btn-primary btn-sm" style="width:100%;margin-top:8px">' +
+        '<button type="button" class="btn btn-secondary btn-sm proof-pick-btn">' +
+          esc(i18n.proof_choose_file || 'Choose image / PDF') +
+        '</button>' +
+        '<p class="proof-file-name order-meta">' + esc(i18n.proof_no_file || 'No file selected') + '</p>' +
+        '<button type="submit" class="btn btn-primary btn-sm proof-upload-submit" style="width:100%;margin-top:8px" disabled>' +
           esc(i18n.proof_upload_btn || 'Submit proof') +
         '</button>' +
       '</form>';
@@ -310,9 +343,10 @@
     }
     const slot = card.querySelector('.track-payment-slot');
     const key = paymentProofKey(order);
-    if (slot && slot.dataset.proofKey !== key && !hasActiveProofInput()) {
+    if (slot && slot.dataset.proofKey !== key && !shouldFreezeProofUi()) {
       slot.dataset.proofKey = key;
       slot.innerHTML = renderPaymentBlock(order);
+      syncProofFileLabels();
     }
     card.classList.toggle('is-focus', isFocus);
   }
@@ -330,7 +364,7 @@
       heading.textContent = (i18n.your_orders || 'Your orders') + ' (' + orders.length + ')';
     }
     if (list) {
-      const preserveProof = hasActiveProofInput();
+      const preserveProof = shouldFreezeProofUi();
       if (preserveProof) {
         orders.forEach(function (o) {
           const oid = String(o.order_id || '');
@@ -341,10 +375,12 @@
             list.insertAdjacentHTML('beforeend', renderOrderCard(o, Number(o.order_id) === focusId));
           }
         });
+        syncProofFileLabels();
       } else {
         list.innerHTML = orders.map(function (o) {
           return renderOrderCard(o, Number(o.order_id) === focusId);
         }).join('');
+        syncProofFileLabels();
       }
     }
     return { stage: stage, focusOrder: focusOrder, orders: orders };
@@ -378,7 +414,7 @@
   }
 
   async function poll() {
-    if (busy || !pollUrl) return;
+    if (busy || !pollUrl || proofInteractionLock) return;
     busy = true;
     try {
       const url = pollUrl + (pollUrl.indexOf('?') >= 0 ? '&' : '?') + 'lang=' + encodeURIComponent(lang);
@@ -464,21 +500,54 @@
 
   TableTapLive.loop(poll, interval);
 
+  if (proofFileInput) {
+    proofFileInput.addEventListener('change', function () {
+      proofInteractionLock = false;
+      syncProofFileLabels();
+    });
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState !== 'visible') return;
+    window.setTimeout(function () {
+      if (!hasGlobalProofFile()) proofInteractionLock = false;
+    }, 400);
+  });
+
+  root.addEventListener('click', function (e) {
+    const pickBtn = e.target.closest('.proof-pick-btn');
+    if (!pickBtn || !root.contains(pickBtn)) return;
+    if (!proofFileInput) return;
+    e.preventDefault();
+    const form = pickBtn.closest('.proof-upload-form');
+    if (!form) return;
+    proofPendingOrderId = proofFormOrderId(form);
+    proofPendingGt = proofFormGuestToken(form);
+    proofInteractionLock = true;
+    proofFileInput.value = '';
+    proofFileInput.click();
+  });
+
   document.addEventListener('submit', async function (e) {
     const form = e.target.closest('.proof-upload-form');
     if (!form || !root.contains(form)) return;
     e.preventDefault();
     e.stopPropagation();
-    const btn = form.querySelector('button[type="submit"]');
-    const fileInput = form.querySelector('input[type="file"]');
-    if (!fileInput || !fileInput.files || !fileInput.files.length) {
+    const btn = form.querySelector('.proof-upload-submit');
+    const orderId = proofFormOrderId(form);
+    const gt = proofFormGuestToken(form) || proofPendingGt;
+    if (!hasGlobalProofFile() || orderId !== proofPendingOrderId) {
       alert(i18n.proof_upload_required || 'Please choose a proof file');
       return;
     }
     proofUploading = true;
     if (btn) btn.disabled = true;
     try {
-      const res = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
+      const fd = new FormData();
+      fd.append('order_id', orderId);
+      fd.append('gt', gt);
+      fd.append('proof', proofFileInput.files[0]);
+      const res = await fetch(form.action, { method: 'POST', body: fd, credentials: 'same-origin' });
       const raw = await res.text();
       let data;
       try {
@@ -492,6 +561,7 @@
       alert(err.message || (i18n.proof_upload_failed || 'Upload failed'));
       if (btn) btn.disabled = false;
       proofUploading = false;
+      syncProofFileLabels();
     }
   });
 })();

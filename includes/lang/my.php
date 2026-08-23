@@ -102,6 +102,8 @@ return [
     'reject_proof'      => 'Tolak bukti',
     'proof_pending'     => 'Menunggu bukti',
     'proof_upload_hint' => 'Upload tangkapan skrin / PDF bukti DuitNow.',
+    'proof_choose_file' => 'Pilih gambar / PDF',
+    'proof_no_file'     => 'Tiada fail dipilih',
     'proof_upload_btn'  => 'Hantar bukti',
     'proof_waiting_kasir' => 'Bukti dihantar — tunggu pengesahan kasir.',
     'proof_uploaded'    => 'Bukti berjaya dihantar',

@@ -102,6 +102,8 @@ return [
     'reject_proof'      => 'Reject proof',
     'proof_pending'     => 'Waiting for proof',
     'proof_upload_hint' => 'Upload a screenshot / PDF of your DuitNow transfer.',
+    'proof_choose_file' => 'Choose image / PDF',
+    'proof_no_file'     => 'No file selected',
     'proof_upload_btn'  => 'Submit proof',
     'proof_waiting_kasir' => 'Proof submitted — waiting for cashier confirmation.',
     'proof_uploaded'    => 'Proof uploaded',
