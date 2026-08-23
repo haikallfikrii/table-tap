@@ -211,16 +211,7 @@ function shopDuitnowQrPath(?array $shop): ?string
     if (!$shop) {
         return null;
     }
-    $rel = trim((string) ($shop['duitnow_qr_url'] ?? ''));
-    if ($rel === '') {
-        return null;
-    }
-    $rel = ltrim(str_replace(['..', '\\'], '', $rel), '/');
-    $path = dirname(__DIR__) . '/' . $rel;
-    if (!is_file($path) || !is_readable($path)) {
-        return null;
-    }
-    return $path;
+    return resolveUploadPath(trim((string) ($shop['duitnow_qr_url'] ?? '')));
 }
 
 /**

@@ -98,7 +98,7 @@ foreach ($orders as $o) {
         'phone' => (string) ($o['phone'] ?? ''),
         'alamat' => (string) ($o['alamat'] ?? ''),
         'payment_method' => (string) ($o['payment_method'] ?? 'counter'),
-        'payment_proof_url' => (string) ($o['payment_proof_url'] ?? ''),
+        'payment_proof_url' => uploadUrl((string) ($o['payment_proof_url'] ?? '')),
         'payment_proof_status' => (string) ($o['payment_proof_status'] ?? 'none'),
         'customer_email_masked' => $customerEmail !== '' ? maskEmail($customerEmail) : '',
         'customer_email' => $customerEmail,

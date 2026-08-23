@@ -137,16 +137,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                         throw new RuntimeException('Invalid QR image');
                     }
                     $ext = $mime === 'image/png' ? 'png' : ($mime === 'image/webp' ? 'webp' : 'jpg');
-                    $dir = dirname(__DIR__, 2) . '/assets/uploads/duitnow';
-                    if (!is_dir($dir)) {
-                        mkdir($dir, 0755, true);
-                    }
+                    $dir = storageUploadDir('duitnow');
                     $name = 'dn_' . $shopId . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
                     if (!move_uploaded_file($file['tmp_name'], $dir . '/' . $name)) {
                         throw new RuntimeException('Could not save QR');
                     }
+                    $newRel = storageUploadRel('duitnow', $name);
                     $pdo->prepare('UPDATE shops SET duitnow_qr_url = ? WHERE id = ?')
-                        ->execute(['assets/uploads/duitnow/' . $name, $shopId]);
+                        ->execute([$newRel, $shopId]);
+                    deleteUploadFile((string) ($shop['duitnow_qr_url'] ?? ''));
                 }
             }
         }
@@ -351,7 +350,7 @@ $retentionLabel = $shop['retention_days'] === null
       <div class="settings-block" style="margin-top:14px">
         <label class="settings-block-label"><?= e(t('duitnow_qr_upload')) ?></label>
         <?php if (!empty($shop['duitnow_qr_url'])): ?>
-          <img src="<?= e(baseUrl((string) $shop['duitnow_qr_url'])) ?>" alt="DuitNow" style="width:120px;height:120px;object-fit:contain;border:1px solid var(--border);border-radius:8px;display:block;margin-bottom:8px">
+          <img src="<?= e(uploadUrl((string) $shop['duitnow_qr_url'])) ?>" alt="DuitNow" style="width:120px;height:120px;object-fit:contain;border:1px solid var(--border);border-radius:8px;display:block;margin-bottom:8px">
         <?php endif; ?>
         <input type="file" name="duitnow_qr" accept="image/jpeg,image/png,image/webp">
         <p class="order-meta"><?= e(t('duitnow_qr_hint')) ?></p>

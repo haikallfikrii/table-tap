@@ -1,6 +1,6 @@
 config/config.php
-assets/uploads/menu/*
-!assets/uploads/menu/.gitkeep
+assets/uploads/**/*
+!assets/uploads/**/.gitkeep
 .DS_Store
 *.log
 .env

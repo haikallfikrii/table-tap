@@ -77,16 +77,13 @@ if ($ext === null) {
     jsonError(t('proof_invalid_type'), 400);
 }
 
-$dir = dirname(__DIR__, 2) . '/assets/uploads/proofs';
-if (!is_dir($dir)) {
-    mkdir($dir, 0755, true);
-}
+$dir = storageUploadDir('proofs');
 $name = 'proof_' . $orderId . '_' . bin2hex(random_bytes(6)) . '.' . $ext;
 $dest = $dir . '/' . $name;
 if (!move_uploaded_file($file['tmp_name'], $dest)) {
     jsonError(t('proof_upload_failed'), 500);
 }
-$rel = 'assets/uploads/proofs/' . $name;
+$rel = storageUploadRel('proofs', $name);
 
 $pdo->prepare(
     "UPDATE orders

@@ -57,7 +57,7 @@ function handleMenuUpload(array $file, array $config): ?string
     if (!move_uploaded_file($file['tmp_name'], $dest)) {
         throw new RuntimeException('Could not save upload');
     }
-    return 'assets/uploads/menu/' . $name;
+    return storageUploadRel('menu', $name);
 }
 
 function saveGalleryUploads(PDO $pdo, int $shopId, int $menuId, array $files, array $config, int $max): void
@@ -385,7 +385,7 @@ if (isset($_GET['ok'])) {
             <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">
               <?php foreach ($editPhotos as $ph): ?>
                 <div style="text-align:center">
-                  <img src="<?= e(baseUrl($ph['foto_url'])) ?>" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:8px;display:block">
+                  <img src="<?= e(uploadUrl($ph['foto_url'])) ?>" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:8px;display:block">
                   <button type="submit" form="delete-photo-<?= (int) $ph['id'] ?>" class="btn btn-ghost btn-sm" style="color:var(--danger);margin-top:4px"><?= e(t('delete')) ?></button>
                 </div>
               <?php endforeach; ?>
@@ -430,7 +430,7 @@ if (isset($_GET['ok'])) {
         <tr>
           <td>
             <?php if ($item['foto_url']): ?>
-              <img src="<?= e(baseUrl($item['foto_url'])) ?>" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px">
+              <img src="<?= e(uploadUrl($item['foto_url'])) ?>" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px">
             <?php else: ?>
               —
             <?php endif; ?>
