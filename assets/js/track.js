@@ -17,6 +17,26 @@
   const focusOrderId = Number(root.dataset.focusOrder || 0);
   const proofUploadUrl = root.dataset.proofUrl || '';
   let duitnowQrUrl = root.dataset.duitnowQr || '';
+  let proofUploading = false;
+
+  function hasActiveProofInput() {
+    const list = document.getElementById('track-orders-list');
+    if (!list) return false;
+    const inputs = list.querySelectorAll('.proof-upload-form input[type="file"]');
+    for (let i = 0; i < inputs.length; i++) {
+      if (inputs[i].files && inputs[i].files.length > 0) return true;
+    }
+    return proofUploading;
+  }
+
+  function paymentProofKey(order) {
+    return [
+      order.payment_method || '',
+      order.status_bayar || '',
+      order.payment_proof_status || 'none',
+      order.guest_token || '',
+    ].join('|');
+  }
 
   let lastStage = root.dataset.stage || 'queue';
   let lastItems = {};
@@ -198,7 +218,7 @@
         '<div class="duitnow-pay-block">' +
           '<p class="order-meta">' + esc(i18n.duitnow_scan_hint || 'Scan DuitNow QR') + '</p>' +
           '<div class="duitnow-pay-visual">' +
-            '<img class="duitnow-pay-qr" src="' + esc(qr) + '" alt="DuitNow QR" width="220" height="220" decoding="sync">' +
+            '<img class="duitnow-pay-qr" src="' + esc(qr) + '" alt="DuitNow QR" width="220" height="220" decoding="async">' +
           '</div>' +
           '<a class="btn btn-secondary btn-sm duitnow-download" href="' + esc(qr) + '" download="duitnow-qr.png" target="_blank" rel="noopener">' +
             esc(i18n.download_qr || 'Download QR') +
@@ -256,9 +276,45 @@
       html += '<button type="button" class="btn btn-success btn-collect-order" style="width:100%;margin-top:8px;' + (stage === 'ready' ? '' : 'display:none') + '" data-order-id="' + oid + '" data-guest-token="' + esc(gt) + '">' +
         esc(i18n.i_collected || 'Collected') + ' (#' + oid + ')</button>';
     }
+    html += '<div class="track-payment-slot" data-proof-key="' + esc(paymentProofKey(order)) + '">';
     html += renderPaymentBlock(order);
+    html += '</div>';
     html += '</article>';
     return html;
+  }
+
+  function updateOrderCardPartial(card, order, isFocus) {
+    const stage = order.stage || 'queue';
+    card.setAttribute('data-stage', stage);
+    const banner = card.querySelector('.track-order-banner');
+    if (banner) {
+      banner.className = 'confirm-status track-banner track-order-banner ' + stage;
+      banner.textContent = overallText(stage);
+    }
+    const itemsUl = card.querySelector('.track-order-items');
+    if (itemsUl) {
+      itemsUl.innerHTML = (order.items || []).map(function (it) {
+        const st = it.status_item;
+        return (
+          '<li class="' + itemClass(st) + '">' +
+            '<span class="track-item-pulse" aria-hidden="true"></span>' +
+            '<span class="track-item-name"><b>' + esc(String(it.qty)) + '×</b> ' + esc(it.nama) + '</span>' +
+            '<span class="track-pill">' + esc(itemLabel(st)) + '</span>' +
+          '</li>'
+        );
+      }).join('');
+    }
+    const collectBtn = card.querySelector('.btn-collect-order');
+    if (collectBtn) {
+      collectBtn.style.display = stage === 'ready' ? '' : 'none';
+    }
+    const slot = card.querySelector('.track-payment-slot');
+    const key = paymentProofKey(order);
+    if (slot && slot.dataset.proofKey !== key && !hasActiveProofInput()) {
+      slot.dataset.proofKey = key;
+      slot.innerHTML = renderPaymentBlock(order);
+    }
+    card.classList.toggle('is-focus', isFocus);
   }
 
   function render(data) {
@@ -274,9 +330,22 @@
       heading.textContent = (i18n.your_orders || 'Your orders') + ' (' + orders.length + ')';
     }
     if (list) {
-      list.innerHTML = orders.map(function (o) {
-        return renderOrderCard(o, Number(o.order_id) === focusId);
-      }).join('');
+      const preserveProof = hasActiveProofInput();
+      if (preserveProof) {
+        orders.forEach(function (o) {
+          const oid = String(o.order_id || '');
+          const card = list.querySelector('.track-order-card[data-order-id="' + oid + '"]');
+          if (card) {
+            updateOrderCardPartial(card, o, Number(o.order_id) === focusId);
+          } else {
+            list.insertAdjacentHTML('beforeend', renderOrderCard(o, Number(o.order_id) === focusId));
+          }
+        });
+      } else {
+        list.innerHTML = orders.map(function (o) {
+          return renderOrderCard(o, Number(o.order_id) === focusId);
+        }).join('');
+      }
     }
     return { stage: stage, focusOrder: focusOrder, orders: orders };
   }
@@ -317,7 +386,9 @@
       const data = await res.json();
       if (!data.ok) return;
 
-      if (data.duitnow_qr_url) duitnowQrUrl = data.duitnow_qr_url;
+      if (data.duitnow_qr_url && !duitnowQrUrl) {
+        duitnowQrUrl = data.duitnow_qr_url;
+      }
 
       const focusId = Number(data.focus_order_id || focusOrderId);
       const focusOrder = (data.orders || []).find(function (o) { return Number(o.order_id) === focusId; });
@@ -397,16 +468,30 @@
     const form = e.target.closest('.proof-upload-form');
     if (!form || !root.contains(form)) return;
     e.preventDefault();
+    e.stopPropagation();
     const btn = form.querySelector('button[type="submit"]');
+    const fileInput = form.querySelector('input[type="file"]');
+    if (!fileInput || !fileInput.files || !fileInput.files.length) {
+      alert(i18n.proof_upload_required || 'Please choose a proof file');
+      return;
+    }
+    proofUploading = true;
     if (btn) btn.disabled = true;
     try {
       const res = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Failed');
+      const raw = await res.text();
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (parseErr) {
+        throw new Error(raw.trim().slice(0, 160) || (i18n.proof_upload_failed || 'Upload failed'));
+      }
+      if (!data.ok) throw new Error(data.error || (i18n.proof_upload_failed || 'Upload failed'));
       window.location.reload();
     } catch (err) {
-      alert(err.message || 'Upload failed');
+      alert(err.message || (i18n.proof_upload_failed || 'Upload failed'));
       if (btn) btn.disabled = false;
+      proofUploading = false;
     }
   });
 })();

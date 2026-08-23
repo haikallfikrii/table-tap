@@ -68,7 +68,7 @@ jsonResponse([
     'focus_order_id' => $focusOrderId,
     'focus_stage' => $focusStage,
     'fulfillment' => shopFulfillment($shop),
-    'duitnow_qr_url' => !empty($shop['duitnow_qr_url']) ? shopDuitnowQrProxyUrl((int) $shop['id']) : '',
+    'duitnow_qr_url' => !empty($shop['duitnow_qr_url']) ? shopDuitnowQrProxyUrl((int) $shop['id'], $shop) : '',
     'proof_upload_url' => baseUrl('public/api/upload_payment_proof.php'),
     'orders' => $orders,
     'sound' => shopSoundSettings($shop),

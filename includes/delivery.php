@@ -258,9 +258,21 @@ function shopDuitnowQrDataUri(?array $shop): string
 /**
  * Public URL that streams the DuitNow QR with correct Content-Type (Safari-friendly).
  */
-function shopDuitnowQrProxyUrl(int $shopId): string
+function shopDuitnowQrProxyUrl(int $shopId, ?array $shop = null): string
 {
-    return baseUrl('public/api/duitnow_qr.php?shop_id=' . $shopId . '&v=' . time());
+    if ($shop === null) {
+        $shop = findShopById($shopId);
+    }
+    $v = '';
+    $path = shopDuitnowQrPath($shop);
+    if ($path !== null) {
+        $mt = filemtime($path);
+        if ($mt !== false) {
+            $v = (string) $mt;
+        }
+    }
+    $qs = 'shop_id=' . $shopId . ($v !== '' ? '&v=' . rawurlencode($v) : '');
+    return baseUrl('public/api/duitnow_qr.php?' . $qs);
 }
 
 /**

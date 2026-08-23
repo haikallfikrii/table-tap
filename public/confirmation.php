@@ -160,6 +160,8 @@ $trackI18n = [
     'delivery'        => t('delivery_order_title'),
     'proof_upload_hint' => t('proof_upload_hint'),
     'proof_upload_btn' => t('proof_upload_btn'),
+    'proof_upload_required' => t('proof_upload_required'),
+    'proof_upload_failed' => t('proof_upload_failed'),
     'proof_waiting_kasir' => t('proof_waiting_kasir'),
     'duitnow_scan_hint' => t('duitnow_scan_hint'),
     'download_qr'     => t('download_qr'),
@@ -228,7 +230,7 @@ $trackSubtitle = $deliveryMode
 $shopRow = $table ? findShopById((int) ($table['shop_id'] ?? 0)) : null;
 $duitnowQrData = $shopRow ? shopDuitnowQrDataUri($shopRow) : '';
 $duitnowQrAbs = ($shopRow && !empty($shopRow['duitnow_qr_url']))
-    ? shopDuitnowQrProxyUrl((int) $shopRow['id'])
+    ? shopDuitnowQrProxyUrl((int) $shopRow['id'], $shopRow)
     : '';
 $duitnowQrDisplay = $duitnowQrData !== '' ? $duitnowQrData : $duitnowQrAbs;
 $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
@@ -253,7 +255,7 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
     <p><?= e($sessionToken !== '' ? t('cafe_session_expired') : t('invalid_table')) ?></p>
   </div>
 <?php else: ?>
-  <div class="confirm-page tracking" id="track-app" data-fulfillment="<?= e($selfPickup ? 'self_pickup' : ($deliveryMode ? 'delivery' : 'waiter')) ?>" data-stage="<?= e($stage) ?>" data-focus-order="<?= (int) $orderId ?>" data-meja="<?= e($table['nomor_meja']) ?>" data-token="<?= e($table['token_akses']) ?>" data-guest-token="<?= e($guestTokenParam) ?>" data-session="<?= e($cafeMode ? $sessionToken : '') ?>"<?= $selfPickup ? ' data-collect-url="' . e(baseUrl('public/api/collect_order.php')) . '"' : '' ?> data-poll-url="<?= e($pollUrl) ?>" data-proof-url="<?= e($proofUploadUrl) ?>" data-duitnow-qr="<?= e($duitnowQrAbs) ?>" data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>" data-lang="<?= e($lang) ?>" data-i18n="<?= e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) ?>">
+  <div class="confirm-page tracking" id="track-app" data-fulfillment="<?= e($selfPickup ? 'self_pickup' : ($deliveryMode ? 'delivery' : 'waiter')) ?>" data-stage="<?= e($stage) ?>" data-focus-order="<?= (int) $orderId ?>" data-meja="<?= e($table['nomor_meja']) ?>" data-token="<?= e($table['token_akses']) ?>" data-guest-token="<?= e($guestTokenParam) ?>" data-session="<?= e($cafeMode ? $sessionToken : '') ?>"<?= $selfPickup ? ' data-collect-url="' . e(baseUrl('public/api/collect_order.php')) . '"' : '' ?> data-poll-url="<?= e($pollUrl) ?>" data-proof-url="<?= e($proofUploadUrl) ?>" data-duitnow-qr="<?= e($duitnowQrDisplay) ?>" data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>" data-lang="<?= e($lang) ?>" data-i18n="<?= e(json_encode($trackI18n, JSON_UNESCAPED_UNICODE)) ?>">
     <div class="lang-toggle" style="position:absolute;top:16px;right:16px">
       <button type="button" data-set-lang="my" class="<?= $lang === 'my' ? 'active' : '' ?>"><?= e(t('lang_my')) ?></button>
       <button type="button" data-set-lang="en" class="<?= $lang === 'en' ? 'active' : '' ?>"><?= e(t('lang_en')) ?></button>
@@ -364,11 +366,12 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
               && $duitnowQrDisplay !== ''
               && in_array(($ord['payment_proof_status'] ?? 'none'), ['none', 'rejected'], true);
         ?>
+        <div class="track-payment-slot" data-proof-status="<?= e((string) ($ord['payment_proof_status'] ?? 'none')) ?>">
         <?php if ($showDuitnowQr): ?>
         <div class="duitnow-pay-block">
           <p class="order-meta"><?= e(t('duitnow_scan_hint')) ?></p>
           <div class="duitnow-pay-visual">
-            <img class="duitnow-pay-qr" src="<?= e($duitnowQrDisplay) ?>" alt="DuitNow QR" width="220" height="220" decoding="sync">
+            <img class="duitnow-pay-qr" src="<?= e($duitnowQrDisplay) ?>" alt="DuitNow QR" width="220" height="220" decoding="async">
           </div>
           <a class="btn btn-secondary btn-sm duitnow-download" href="<?= e($duitnowQrAbs !== '' ? $duitnowQrAbs : $duitnowQrDisplay) ?>" download="duitnow-qr.png" target="_blank" rel="noopener"><?= e(t('download_qr')) ?></a>
         </div>
@@ -382,8 +385,9 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
           <button type="submit" class="btn btn-primary btn-sm" style="width:100%;margin-top:8px"><?= e(t('proof_upload_btn')) ?></button>
         </form>
         <?php elseif ($proofWaiting): ?>
-          <p class="order-meta" style="margin-top:8px"><?= e(t('proof_waiting_kasir')) ?></p>
+          <p class="order-meta proof-waiting" style="margin-top:8px"><?= e(t('proof_waiting_kasir')) ?></p>
         <?php endif; ?>
+        </div>
       </article>
       <?php endforeach; ?>
     </div>
@@ -408,23 +412,5 @@ $proofUploadUrl = baseUrl('public/api/upload_payment_proof.php');
 <script src="<?= e(assetUrl('js/live-poll.js')) ?>"></script>
 <script src="<?= e(assetUrl('js/track.js')) ?>"></script>
 <?php endif; ?>
-<script>
-document.addEventListener('submit', async function (e) {
-  const form = e.target.closest('.proof-upload-form');
-  if (!form) return;
-  e.preventDefault();
-  var btn = form.querySelector('button[type="submit"]');
-  if (btn) btn.disabled = true;
-  try {
-    var res = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
-    var data = await res.json();
-    if (!data.ok) throw new Error(data.error || 'Failed');
-    window.location.reload();
-  } catch (err) {
-    alert(err.message || 'Upload failed');
-    if (btn) btn.disabled = false;
-  }
-});
-</script>
 </body>
 </html>
