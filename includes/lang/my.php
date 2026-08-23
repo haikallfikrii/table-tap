@@ -74,6 +74,7 @@ return [
     'delivery_require_phone' => 'Wajibkan nombor telefon untuk delivery',
     'delivery_require_phone_hint' => 'Delivery sentiasa guna OTP e-mel. Tandakan ini jika kedai juga mahu nombor telefon.',
     'delivery_email_otp_note' => 'Kod 6 digit dihantar ke e-mel anda untuk sahkan pesanan delivery.',
+    'delivery_serve_note' => 'Penghantaran — waiter hantar ke alamat anda',
     'cafe_verify_email_phone' => 'E-mel OTP + telefon',
     'cafe_verify_email_phone_short' => 'OTP e-mel dan nombor telefon diperlukan.',
     'cafe_verify_phone' => 'Nombor telefon',

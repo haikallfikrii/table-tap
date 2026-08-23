@@ -15,6 +15,8 @@
   const loopingReady = fulfillment === 'self_pickup';
   const sound = window.TableTapSound;
   const focusOrderId = Number(root.dataset.focusOrder || 0);
+  const proofUploadUrl = root.dataset.proofUrl || '';
+  let duitnowQrUrl = root.dataset.duitnowQr || '';
 
   let lastStage = root.dataset.stage || 'queue';
   let lastItems = {};
@@ -176,6 +178,48 @@
     root.dataset.stage = stage;
   }
 
+  function renderPaymentBlock(order) {
+    const method = order.payment_method || '';
+    const bayar = order.status_bayar || '';
+    const proof = order.payment_proof_status || 'none';
+    const gt = order.guest_token || '';
+    if (method !== 'duitnow' || bayar === 'lunas' || !gt) return '';
+
+    if (proof === 'uploaded') {
+      return '<p class="order-meta proof-waiting" style="margin-top:8px">' + esc(i18n.proof_waiting_kasir || 'Waiting for cashier') + '</p>';
+    }
+    if (proof === 'confirmed') return '';
+    if (proof !== 'none' && proof !== 'rejected') return '';
+
+    let html = '';
+    const qr = duitnowQrUrl || '';
+    if (qr) {
+      html +=
+        '<div class="duitnow-pay-block">' +
+          '<p class="order-meta">' + esc(i18n.duitnow_scan_hint || 'Scan DuitNow QR') + '</p>' +
+          '<div class="duitnow-pay-visual">' +
+            '<img class="duitnow-pay-qr" src="' + esc(qr) + '" alt="DuitNow QR" width="220" height="220" loading="eager" decoding="async">' +
+          '</div>' +
+          '<a class="btn btn-secondary btn-sm duitnow-download" href="' + esc(qr) + '" download="duitnow-qr.png" target="_blank" rel="noopener">' +
+            esc(i18n.download_qr || 'Download QR') +
+          '</a>' +
+        '</div>';
+    }
+    const action = proofUploadUrl || '';
+    if (!action) return html;
+    html +=
+      '<form class="proof-upload-form" method="post" enctype="multipart/form-data" action="' + esc(action) + '" style="margin-top:12px">' +
+        '<input type="hidden" name="order_id" value="' + esc(String(order.order_id || '')) + '">' +
+        '<input type="hidden" name="gt" value="' + esc(gt) + '">' +
+        '<p class="order-meta">' + esc(i18n.proof_upload_hint || 'Upload proof') + '</p>' +
+        '<input type="file" name="proof" accept="image/jpeg,image/png,image/webp,application/pdf" capture="environment" required>' +
+        '<button type="submit" class="btn btn-primary btn-sm" style="width:100%;margin-top:8px">' +
+          esc(i18n.proof_upload_btn || 'Submit proof') +
+        '</button>' +
+      '</form>';
+    return html;
+  }
+
   function renderOrderCard(order, isFocus) {
     const oid = Number(order.order_id || 0);
     const stage = order.stage || 'queue';
@@ -212,6 +256,7 @@
       html += '<button type="button" class="btn btn-success btn-collect-order" style="width:100%;margin-top:8px;' + (stage === 'ready' ? '' : 'display:none') + '" data-order-id="' + oid + '" data-guest-token="' + esc(gt) + '">' +
         esc(i18n.i_collected || 'Collected') + ' (#' + oid + ')</button>';
     }
+    html += renderPaymentBlock(order);
     html += '</article>';
     return html;
   }
@@ -271,6 +316,8 @@
       const res = await TableTapLive.fetch(url);
       const data = await res.json();
       if (!data.ok) return;
+
+      if (data.duitnow_qr_url) duitnowQrUrl = data.duitnow_qr_url;
 
       const focusId = Number(data.focus_order_id || focusOrderId);
       const focusOrder = (data.orders || []).find(function (o) { return Number(o.order_id) === focusId; });
@@ -345,4 +392,21 @@
   });
 
   TableTapLive.loop(poll, interval);
+
+  document.addEventListener('submit', async function (e) {
+    const form = e.target.closest('.proof-upload-form');
+    if (!form || !root.contains(form)) return;
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch(form.action, { method: 'POST', body: new FormData(form), credentials: 'same-origin' });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Failed');
+      window.location.reload();
+    } catch (err) {
+      alert(err.message || 'Upload failed');
+      if (btn) btn.disabled = false;
+    }
+  });
 })();

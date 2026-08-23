@@ -222,10 +222,14 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
       <span><?= e(t('total')) ?></span>
       <span id="cart-sheet-total">RM 0.00</span>
     </div>
-    <div class="serve-toggle" role="group" aria-label="<?= e(t('serving_type')) ?>"<?= $deliveryMode ? ' hidden' : '' ?>>
+    <?php if (!$deliveryMode): ?>
+    <div class="serve-toggle" role="group" aria-label="<?= e(t('serving_type')) ?>">
       <button type="button" class="serve-opt on" data-serve="dine_in"><?= e(t('dine_in')) ?></button>
       <button type="button" class="serve-opt" data-serve="takeaway"><?= e(t('takeaway')) ?></button>
     </div>
+    <?php else: ?>
+    <p class="order-meta delivery-serve-note"><?= e(t('delivery_serve_note')) ?></p>
+    <?php endif; ?>
     <?php if ($showGuestName): ?>
       <div class="guest-name-field">
         <label for="guest-name"><?= e(t('guest_name')) ?></label>
@@ -295,10 +299,15 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
           </label>
         <?php } ?>
       </fieldset>
-      <?php if (!empty($payMethods['duitnow']) && $duitnowQrUrl !== ''): ?>
-        <div class="duitnow-preview" id="duitnow-preview" hidden>
+      <?php if (!empty($payMethods['duitnow']) && $duitnowQrUrl !== ''):
+        $duitnowQrAbs = baseUrl($duitnowQrUrl);
+      ?>
+        <div class="duitnow-preview is-collapsed" id="duitnow-preview">
           <p class="order-meta"><?= e(t('duitnow_scan_hint')) ?></p>
-          <img src="<?= e(baseUrl($duitnowQrUrl)) ?>" alt="DuitNow QR" width="200" height="200" style="max-width:200px;margin:8px auto;display:block;border-radius:8px">
+          <div class="duitnow-pay-visual">
+            <img class="duitnow-pay-qr" src="" data-src="<?= e($duitnowQrAbs) ?>" alt="DuitNow QR" width="220" height="220" loading="lazy" decoding="async">
+          </div>
+          <a class="btn btn-secondary btn-sm duitnow-download" href="<?= e($duitnowQrAbs) ?>" download="duitnow-qr.png" target="_blank" rel="noopener"><?= e(t('download_qr')) ?></a>
         </div>
       <?php endif; ?>
       <?php endif; ?>

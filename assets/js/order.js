@@ -440,7 +440,14 @@
 
   function syncDuitnowPreview() {
     if (!duitnowPreview) return;
-    duitnowPreview.hidden = selectedPayMethod() !== 'duitnow';
+    const show = selectedPayMethod() === 'duitnow';
+    duitnowPreview.classList.toggle('is-collapsed', !show);
+    duitnowPreview.hidden = !show;
+    if (!show) return;
+    const img = duitnowPreview.querySelector('.duitnow-pay-qr');
+    if (img && img.dataset.src) {
+      img.src = img.dataset.src;
+    }
   }
 
   document.querySelectorAll('input[name="pay_method"]').forEach(function (el) {

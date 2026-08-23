@@ -74,6 +74,7 @@ return [
     'delivery_require_phone' => 'Require phone number for delivery',
     'delivery_require_phone_hint' => 'Delivery always uses email OTP. Tick this if the shop also needs a phone number.',
     'delivery_email_otp_note' => 'A 6-digit code is sent to your email to verify the delivery order.',
+    'delivery_serve_note' => 'Delivery — a waiter will bring it to your address',
     'cafe_verify_email_phone' => 'Email OTP + phone',
     'cafe_verify_email_phone_short' => 'Email OTP and phone number are both required.',
     'cafe_verify_phone' => 'Phone number',
