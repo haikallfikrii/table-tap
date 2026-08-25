@@ -104,6 +104,20 @@
     return line(new Array(width + 1).join('-'));
   }
 
+  /**
+   * ESC B n t — common Chinese ESC/POS buzzer (MTP-II / PT200 class).
+   * n = times (1–9), t = duration/interval unit (1–9).
+   * Also append BEL (0x07) as fallback for some firmwares.
+   */
+  function beep(times, duration) {
+    var n = Math.max(1, Math.min(9, Number(times) || 4));
+    var t = Math.max(1, Math.min(9, Number(duration) || 2));
+    return new Uint8Array([
+      0x1b, 0x42, n, t, // ESC B n t
+      0x07,             // BEL fallback
+    ]);
+  }
+
   function wrapName(name, width) {
     width = width || 28;
     var s = String(name || '').trim();
@@ -125,6 +139,8 @@
     var width = 32;
     var chunks = [];
     chunks.push(new Uint8Array([0x1b, 0x40])); // init
+    // Alert kitchen: tit-tit-tit before ticket body (MTP-II has hardware buzzer)
+    chunks.push(beep(4, 2));
     chunks.push(line(ticket.shopName || 'TableTap', { align: 'center', bold: true }));
     if (ticket.stationName) {
       chunks.push(line(ticket.stationName, { align: 'center' }));
@@ -157,6 +173,7 @@
     chunks.push(separator(width));
     chunks.push(line(labels.kitchen_ticket || 'KITCHEN TICKET', { align: 'center' }));
     chunks.push(new Uint8Array([0x0a, 0x0a, 0x0a]));
+    chunks.push(beep(3, 2)); // second alert after print so staff notices paper
     chunks.push(new Uint8Array([0x1d, 0x56, 0x00])); // full cut
     return concatBytes(chunks);
   }
@@ -449,6 +466,13 @@
     }, labels);
   }
 
+  function printBeep(times, duration) {
+    return printRaw(concatBytes([
+      new Uint8Array([0x1b, 0x40]),
+      beep(times, duration),
+    ]));
+  }
+
   global.TableTapPrint = {
     supported: supported,
     isConnected: isConnected,
@@ -461,6 +485,7 @@
     printKitchenTicket: printKitchenTicket,
     printReceipt: printReceipt,
     printTest: printTest,
+    printBeep: printBeep,
     buildKitchenTicket: buildKitchenTicket,
     buildReceiptTicket: buildReceiptTicket,
   };
