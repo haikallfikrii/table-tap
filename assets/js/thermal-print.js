@@ -210,6 +210,63 @@
     });
   }
 
+  function bindDevice(dev) {
+    device = dev;
+    attachDisconnect();
+    return device.gatt.connect().then(function (server) {
+      return findWritable(server).catch(function () {
+        return findWritableFallback(server);
+      });
+    }).then(function (char) {
+      characteristic = char;
+      notify();
+      return { name: device.name || 'Printer' };
+    });
+  }
+
+  /**
+   * Reconnect to a previously permitted Bluetooth printer (no picker).
+   * Chrome: navigator.bluetooth.getDevices() after first grant.
+   */
+  function reconnect() {
+    if (!supported()) {
+      return Promise.reject(new Error('unsupported'));
+    }
+    if (isConnected()) {
+      return Promise.resolve({ name: device.name || 'Printer' });
+    }
+    if (connecting) return Promise.reject(new Error('busy'));
+    if (typeof navigator.bluetooth.getDevices !== 'function') {
+      return Promise.reject(new Error('no_saved'));
+    }
+
+    connecting = true;
+    notify();
+
+    return navigator.bluetooth.getDevices().then(function (devices) {
+      if (!devices || !devices.length) throw new Error('no_saved');
+      // Prefer a device that still looks reachable / last used
+      var queue = Promise.reject(new Error('no_saved'));
+      devices.forEach(function (dev) {
+        queue = queue.catch(function () {
+          return bindDevice(dev);
+        });
+      });
+      return queue;
+    }).then(function (result) {
+      connecting = false;
+      notify();
+      return result;
+    }).catch(function (err) {
+      connecting = false;
+      if (!isConnected()) {
+        characteristic = null;
+      }
+      notify();
+      throw err;
+    });
+  }
+
   function connect() {
     if (!supported()) {
       return Promise.reject(new Error('unsupported'));
@@ -222,23 +279,34 @@
       acceptAllDevices: true,
       optionalServices: SERVICES,
     }).then(function (dev) {
-      device = dev;
-      attachDisconnect();
-      return device.gatt.connect();
-    }).then(function (server) {
-      return findWritable(server).catch(function () {
-        return findWritableFallback(server);
-      });
-    }).then(function (char) {
-      characteristic = char;
+      return bindDevice(dev);
+    }).then(function (result) {
       connecting = false;
       notify();
-      return { name: device.name || 'Printer' };
+      return result;
     }).catch(function (err) {
       connecting = false;
-      characteristic = null;
+      if (!isConnected()) {
+        characteristic = null;
+      }
       notify();
       throw err;
+    });
+  }
+
+  /**
+   * Ensure a live GATT connection before silent print.
+   * @param {{interactive?: boolean}} opts
+   *   interactive=true may open the Bluetooth device picker (needs user gesture).
+   */
+  function ensureConnected(opts) {
+    opts = opts || {};
+    if (isConnected()) {
+      return Promise.resolve({ name: device.name || 'Printer' });
+    }
+    return reconnect().catch(function () {
+      if (opts.interactive) return connect();
+      throw new Error('not_connected');
     });
   }
 
@@ -386,6 +454,8 @@
     isConnected: isConnected,
     connecting: function () { return connecting; },
     connect: connect,
+    reconnect: reconnect,
+    ensureConnected: ensureConnected,
     disconnect: disconnect,
     onChange: onChange,
     printKitchenTicket: printKitchenTicket,
