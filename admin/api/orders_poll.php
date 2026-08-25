@@ -194,6 +194,7 @@ jsonResponse([
     'new_delivery_ids' => $newDeliveryIds,
     'fulfillment' => shopFulfillment($shop),
     'sound' => shopSoundSettings($shop),
+    'printer' => shopPrinterSettings($shop),
     'stats' => [
         'active_orders' => count($tableOrders),
         'unpaid_orders' => $unpaidCount,

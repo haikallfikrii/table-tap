@@ -88,6 +88,19 @@ function shopSoundSettings(?array $shop): array
 }
 
 /**
+ * Thermal printer prefs for kasir / kitchen screens.
+ * @return array{kasir_print_on_paid:bool,beep_kitchen:int,beep_kasir:int}
+ */
+function shopPrinterSettings(?array $shop): array
+{
+    return [
+        'kasir_print_on_paid' => (int) ($shop['kasir_print_on_paid'] ?? 1) === 1,
+        'beep_kitchen' => max(0, min(9, (int) ($shop['printer_beep_kitchen'] ?? 4))),
+        'beep_kasir' => max(0, min(9, (int) ($shop['printer_beep_kasir'] ?? 0))),
+    ];
+}
+
+/**
  * Delete paid/cancelled orders older than package retention.
  * Skips shops with retention_days = NULL (forever).
  * Returns number of orders deleted.

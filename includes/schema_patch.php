@@ -389,6 +389,16 @@ function ensureAppSchema(PDO $pdo): void
                 KEY idx_menu_addons_item (shop_id, menu_item_id, is_active, urutan)
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
+
+        $printPaidCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'kasir_print_on_paid'")->fetch();
+        if (!$printPaidCol) {
+            $pdo->exec(
+                'ALTER TABLE shops
+                 ADD COLUMN kasir_print_on_paid TINYINT(1) NOT NULL DEFAULT 1 AFTER sound_volume,
+                 ADD COLUMN printer_beep_kitchen TINYINT UNSIGNED NOT NULL DEFAULT 4 AFTER kasir_print_on_paid,
+                 ADD COLUMN printer_beep_kasir TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER printer_beep_kitchen'
+            );
+        }
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }
