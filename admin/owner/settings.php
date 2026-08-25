@@ -37,6 +37,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $soundDuration = max(3, min(300, (int) ($_POST['sound_duration_sec'] ?? 45)));
         $soundInterval = max(400, min(5000, (int) ($_POST['sound_interval_ms'] ?? 900)));
         $soundVolume = max(20, min(100, (int) ($_POST['sound_volume'] ?? 100)));
+        $kasirPrintOnPaid = isset($_POST['kasir_print_on_paid']) ? 1 : 0;
+        $printerBeepKitchen = max(0, min(9, (int) ($_POST['printer_beep_kitchen'] ?? 4)));
+        $printerBeepKasir = max(0, min(9, (int) ($_POST['printer_beep_kasir'] ?? 0)));
         $fulfillment = (string) ($_POST['fulfillment_mode'] ?? 'waiter');
         if (!in_array($fulfillment, ['waiter', 'self_pickup'], true)) {
             $fulfillment = 'waiter';
@@ -84,6 +87,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $soundMode, $soundCount, $soundDuration, $soundInterval, $soundVolume,
             $shopId,
         ]);
+
+        $printPaidCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'kasir_print_on_paid'")->fetch();
+        if ($printPaidCol) {
+            $pdo->prepare(
+                'UPDATE shops SET kasir_print_on_paid = ?, printer_beep_kitchen = ?, printer_beep_kasir = ?
+                 WHERE id = ?'
+            )->execute([$kasirPrintOnPaid, $printerBeepKitchen, $printerBeepKasir, $shopId]);
+        }
 
         if (orderingModeColumnExists()) {
             if ($orderingMode === 'cafe') {
@@ -357,6 +368,26 @@ $retentionLabel = $shop['retention_days'] === null
       </div>
     </fieldset>
     <?php endif; ?>
+
+    <fieldset class="settings-fieldset">
+      <legend><?= e(t('printer_settings')) ?></legend>
+      <p class="settings-fieldset-desc"><?= e(t('printer_settings_hint')) ?></p>
+      <label class="settings-check" style="margin-bottom:14px">
+        <input type="checkbox" name="kasir_print_on_paid" value="1" <?= (int) ($shop['kasir_print_on_paid'] ?? 1) === 1 ? 'checked' : '' ?>>
+        <span><?= e(t('kasir_print_on_paid')) ?></span>
+      </label>
+      <p class="order-meta" style="margin:-8px 0 14px"><?= e(t('kasir_print_on_paid_hint')) ?></p>
+      <div class="form-group">
+        <label><?= e(t('printer_beep_kitchen')) ?></label>
+        <input type="number" min="0" max="9" name="printer_beep_kitchen" value="<?= (int) ($shop['printer_beep_kitchen'] ?? 4) ?>">
+        <p class="order-meta"><?= e(t('printer_beep_kitchen_hint')) ?></p>
+      </div>
+      <div class="form-group">
+        <label><?= e(t('printer_beep_kasir')) ?></label>
+        <input type="number" min="0" max="9" name="printer_beep_kasir" value="<?= (int) ($shop['printer_beep_kasir'] ?? 0) ?>">
+        <p class="order-meta"><?= e(t('printer_beep_kasir_hint')) ?></p>
+      </div>
+    </fieldset>
 
     <fieldset class="settings-fieldset">
       <legend><?= e(t('sound_settings')) ?></legend>

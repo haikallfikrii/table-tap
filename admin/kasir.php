@@ -17,6 +17,9 @@ $config = getConfig();
 $pageTitle = t('kasir_title');
 $showSound = true;
 $showPrinter = true;
+$shopId = requireShopId();
+$shop = getShopOrFail($shopId);
+$printerPrefs = shopPrinterSettings($shop);
 $adminScripts = [
     assetUrl('js/sound.js'),
     assetUrl('js/live-poll.js'),
@@ -142,7 +145,9 @@ $i18n = [
      data-receipt-url="<?= e(baseUrl('admin/receipt.php')) ?>"
      data-receipt-json-url="<?= e(baseUrl('admin/api/receipt_json.php')) ?>"
      data-send-receipt-url="<?= e(baseUrl('admin/api/send_receipt.php')) ?>"
-     data-shop-name="<?= e((string) ($user['shop_name'] ?? 'TableTap')) ?>"
+     data-shop-name="<?= e((string) ($user['shop_name'] ?? $shop['nama_kedai'] ?? 'TableTap')) ?>"
+     data-print-on-paid="<?= !empty($printerPrefs['kasir_print_on_paid']) ? '1' : '0' ?>"
+     data-beep-kasir="<?= (int) $printerPrefs['beep_kasir'] ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 3000) ?>"
      data-lang="<?= e($lang) ?>"
      data-i18n="<?= e(json_encode($i18n, JSON_UNESCAPED_UNICODE)) ?>">

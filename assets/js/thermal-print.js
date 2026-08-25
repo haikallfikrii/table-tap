@@ -107,15 +107,23 @@
   /**
    * ESC B n t — common Chinese ESC/POS buzzer (MTP-II / PT200 class).
    * n = times (1–9), t = duration/interval unit (1–9).
-   * Also append BEL (0x07) as fallback for some firmwares.
+   * times=0 → empty (no beep).
    */
   function beep(times, duration) {
-    var n = Math.max(1, Math.min(9, Number(times) || 4));
+    var n = Math.max(0, Math.min(9, Number(times) || 0));
+    if (n <= 0) return new Uint8Array(0);
     var t = Math.max(1, Math.min(9, Number(duration) || 2));
     return new Uint8Array([
       0x1b, 0x42, n, t, // ESC B n t
       0x07,             // BEL fallback
     ]);
+  }
+
+  function resolveBeepCount(labels, fallback) {
+    if (labels && labels.beep_count != null) {
+      return Math.max(0, Math.min(9, Number(labels.beep_count) || 0));
+    }
+    return Math.max(0, Math.min(9, Number(fallback) || 0));
   }
 
   function wrapName(name, width) {
@@ -138,9 +146,12 @@
     labels = labels || {};
     var width = 32;
     var chunks = [];
+    var beepCount = resolveBeepCount(labels, 4);
     chunks.push(new Uint8Array([0x1b, 0x40])); // init
-    // Alert kitchen: tit-tit-tit before ticket body (MTP-II has hardware buzzer)
-    chunks.push(beep(4, 2));
+    // Alert kitchen: tit-tit before ticket body (MTP-II has hardware buzzer)
+    if (beepCount > 0) {
+      chunks.push(beep(beepCount, 2));
+    }
     chunks.push(line(ticket.shopName || 'TableTap', { align: 'center', bold: true }));
     if (ticket.stationName) {
       chunks.push(line(ticket.stationName, { align: 'center' }));
@@ -173,7 +184,10 @@
     chunks.push(separator(width));
     chunks.push(line(labels.kitchen_ticket || 'KITCHEN TICKET', { align: 'center' }));
     chunks.push(new Uint8Array([0x0a, 0x0a, 0x0a]));
-    chunks.push(beep(3, 2)); // second alert after print so staff notices paper
+    if (beepCount > 0) {
+      var endBeeps = Math.max(1, Math.min(beepCount, 3));
+      chunks.push(beep(endBeeps, 2)); // second alert after print so staff notices paper
+    }
     chunks.push(new Uint8Array([0x1d, 0x56, 0x00])); // full cut
     return concatBytes(chunks);
   }
@@ -386,7 +400,11 @@
     var width = 32;
     var lang = (receipt && receipt.lang) === 'en' ? 'en' : 'my';
     var chunks = [];
+    var beepCount = resolveBeepCount(labels, 0);
     chunks.push(new Uint8Array([0x1b, 0x40]));
+    if (beepCount > 0) {
+      chunks.push(beep(beepCount, 2));
+    }
     chunks.push(line((receipt && receipt.shop_name) || 'TableTap', { align: 'center', bold: true }));
     chunks.push(line((labels.receipt || (lang === 'en' ? 'RECEIPT' : 'RESIT')) + ' #' + ((receipt && receipt.order_id) || ''), { align: 'center', bold: true }));
     chunks.push(separator(width));

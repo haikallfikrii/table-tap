@@ -120,5 +120,6 @@ jsonResponse([
     'new_item_ids' => $newIds,
     'pending_alerts' => $pendingAlerts,
     'sound' => shopSoundSettings($shop),
+    'printer' => shopPrinterSettings($shop),
     'items' => $result,
 ]);

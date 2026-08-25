@@ -22,12 +22,17 @@
   let busy = false;
   let latestOrders = [];
   let autoPrint = true;
+  let beepKasir = Math.max(0, Math.min(9, Number(root.dataset.beepKasir) || 0));
+  let ownerPrintOnPaid = root.dataset.printOnPaid !== '0';
   const autoKey = 'tt_kasir_autoprint';
   try {
     const saved = localStorage.getItem(autoKey);
     if (saved === '0') autoPrint = false;
-    if (saved === '1') autoPrint = true;
-  } catch (e) { /* ignore */ }
+    else if (saved === '1') autoPrint = true;
+    else autoPrint = ownerPrintOnPaid;
+  } catch (e) {
+    autoPrint = ownerPrintOnPaid;
+  }
 
   const splitOverlay = document.getElementById('split-overlay');
   const splitSheet = document.getElementById('split-sheet');
@@ -77,6 +82,7 @@
       split_from: i18n.split_from || 'Split from',
       test_item: i18n.print_test_item || 'Test print OK',
       mode: 'receipt',
+      beep_count: beepKasir,
     };
   }
 
@@ -551,9 +557,11 @@
     }
   }
 
-  function setAutoPrint(on) {
+  function setAutoPrint(on, persist) {
     autoPrint = !!on;
-    try { localStorage.setItem(autoKey, autoPrint ? '1' : '0'); } catch (e) { /* ignore */ }
+    if (persist !== false) {
+      try { localStorage.setItem(autoKey, autoPrint ? '1' : '0'); } catch (e) { /* ignore */ }
+    }
     const toggle = document.getElementById('btn-autoprint');
     if (toggle) {
       toggle.classList.toggle('is-on', autoPrint);
@@ -561,6 +569,24 @@
       toggle.textContent = autoPrint
         ? (i18n.autoprint_on || 'Auto-print on')
         : (i18n.autoprint_off || 'Auto-print off');
+    }
+  }
+
+  function applyPrinterSettings(printer) {
+    if (!printer) return;
+    if (printer.beep_kasir != null) {
+      beepKasir = Math.max(0, Math.min(9, Number(printer.beep_kasir) || 0));
+    }
+    if (typeof printer.kasir_print_on_paid === 'boolean') {
+      ownerPrintOnPaid = printer.kasir_print_on_paid;
+      // First visit (no local override yet): follow owner default
+      try {
+        if (localStorage.getItem(autoKey) === null) {
+          setAutoPrint(ownerPrintOnPaid, false);
+        }
+      } catch (e) {
+        setAutoPrint(ownerPrintOnPaid, false);
+      }
     }
   }
 
@@ -652,7 +678,7 @@
     });
 
     document.getElementById('btn-autoprint')?.addEventListener('click', function () {
-      setAutoPrint(!autoPrint);
+      setAutoPrint(!autoPrint, true);
       updatePrintStatus();
     });
   }
@@ -689,6 +715,7 @@
       if (typeof data.max_id === 'number') {
         sinceId = Math.max(sinceId, data.max_id);
       }
+      applyPrinterSettings(data.printer);
       render(data);
     } catch (e) {
       // keep polling

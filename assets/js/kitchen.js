@@ -24,6 +24,7 @@
   let primed = false;
   let printBusy = false;
   const printedIds = new Set();
+  let beepKitchen = 4;
 
   const autoKey = 'tt_kitchen_autoprint_' + (stationId || kategori);
   let autoPrint = true;
@@ -145,6 +146,7 @@
       kitchen_ticket: i18n.kitchen_ticket || 'KITCHEN TICKET',
       test_station: stationName || 'Test',
       test_item: i18n.print_test_item || 'Test print OK',
+      beep_count: beepKitchen,
     };
   }
 
@@ -338,6 +340,10 @@
 
       if (typeof data.max_id === 'number') {
         sinceId = Math.max(sinceId, data.max_id);
+      }
+
+      if (data.printer && data.printer.beep_kitchen != null) {
+        beepKitchen = Math.max(0, Math.min(9, Number(data.printer.beep_kitchen) || 0));
       }
 
       // First poll only seeds baseline — avoid reprinting all waiting tickets on open
