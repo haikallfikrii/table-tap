@@ -79,6 +79,7 @@ $i18n = [
     'print_test_ok' => t('print_test_ok'),
     'print_test_item' => t('print_test_item'),
     'print_failed'  => t('print_failed'),
+    'kasir_print_need_bt' => t('kasir_print_need_bt'),
     'delivery'      => t('delivery'),
     'pay_cod'       => t('pay_cod'),
     'pay_duitnow'   => t('pay_duitnow'),

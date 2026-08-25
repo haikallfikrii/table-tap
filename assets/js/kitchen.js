@@ -179,13 +179,18 @@
   }
 
   async function autoPrintNew(items, newIds) {
-    if (!autoPrint || !window.TableTapPrint || !TableTapPrint.isConnected()) return;
+    if (!autoPrint || !window.TableTapPrint || !TableTapPrint.supported()) return;
     if (!primed || printBusy) return;
     const tickets = groupNewTickets(items, newIds);
     if (!tickets.length) return;
 
     printBusy = true;
     try {
+      try {
+        await TableTapPrint.ensureConnected({ interactive: false });
+      } catch (e) {
+        return;
+      }
       for (let i = 0; i < tickets.length; i++) {
         const t = tickets[i];
         try {
@@ -264,6 +269,10 @@
     TableTapPrint.onChange(function () { updatePrintStatus(); });
     updatePrintStatus();
 
+    TableTapPrint.reconnect().then(function () {
+      updatePrintStatus();
+    }).catch(function () { /* no prior grant */ });
+
     connectBtn?.addEventListener('click', async function () {
       if (TableTapPrint.isConnected()) {
         TableTapPrint.disconnect();
@@ -272,7 +281,7 @@
       }
       connectBtn.disabled = true;
       try {
-        await TableTapPrint.connect();
+        await TableTapPrint.ensureConnected({ interactive: true });
         updatePrintStatus(i18n.printer_connected || 'Printer connected');
       } catch (err) {
         if (err && err.name === 'NotFoundError') {
@@ -290,12 +299,14 @@
     testBtn?.addEventListener('click', async function () {
       testBtn.disabled = true;
       try {
+        await TableTapPrint.ensureConnected({ interactive: true });
         await TableTapPrint.printTest(printLabels());
         updatePrintStatus(i18n.print_test_ok || 'Test printed');
       } catch (err) {
         updatePrintStatus(i18n.print_failed || 'Print failed');
       } finally {
         testBtn.disabled = false;
+        updatePrintStatus();
       }
     });
 

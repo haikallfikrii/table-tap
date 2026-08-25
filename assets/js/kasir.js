@@ -96,7 +96,7 @@
   }
 
   async function silentPrintReceipt(receiptOrId) {
-    if (!window.TableTapPrint || !TableTapPrint.isConnected()) return false;
+    if (!window.TableTapPrint) return false;
     let receipt = receiptOrId;
     if (typeof receiptOrId === 'number') {
       receipt = await fetchReceipt(receiptOrId);
@@ -106,20 +106,38 @@
     return true;
   }
 
-  async function printPaidReceipt(orderId, receiptPayload) {
+  /**
+   * Print via Bluetooth thermal (same path as kitchen) — never open OS print dialog first.
+   * On click: reconnect saved printer, or open BT picker once, then silent ESC/POS print.
+   */
+  async function printPaidReceipt(orderId, receiptPayload, opts) {
+    opts = opts || {};
+    const interactive = opts.interactive !== false;
+
+    if (!window.TableTapPrint || !TableTapPrint.supported()) {
+      updatePrintStatus(i18n.printer_unsupported || 'Bluetooth print needs Chrome/Edge.');
+      return false;
+    }
+
     try {
-      if (autoPrint && window.TableTapPrint && TableTapPrint.isConnected()) {
-        await silentPrintReceipt(receiptPayload || orderId);
-        updatePrintStatus(i18n.print_test_ok || 'Printed');
-        return;
-      }
+      await TableTapPrint.ensureConnected({ interactive: interactive });
+      await silentPrintReceipt(receiptPayload || orderId);
+      updatePrintStatus(i18n.print_test_ok || 'Printed');
+      return true;
     } catch (err) {
       console.warn('Silent print failed', err);
-      updatePrintStatus(i18n.print_failed || 'Print failed');
-    }
-    // Fallback only when not connected — avoid browser dialog when BT works
-    if (!window.TableTapPrint || !TableTapPrint.isConnected()) {
-      openBrowserReceipt(orderId, true);
+      const name = err && err.name;
+      const msg = String((err && err.message) || '');
+      if (name === 'NotFoundError') {
+        updatePrintStatus(i18n.printer_cancelled || 'No printer selected');
+      } else if (msg === 'unsupported') {
+        updatePrintStatus(i18n.printer_unsupported || 'Bluetooth print not supported');
+        } else if (msg === 'not_connected' || msg === 'no_saved') {
+        updatePrintStatus(i18n.kasir_print_need_bt || i18n.kasir_printer_hint || 'Connect printer first');
+      } else {
+        updatePrintStatus(i18n.print_failed || 'Print failed');
+      }
+      return false;
     }
   }
 
@@ -523,7 +541,9 @@
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Failed');
       closeSplitModal();
-      await printPaidReceipt(data.paid_order_id, data.receipt);
+      if (autoPrint) {
+        await printPaidReceipt(data.paid_order_id, data.receipt, { interactive: false });
+      }
       await poll();
     } catch (err) {
       alert(err.message || 'Error');
@@ -589,6 +609,11 @@
     TableTapPrint.onChange(function () { updatePrintStatus(); });
     updatePrintStatus();
 
+    // Same as kitchen: restore previous BT grant without picker
+    TableTapPrint.reconnect().then(function () {
+      updatePrintStatus();
+    }).catch(function () { /* first visit / no grant yet */ });
+
     document.getElementById('btn-connect-printer')?.addEventListener('click', async function () {
       const connectBtn = this;
       if (TableTapPrint.isConnected()) {
@@ -598,8 +623,8 @@
       }
       connectBtn.disabled = true;
       try {
-        await TableTapPrint.connect();
-        updatePrintStatus();
+        await TableTapPrint.ensureConnected({ interactive: true });
+        updatePrintStatus(i18n.printer_connected || 'Printer connected');
       } catch (err) {
         if (err && err.name === 'NotFoundError') {
           updatePrintStatus(i18n.printer_cancelled || 'No printer selected');
@@ -615,12 +640,14 @@
       const testBtn = this;
       testBtn.disabled = true;
       try {
+        await TableTapPrint.ensureConnected({ interactive: true });
         await TableTapPrint.printTest(receiptLabels());
         updatePrintStatus(i18n.print_test_ok || 'Test printed');
       } catch (err) {
         updatePrintStatus(i18n.print_failed || 'Print failed');
       } finally {
         testBtn.disabled = false;
+        updatePrintStatus();
       }
     });
 
@@ -675,15 +702,11 @@
     if (printBtn) {
       const orderId = Number(printBtn.getAttribute('data-print-receipt'));
       if (!orderId) return;
+      printBtn.disabled = true;
       try {
-        if (window.TableTapPrint && TableTapPrint.isConnected()) {
-          await silentPrintReceipt(orderId);
-          updatePrintStatus(i18n.print_test_ok || 'Printed');
-        } else {
-          openBrowserReceipt(orderId, true);
-        }
-      } catch (err) {
-        openBrowserReceipt(orderId, true);
+        await printPaidReceipt(orderId, null, { interactive: true });
+      } finally {
+        printBtn.disabled = false;
       }
       return;
     }
@@ -732,7 +755,9 @@
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Failed');
         if (action !== 'reject') {
-          await printPaidReceipt(orderId, data.receipt);
+          if (autoPrint) {
+            await printPaidReceipt(orderId, data.receipt, { interactive: false });
+          }
         }
         await poll();
       } catch (err) {
@@ -780,7 +805,9 @@
       });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Failed');
-      await printPaidReceipt(orderId, data.receipt);
+      if (autoPrint) {
+        await printPaidReceipt(orderId, data.receipt, { interactive: false });
+      }
       await poll();
     } catch (err) {
       alert(err.message || 'Error');
