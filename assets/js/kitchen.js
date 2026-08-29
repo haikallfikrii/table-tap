@@ -205,6 +205,9 @@
         try {
           await TableTapPrint.printKitchenTicket(t, printLabels());
           t.itemIds.forEach(function (id) { printedIds.add(id); });
+          if (i < tickets.length - 1) {
+            await new Promise(function (r) { setTimeout(r, 400); });
+          }
         } catch (err) {
           console.warn('TableTap print failed', err);
           updatePrintStatus(i18n.print_failed || 'Print failed');

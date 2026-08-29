@@ -327,15 +327,8 @@ function kitchenPrintTicketMeta(
     ?string $menuCategoryName = null,
     string $lang = 'my'
 ): array {
-    $stationKod = (string) ($station['kod'] ?? '');
-    if ($stationKod !== 'minuman') {
-        return [
-            'ticket_group' => 'default',
-            'ticket_label' => stationLabel($station, $lang),
-        ];
-    }
-
     $catKod = strtolower(trim((string) ($menuCategoryKod ?? '')));
+    $stationKod = (string) ($station['kod'] ?? '');
 
     if ($catKod === 'minuman' || ($catKod === '' && $kategoriSaatOrder === 'minuman')) {
         return [
@@ -344,7 +337,7 @@ function kitchenPrintTicketMeta(
         ];
     }
 
-    if ($catKod !== '' && !in_array($catKod, ['makanan', 'minuman'], true)) {
+    if ($catKod !== '' && !in_array($catKod, ['makanan'], true)) {
         $label = trim((string) ($menuCategoryName ?? ''));
         if ($label === '') {
             $label = strtoupper(str_replace('-', ' ', $catKod));
@@ -363,6 +356,14 @@ function kitchenPrintTicketMeta(
         return [
             'ticket_group' => 'minuman',
             'ticket_label' => $lang === 'en' ? 'DRINKS' : 'MINUMAN',
+        ];
+    }
+
+    // Dapur keeps one combined ticket per order.
+    if ($stationKod === 'dapur') {
+        return [
+            'ticket_group' => 'default',
+            'ticket_label' => stationLabel($station, $lang),
         ];
     }
 
