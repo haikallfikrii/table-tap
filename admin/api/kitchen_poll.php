@@ -41,10 +41,13 @@ if ($useStationCol) {
         "SELECT oi.id, oi.order_id, oi.qty, oi.catatan, oi.status_item,
                 oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
                 o.waktu_order, o.jenis_hidang, o.nama_pelanggan, o.status_bayar,
-                o.payment_method, o.payment_proof_status, t.nomor_meja
+                o.payment_method, o.payment_proof_status, t.nomor_meja,
+                mc.kod AS menu_category_kod
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          INNER JOIN tables t ON t.id = o.table_id
+         LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
+         LEFT JOIN menu_categories mc ON mc.id = mi.menu_category_id
          WHERE o.shop_id = ?
            AND oi.station_id_saat_order = ?
            AND oi.status_item IN ($statusList)
@@ -61,10 +64,13 @@ if ($useStationCol) {
         "SELECT oi.id, oi.order_id, oi.qty, oi.catatan, oi.status_item,
                 oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
                 o.waktu_order, o.jenis_hidang, o.nama_pelanggan, o.status_bayar,
-                o.payment_method, o.payment_proof_status, t.nomor_meja
+                o.payment_method, o.payment_proof_status, t.nomor_meja,
+                mc.kod AS menu_category_kod
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          INNER JOIN tables t ON t.id = o.table_id
+         LEFT JOIN menu_items mi ON mi.id = oi.menu_item_id
+         LEFT JOIN menu_categories mc ON mc.id = mi.menu_category_id
          WHERE o.shop_id = ?
            AND oi.kategori_saat_order = ?
            AND oi.status_item IN ($statusList)
@@ -97,6 +103,12 @@ foreach ($items as $it) {
             $newIds[] = $id;
         }
     }
+    $ticketMeta = kitchenPrintTicketMeta(
+        $station,
+        (string) ($it['kategori_saat_order'] ?? 'makanan'),
+        isset($it['menu_category_kod']) ? (string) $it['menu_category_kod'] : null,
+        $lang
+    );
     $result[] = [
         'id' => $id,
         'order_id' => (int) $it['order_id'],
@@ -104,6 +116,9 @@ foreach ($items as $it) {
         'catatan' => $it['catatan'],
         'status_item' => $it['status_item'],
         'nama' => $lang === 'en' ? $it['nama_saat_order_en'] : $it['nama_saat_order_my'],
+        'kategori' => (string) ($it['kategori_saat_order'] ?? ''),
+        'ticket_group' => $ticketMeta['ticket_group'],
+        'ticket_label' => $ticketMeta['ticket_label'],
         'nomor_meja' => $it['nomor_meja'],
         'waktu_order' => $it['waktu_order'],
         'jenis_hidang' => ($it['jenis_hidang'] ?? 'dine_in') === 'takeaway'

@@ -313,3 +313,37 @@ function emptyStationCounts(): array
         'diambil' => 0,
     ];
 }
+
+/**
+ * Minuman counter may also prep Western food — split printer tickets by type
+ * while keeping one station screen / one staff login.
+ *
+ * @return array{ticket_group:string,ticket_label:string}
+ */
+function kitchenPrintTicketMeta(
+    array $station,
+    string $kategoriSaatOrder,
+    ?string $menuCategoryKod,
+    string $lang = 'my'
+): array {
+    $stationKod = (string) ($station['kod'] ?? '');
+    if ($stationKod !== 'minuman') {
+        return [
+            'ticket_group' => 'default',
+            'ticket_label' => stationLabel($station, $lang),
+        ];
+    }
+
+    $catKod = strtolower(trim((string) ($menuCategoryKod ?? '')));
+    $isWestern = $catKod === 'western'
+        || ($catKod !== 'minuman' && $kategoriSaatOrder === 'makanan');
+
+    if ($isWestern) {
+        return ['ticket_group' => 'western', 'ticket_label' => 'WESTERN'];
+    }
+
+    return [
+        'ticket_group' => 'minuman',
+        'ticket_label' => $lang === 'en' ? 'DRINKS' : 'MINUMAN',
+    ];
+}
