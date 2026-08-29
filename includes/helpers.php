@@ -480,14 +480,31 @@ function createShopOrder(
         $normalized
     )));
     require_once __DIR__ . '/stations.php';
+    require_once __DIR__ . '/menu_categories.php';
     $stationCols = menuStationColumnExists();
-    $menuSql = $stationCols
-        ? "SELECT id, nama_my, nama_en, harga, kategori, station_id, status_stok, is_active
-           FROM menu_items
-           WHERE shop_id = ? AND id IN ($placeholders)"
-        : "SELECT id, nama_my, nama_en, harga, kategori, status_stok, is_active
-           FROM menu_items
-           WHERE shop_id = ? AND id IN ($placeholders)";
+    $useMenuCat = menuCategoriesTableExists() && menuCategoryColumnExists();
+    $snapMenuCat = orderMenuCategoryKodColumnExists();
+    if ($useMenuCat) {
+        $menuSql = $stationCols
+            ? "SELECT mi.id, mi.nama_my, mi.nama_en, mi.harga, mi.kategori, mi.station_id, mi.status_stok, mi.is_active,
+                      mi.menu_category_id, mc.kod AS menu_category_kod, mc.nama_my AS menu_category_nama_my, mc.nama_en AS menu_category_nama_en
+               FROM menu_items mi
+               LEFT JOIN menu_categories mc ON mc.id = mi.menu_category_id
+               WHERE mi.shop_id = ? AND mi.id IN ($placeholders)"
+            : "SELECT mi.id, mi.nama_my, mi.nama_en, mi.harga, mi.kategori, mi.status_stok, mi.is_active,
+                      mi.menu_category_id, mc.kod AS menu_category_kod, mc.nama_my AS menu_category_nama_my, mc.nama_en AS menu_category_nama_en
+               FROM menu_items mi
+               LEFT JOIN menu_categories mc ON mc.id = mi.menu_category_id
+               WHERE mi.shop_id = ? AND mi.id IN ($placeholders)";
+    } else {
+        $menuSql = $stationCols
+            ? "SELECT id, nama_my, nama_en, harga, kategori, station_id, status_stok, is_active
+               FROM menu_items
+               WHERE shop_id = ? AND id IN ($placeholders)"
+            : "SELECT id, nama_my, nama_en, harga, kategori, status_stok, is_active
+               FROM menu_items
+               WHERE shop_id = ? AND id IN ($placeholders)";
+    }
     $stmt = $pdo->prepare($menuSql);
     $stmt->execute(array_merge([$shopId], $ids));
     $menuById = [];
@@ -531,6 +548,9 @@ function createShopOrder(
             'nama_saat_order_en' => $namaEn,
             'kategori_saat_order' => $m['kategori'],
             'station_id_saat_order' => $stationId,
+            'menu_category_kod_saat_order' => $useMenuCat ? (string) ($m['menu_category_kod'] ?? '') : null,
+            'menu_category_nama_my_saat_order' => $useMenuCat ? (string) ($m['menu_category_nama_my'] ?? '') : null,
+            'menu_category_nama_en_saat_order' => $useMenuCat ? (string) ($m['menu_category_nama_en'] ?? '') : null,
         ];
     }
 
@@ -654,15 +674,25 @@ function createShopOrder(
         }
 
         $snapStation = orderStationColumnExists();
-        $insItem = $pdo->prepare(
-            $snapStation
-                ? 'INSERT INTO order_items
-                   (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order, station_id_saat_order)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-                : 'INSERT INTO order_items
-                   (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        );
+        if ($snapStation && $snapMenuCat) {
+            $insItem = $pdo->prepare(
+                'INSERT INTO order_items
+                 (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order, station_id_saat_order, menu_category_kod_saat_order, menu_category_nama_my_saat_order, menu_category_nama_en_saat_order)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+        } elseif ($snapStation) {
+            $insItem = $pdo->prepare(
+                'INSERT INTO order_items
+                 (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order, station_id_saat_order)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+        } else {
+            $insItem = $pdo->prepare(
+                'INSERT INTO order_items
+                 (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            );
+        }
         foreach ($lines as $line) {
             $args = [
                 $orderId,
@@ -677,6 +707,11 @@ function createShopOrder(
             ];
             if ($snapStation) {
                 $args[] = $line['station_id_saat_order'];
+            }
+            if ($snapStation && $snapMenuCat) {
+                $args[] = $line['menu_category_kod_saat_order'] ?: null;
+                $args[] = $line['menu_category_nama_my_saat_order'] ?: null;
+                $args[] = $line['menu_category_nama_en_saat_order'] ?: null;
             }
             $insItem->execute($args);
         }

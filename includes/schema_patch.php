@@ -272,6 +272,25 @@ function ensureAppSchema(PDO $pdo): void
         ensureAllShopMenuCategories($pdo);
         backfillMenuItemCategories($pdo);
 
+        $orderMenuCatCol = $pdo->query("SHOW COLUMNS FROM order_items LIKE 'menu_category_kod_saat_order'")->fetch();
+        if (!$orderMenuCatCol) {
+            $pdo->exec(
+                'ALTER TABLE order_items
+                 ADD COLUMN menu_category_kod_saat_order VARCHAR(40) DEFAULT NULL AFTER station_id_saat_order,
+                 ADD COLUMN menu_category_nama_my_saat_order VARCHAR(80) DEFAULT NULL AFTER menu_category_kod_saat_order,
+                 ADD COLUMN menu_category_nama_en_saat_order VARCHAR(80) DEFAULT NULL AFTER menu_category_nama_my_saat_order'
+            );
+            $pdo->exec(
+                "UPDATE order_items oi
+                 INNER JOIN menu_items mi ON mi.id = oi.menu_item_id
+                 INNER JOIN menu_categories mc ON mc.id = mi.menu_category_id
+                 SET oi.menu_category_kod_saat_order = mc.kod,
+                     oi.menu_category_nama_my_saat_order = mc.nama_my,
+                     oi.menu_category_nama_en_saat_order = mc.nama_en
+                 WHERE oi.menu_category_kod_saat_order IS NULL"
+            );
+        }
+
         $splitCol = $pdo->query("SHOW COLUMNS FROM orders LIKE 'split_from_order_id'")->fetch();
         if (!$splitCol) {
             $pdo->exec(

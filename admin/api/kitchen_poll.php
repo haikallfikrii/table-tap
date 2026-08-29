@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/shop.php';
 require_once dirname(__DIR__, 2) . '/includes/stations.php';
+require_once dirname(__DIR__, 2) . '/includes/menu_categories.php';
 
 $user = requireLoginApi(['dapur', 'minuman', 'owner']);
 $shopId = requireShopIdApi();
@@ -35,6 +36,13 @@ $statusList = $selfPickup
 
 $stationId = (int) ($station['id'] ?? 0);
 $useStationCol = orderStationColumnExists() && $stationId > 0;
+$catSelect = orderMenuCategoryKodColumnExists()
+    ? 'COALESCE(oi.menu_category_kod_saat_order, mc.kod) AS menu_category_kod,
+                COALESCE(oi.menu_category_nama_my_saat_order, mc.nama_my) AS menu_category_nama_my,
+                COALESCE(oi.menu_category_nama_en_saat_order, mc.nama_en) AS menu_category_nama_en'
+    : 'mc.kod AS menu_category_kod,
+                mc.nama_my AS menu_category_nama_my,
+                mc.nama_en AS menu_category_nama_en';
 
 if ($useStationCol) {
     $stmt = $pdo->prepare(
@@ -42,9 +50,7 @@ if ($useStationCol) {
                 oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
                 o.waktu_order, o.jenis_hidang, o.nama_pelanggan, o.status_bayar,
                 o.payment_method, o.payment_proof_status, t.nomor_meja,
-                mc.kod AS menu_category_kod,
-                mc.nama_my AS menu_category_nama_my,
-                mc.nama_en AS menu_category_nama_en
+                {$catSelect}
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          INNER JOIN tables t ON t.id = o.table_id
@@ -67,9 +73,7 @@ if ($useStationCol) {
                 oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
                 o.waktu_order, o.jenis_hidang, o.nama_pelanggan, o.status_bayar,
                 o.payment_method, o.payment_proof_status, t.nomor_meja,
-                mc.kod AS menu_category_kod,
-                mc.nama_my AS menu_category_nama_my,
-                mc.nama_en AS menu_category_nama_en
+                {$catSelect}
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          INNER JOIN tables t ON t.id = o.table_id

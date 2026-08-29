@@ -36,6 +36,20 @@ function menuCategoryColumnExists(): bool
     return $exists;
 }
 
+function orderMenuCategoryKodColumnExists(): bool
+{
+    static $exists = null;
+    if ($exists !== null) {
+        return $exists;
+    }
+    try {
+        $exists = (bool) db()->query("SHOW COLUMNS FROM order_items LIKE 'menu_category_kod_saat_order'")->fetch();
+    } catch (Throwable $e) {
+        $exists = false;
+    }
+    return $exists;
+}
+
 function maxCustomMenuCategories(): int
 {
     return 12;
