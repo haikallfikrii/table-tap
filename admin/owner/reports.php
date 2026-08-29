@@ -78,6 +78,7 @@ $inc = $pdo->prepare(
     "SELECT COALESCE(SUM(total_harga), 0)
      FROM orders
      WHERE shop_id = ? AND status_bayar = 'lunas'
+       AND status_order != 'dibatalkan'
        AND waktu_lunas >= ? AND waktu_lunas < ?"
 );
 $inc->execute([$shopId, $rangeStart, $rangeEnd]);
@@ -94,6 +95,7 @@ $ordersList = $pdo->prepare(
      FROM orders o
      INNER JOIN tables t ON t.id = o.table_id
      WHERE o.shop_id = ? AND o.status_bayar = 'lunas'
+       AND o.status_order != 'dibatalkan'
        AND o.waktu_lunas >= ? AND o.waktu_lunas < ?
      ORDER BY o.waktu_lunas DESC
      LIMIT 100"

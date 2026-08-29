@@ -82,6 +82,10 @@ $i18n = [
     'print_test_ok' => t('print_test_ok'),
     'print_test_item' => t('print_test_item'),
     'print_failed'  => t('print_failed'),
+    'cancel_order' => t('cancel_order'),
+    'cancel_order_confirm' => t('cancel_order_confirm'),
+    'cancel_order_failed' => t('cancel_order_failed'),
+    'order_not_found' => t('order_not_found'),
     'kasir_print_need_bt' => t('kasir_print_need_bt'),
     'delivery'      => t('delivery'),
     'pay_cod'       => t('pay_cod'),
@@ -139,6 +143,7 @@ $i18n = [
 <div id="orders-root" class="kasir-layout"
      data-poll-url="<?= e(baseUrl('admin/api/orders_poll.php')) ?>"
      data-paid-url="<?= e(baseUrl('admin/api/mark_paid.php')) ?>"
+     data-cancel-url="<?= e(baseUrl('admin/api/cancel_order.php')) ?>"
      data-confirm-url="<?= e(baseUrl('admin/api/confirm_payment.php')) ?>"
      data-split-url="<?= e(baseUrl('admin/api/split_bill.php')) ?>"
      data-pickup-url="<?= e(baseUrl('admin/api/pickup_action.php')) ?>"

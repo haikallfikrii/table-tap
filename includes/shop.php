@@ -201,6 +201,27 @@ function mutePickupAlert(PDO $pdo, int $orderId, int $shopId): void
     }
 }
 
+/** Mark order cancelled — removed from kasir, kitchen, and income reports. */
+function cancelShopOrder(int $orderId, int $shopId): bool
+{
+    $pdo = db();
+    $stmt = $pdo->prepare(
+        'SELECT id, status_order FROM orders WHERE id = ? AND shop_id = ? LIMIT 1'
+    );
+    $stmt->execute([$orderId, $shopId]);
+    $row = $stmt->fetch();
+    if (!$row) {
+        return false;
+    }
+    if (($row['status_order'] ?? '') === 'dibatalkan') {
+        return true;
+    }
+    $pdo->prepare(
+        'UPDATE orders SET status_order = ?, pickup_alert = 0 WHERE id = ? AND shop_id = ?'
+    )->execute(['dibatalkan', $orderId, $shopId]);
+    return true;
+}
+
 function collectSelfPickupReadyItems(PDO $pdo, int $orderId, int $shopId): void
 {
     $pdo->prepare(

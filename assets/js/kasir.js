@@ -7,6 +7,7 @@
 
   const pollUrl = root.dataset.pollUrl;
   const paidUrl = root.dataset.paidUrl;
+  const cancelUrl = root.dataset.cancelUrl || '';
   const confirmUrl = root.dataset.confirmUrl || '';
   const splitUrl = root.dataset.splitUrl || '';
   const pickupUrl = root.dataset.pickupUrl;
@@ -145,6 +146,20 @@
       }
       return false;
     }
+  }
+
+  async function cancelOrder(orderId) {
+    if (!cancelUrl) return;
+    if (!confirm(i18n.cancel_order_confirm || 'Cancel this order?')) return;
+    const res = await fetch(cancelUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ order_id: orderId }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || i18n.cancel_order_failed || 'Failed');
+    await poll();
   }
 
   async function sendReceipt(orderId, email) {
@@ -348,6 +363,9 @@
                   : '') +
                 pickupBtns +
                 receiptSection(o) +
+                '<button type="button" class="btn btn-ghost btn-sm" data-cancel-order="' + o.id + '" style="color:var(--danger);margin-top:6px">' +
+                  esc(i18n.cancel_order || 'Cancel order') +
+                '</button>' +
               '</div>' +
             '</div>' +
           '</article>'
@@ -725,6 +743,20 @@
   }
 
   root.addEventListener('click', async (e) => {
+    const cancelBtn = e.target.closest('[data-cancel-order]');
+    if (cancelBtn) {
+      const orderId = Number(cancelBtn.getAttribute('data-cancel-order'));
+      if (!orderId) return;
+      cancelBtn.disabled = true;
+      try {
+        await cancelOrder(orderId);
+      } catch (err) {
+        alert(err.message || 'Error');
+        cancelBtn.disabled = false;
+      }
+      return;
+    }
+
     const printBtn = e.target.closest('[data-print-receipt]');
     if (printBtn) {
       const orderId = Number(printBtn.getAttribute('data-print-receipt'));
