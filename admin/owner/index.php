@@ -31,6 +31,7 @@ $incomeStmt = $pdo->prepare(
     "SELECT COALESCE(SUM(total_harga), 0) AS total
      FROM orders
      WHERE shop_id = ? AND status_bayar = 'lunas'
+       AND status_order != 'dibatalkan'
        AND waktu_lunas >= ? AND waktu_lunas < ?"
 );
 $incomeStmt->execute([$shopId, $dayStart, $dayEnd]);
