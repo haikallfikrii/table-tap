@@ -121,9 +121,14 @@
         ? 'bungkus'
         : (it.jenis_hidang === 'delivery' ? 'delivery' : 'sini');
 
+      const ticketBadge = (it.ticket_label && it.ticket_group && it.ticket_group !== 'default')
+        ? '<div class="ticket-type-badge ticket-type-' + esc(it.ticket_group) + '">' + esc(it.ticket_label) + '</div>'
+        : '';
+
       return (
         '<article class="kitchen-card ' + esc(it.status_item) + hidangClass + (newSet.has(it.id) ? ' new-flash' : '') + '">' +
           '<div class="kitchen-table">' + esc(tableTitle(it.nomor_meja)) + '</div>' +
+          ticketBadge +
           '<div class="serve-badge ' + badgeCls + '">' + esc(hidang) + '</div>' +
           '<div class="kitchen-qty">×' + it.qty + '</div>' +
           '<h2 class="kitchen-item-name">' + esc(it.nama) + '</h2>' +
@@ -152,17 +157,19 @@
 
   function groupNewTickets(items, newIds) {
     const idSet = new Set(newIds || []);
-    const byOrder = {};
+    const byTicket = {};
     items.forEach(function (it) {
       if (!idSet.has(it.id) || printedIds.has(it.id)) return;
       if (it.status_item !== 'menunggu') return;
-      const oid = it.order_id;
-      if (!byOrder[oid]) {
-        byOrder[oid] = {
+      const grp = it.ticket_group || 'default';
+      const key = it.order_id + ':' + grp;
+      const label = it.ticket_label || stationName;
+      if (!byTicket[key]) {
+        byTicket[key] = {
           shopName: shopName,
-          stationName: stationName,
+          stationName: label,
           table: it.nomor_meja,
-          orderId: oid,
+          orderId: it.order_id,
           serveLabel: serveLabel(it.jenis_hidang),
           guest: it.nama_pelanggan || '',
           time: it.waktu_order || '',
@@ -170,14 +177,14 @@
           itemIds: [],
         };
       }
-      byOrder[oid].items.push({
+      byTicket[key].items.push({
         qty: it.qty,
         nama: it.nama,
         catatan: it.catatan || '',
       });
-      byOrder[oid].itemIds.push(it.id);
+      byTicket[key].itemIds.push(it.id);
     });
-    return Object.keys(byOrder).map(function (k) { return byOrder[k]; });
+    return Object.keys(byTicket).map(function (k) { return byTicket[k]; });
   }
 
   async function autoPrintNew(items, newIds) {
