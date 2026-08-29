@@ -610,6 +610,16 @@ body.admin {
   color: #1e40af;
 }
 
+.ticket-type-badge.ticket-type-burger {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ticket-type-badge:not(.ticket-type-minuman):not(.ticket-type-western):not(.ticket-type-burger) {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
 .kitchen-table {
   font-size: clamp(2rem, 5vw, 2.8rem);
   font-weight: 800;

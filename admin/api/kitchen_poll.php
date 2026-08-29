@@ -42,7 +42,9 @@ if ($useStationCol) {
                 oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
                 o.waktu_order, o.jenis_hidang, o.nama_pelanggan, o.status_bayar,
                 o.payment_method, o.payment_proof_status, t.nomor_meja,
-                mc.kod AS menu_category_kod
+                mc.kod AS menu_category_kod,
+                mc.nama_my AS menu_category_nama_my,
+                mc.nama_en AS menu_category_nama_en
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          INNER JOIN tables t ON t.id = o.table_id
@@ -65,7 +67,9 @@ if ($useStationCol) {
                 oi.nama_saat_order_my, oi.nama_saat_order_en, oi.kategori_saat_order,
                 o.waktu_order, o.jenis_hidang, o.nama_pelanggan, o.status_bayar,
                 o.payment_method, o.payment_proof_status, t.nomor_meja,
-                mc.kod AS menu_category_kod
+                mc.kod AS menu_category_kod,
+                mc.nama_my AS menu_category_nama_my,
+                mc.nama_en AS menu_category_nama_en
          FROM order_items oi
          INNER JOIN orders o ON o.id = oi.order_id
          INNER JOIN tables t ON t.id = o.table_id
@@ -103,10 +107,14 @@ foreach ($items as $it) {
             $newIds[] = $id;
         }
     }
+    $catName = $lang === 'en'
+        ? (string) ($it['menu_category_nama_en'] ?? $it['menu_category_nama_my'] ?? '')
+        : (string) ($it['menu_category_nama_my'] ?? $it['menu_category_nama_en'] ?? '');
     $ticketMeta = kitchenPrintTicketMeta(
         $station,
         (string) ($it['kategori_saat_order'] ?? 'makanan'),
         isset($it['menu_category_kod']) ? (string) $it['menu_category_kod'] : null,
+        $catName !== '' ? $catName : null,
         $lang
     );
     $result[] = [

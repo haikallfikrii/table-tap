@@ -315,8 +315,8 @@ function emptyStationCounts(): array
 }
 
 /**
- * Minuman counter may also prep Western food — split printer tickets by type
- * while keeping one station screen / one staff login.
+ * Minuman counter may also prep Western, Burger, etc. — split printer tickets
+ * by customer menu category while keeping one station screen / one staff login.
  *
  * @return array{ticket_group:string,ticket_label:string}
  */
@@ -324,6 +324,7 @@ function kitchenPrintTicketMeta(
     array $station,
     string $kategoriSaatOrder,
     ?string $menuCategoryKod,
+    ?string $menuCategoryName = null,
     string $lang = 'my'
 ): array {
     $stationKod = (string) ($station['kod'] ?? '');
@@ -335,15 +336,38 @@ function kitchenPrintTicketMeta(
     }
 
     $catKod = strtolower(trim((string) ($menuCategoryKod ?? '')));
-    $isWestern = $catKod === 'western'
-        || ($catKod !== 'minuman' && $kategoriSaatOrder === 'makanan');
 
-    if ($isWestern) {
-        return ['ticket_group' => 'western', 'ticket_label' => 'WESTERN'];
+    if ($catKod === 'minuman' || ($catKod === '' && $kategoriSaatOrder === 'minuman')) {
+        return [
+            'ticket_group' => 'minuman',
+            'ticket_label' => $lang === 'en' ? 'DRINKS' : 'MINUMAN',
+        ];
+    }
+
+    if ($catKod !== '' && !in_array($catKod, ['makanan', 'minuman'], true)) {
+        $label = trim((string) ($menuCategoryName ?? ''));
+        if ($label === '') {
+            $label = strtoupper(str_replace('-', ' ', $catKod));
+        } elseif (function_exists('mb_strtoupper')) {
+            $label = mb_strtoupper($label, 'UTF-8');
+        } else {
+            $label = strtoupper($label);
+        }
+        return [
+            'ticket_group' => $catKod,
+            'ticket_label' => $label,
+        ];
+    }
+
+    if ($kategoriSaatOrder === 'minuman') {
+        return [
+            'ticket_group' => 'minuman',
+            'ticket_label' => $lang === 'en' ? 'DRINKS' : 'MINUMAN',
+        ];
     }
 
     return [
-        'ticket_group' => 'minuman',
-        'ticket_label' => $lang === 'en' ? 'DRINKS' : 'MINUMAN',
+        'ticket_group' => 'makanan',
+        'ticket_label' => $lang === 'en' ? 'FOOD' : 'MAKANAN',
     ];
 }
