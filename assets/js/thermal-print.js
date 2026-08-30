@@ -28,6 +28,10 @@
   var connecting = false;
   var listeners = [];
 
+  /** 58mm / 5.5cm thermal — ~32 chars normal, ~16 when double width+height. */
+  var PAPER_WIDTH = 32;
+  var PAPER_WIDTH_DOUBLE = 16;
+
   function supported() {
     return !!(navigator.bluetooth && typeof navigator.bluetooth.requestDevice === 'function');
   }
@@ -100,7 +104,7 @@
   }
 
   function separator(width) {
-    width = width || 32;
+    width = width || PAPER_WIDTH;
     return line(new Array(width + 1).join('-'));
   }
 
@@ -144,7 +148,7 @@
    */
   function buildKitchenTicket(ticket, labels) {
     labels = labels || {};
-    var width = 32;
+    var width = PAPER_WIDTH;
     var chunks = [];
     var beepCount = resolveBeepCount(labels, 4);
     chunks.push(new Uint8Array([0x1b, 0x40])); // init
@@ -152,37 +156,37 @@
     if (beepCount > 0) {
       chunks.push(beep(beepCount, 2));
     }
-    chunks.push(line(ticket.shopName || 'TableTap', { align: 'center', bold: true }));
+    chunks.push(line(ticket.shopName || 'TableTap', { align: 'center', bold: true, wide: true }));
     if (ticket.stationName) {
-      chunks.push(line(ticket.stationName, { align: 'center' }));
+      chunks.push(line(ticket.stationName, { align: 'center', bold: true, double: true }));
     }
     chunks.push(separator(width));
     chunks.push(line((labels.table || 'Meja') + ' ' + (ticket.table || '-'), { bold: true, double: true, align: 'center' }));
-    chunks.push(line((labels.order || 'Order') + ' #' + ticket.orderId, { align: 'center', bold: true }));
-    chunks.push(line(ticket.serveLabel || '', { align: 'center' }));
+    chunks.push(line((labels.order || 'Order') + ' #' + ticket.orderId, { align: 'center', bold: true, tall: true }));
+    chunks.push(line(ticket.serveLabel || '', { align: 'center', bold: true, tall: true }));
     if (ticket.guest) {
-      chunks.push(line((labels.guest || 'Guest') + ': ' + ticket.guest, { align: 'center' }));
+      chunks.push(line((labels.guest || 'Guest') + ': ' + ticket.guest, { align: 'center', bold: true, tall: true }));
     }
     if (ticket.time) {
-      chunks.push(line(ticket.time, { align: 'center' }));
+      chunks.push(line(ticket.time, { align: 'center', tall: true }));
     }
     chunks.push(separator(width));
 
     (ticket.items || []).forEach(function (it) {
       var qty = 'x' + (it.qty || 1) + ' ';
-      var nameRows = wrapName(it.nama || '', width - qty.length);
-      chunks.push(line(qty + nameRows[0], { bold: true }));
+      var nameRows = wrapName(it.nama || '', PAPER_WIDTH_DOUBLE - qty.length);
+      chunks.push(line(qty + nameRows[0], { bold: true, double: true }));
       for (var i = 1; i < nameRows.length; i++) {
-        chunks.push(line('   ' + nameRows[i]));
+        chunks.push(line(nameRows[i], { bold: true, tall: true }));
       }
       if (it.catatan) {
-        chunks.push(line('* ' + it.catatan));
+        chunks.push(line('* ' + it.catatan, { bold: true, tall: true }));
       }
       chunks.push(new Uint8Array([0x0a]));
     });
 
     chunks.push(separator(width));
-    chunks.push(line(labels.kitchen_ticket || 'KITCHEN TICKET', { align: 'center' }));
+    chunks.push(line(labels.kitchen_ticket || 'KITCHEN TICKET', { align: 'center', bold: true, wide: true }));
     chunks.push(new Uint8Array([0x0a, 0x0a, 0x0a]));
     if (beepCount > 0) {
       var endBeeps = Math.max(1, Math.min(beepCount, 3));
@@ -380,7 +384,7 @@
   }
 
   function padMoneyLine(label, amount, width) {
-    width = width || 32;
+    width = width || PAPER_WIDTH;
     var left = String(label || '');
     var right = String(amount || '');
     var space = width - left.length - right.length;
@@ -397,7 +401,7 @@
    */
   function buildReceiptTicket(receipt, labels) {
     labels = labels || {};
-    var width = 32;
+    var width = PAPER_WIDTH;
     var lang = (receipt && receipt.lang) === 'en' ? 'en' : 'my';
     var chunks = [];
     var beepCount = resolveBeepCount(labels, 0);
