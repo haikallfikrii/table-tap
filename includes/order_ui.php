@@ -280,7 +280,7 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
       ?>
       <?php if ($showCheckoutEmail): ?>
       <label for="checkout-email" style="margin-top:12px"><?= e(t('cafe_email')) ?></label>
-      <input type="email" id="checkout-email" maxlength="255" autocomplete="email" placeholder="<?= e(t('cafe_email_ph')) ?>" required>
+      <input type="text" id="checkout-email" maxlength="255" autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" placeholder="<?= e(t('cafe_email_ph')) ?>" required>
       <p class="order-meta cafe-spam-note"><?= e($deliveryMode ? t('delivery_email_otp_note') : t('cafe_spam_note')) ?></p>
       <?php endif; ?>
       <?php if ($showCheckoutPhone): ?>

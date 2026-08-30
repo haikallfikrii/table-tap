@@ -160,6 +160,8 @@ return [
     'adding'            => 'Menambah...',
     'submitting'        => 'Menghantar...',
     'order_failed'      => 'Gagal hantar pesanan. Cuba lagi.',
+    'order_network_error' => 'Sambungan gagal. Refresh halaman dan imbas QR semula.',
+    'order_bad_response' => 'Server tidak memberi jawapan betul. Cuba refresh halaman.',
     'select_items'      => 'Pilih menu dahulu',
     'dine_in'           => 'Makan di sini',
     'takeaway'          => 'Bungkus',

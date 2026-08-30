@@ -160,6 +160,8 @@ return [
     'adding'            => 'Adding...',
     'submitting'        => 'Submitting...',
     'order_failed'      => 'Failed to place order. Try again.',
+    'order_network_error' => 'Connection failed. Refresh the page and scan the QR again.',
+    'order_bad_response' => 'Unexpected server response. Please refresh the page.',
     'select_items'      => 'Please select items first',
     'dine_in'           => 'Dine in',
     'takeaway'          => 'Takeaway',
