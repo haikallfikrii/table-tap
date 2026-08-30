@@ -24,22 +24,38 @@ function generateOrderGuestToken(): string
     return bin2hex(random_bytes(16));
 }
 
+/** @return array{table_burst_seconds:int,table_burst_max_orders:int,cart_max_qty_per_item:int,cart_max_distinct_items:int,cart_max_total_qty:int} */
+function orderLimits(): array
+{
+    $c = getConfig()['order_limits'] ?? [];
+    return [
+        'table_burst_seconds' => max(10, (int) ($c['table_burst_seconds'] ?? 60)),
+        'table_burst_max_orders' => max(1, (int) ($c['table_burst_max_orders'] ?? 15)),
+        'cart_max_qty_per_item' => max(1, (int) ($c['cart_max_qty_per_item'] ?? 99)),
+        'cart_max_distinct_items' => max(1, (int) ($c['cart_max_distinct_items'] ?? 80)),
+        'cart_max_total_qty' => max(1, (int) ($c['cart_max_total_qty'] ?? 200)),
+    ];
+}
+
 function assertTableOrderRateLimit(int $tableId, int $shopId, ?string $jenisHidang = null): void
 {
     // Shared virtual "Delivery" table must NOT block concurrent customers.
     if ($jenisHidang === 'delivery') {
         return;
     }
-    // Anti double-tap: unpaid orders in the last 30 seconds (per physical table).
+    $limits = orderLimits();
+    $seconds = (int) $limits['table_burst_seconds'];
+    $max = (int) $limits['table_burst_max_orders'];
+    // Anti double-tap: unpaid orders in the burst window (per physical table).
     $burst = db()->prepare(
         "SELECT COUNT(*) FROM orders
          WHERE table_id = ? AND shop_id = ?
            AND status_bayar = 'belum_bayar'
            AND status_order != 'dibatalkan'
-           AND waktu_order >= DATE_SUB(NOW(), INTERVAL 30 SECOND)"
+           AND waktu_order >= DATE_SUB(NOW(), INTERVAL {$seconds} SECOND)"
     );
     $burst->execute([$tableId, $shopId]);
-    if ((int) $burst->fetchColumn() >= 3) {
+    if ((int) $burst->fetchColumn() >= $max) {
         jsonError(t('order_rate_limited'), 429);
     }
 }
@@ -70,19 +86,20 @@ function assertDeliveryContactRateLimit(int $shopId, string $email): void
 /** @param array<int, array{qty:int}> $normalized */
 function assertCartLimits(array $normalized): void
 {
+    $limits = orderLimits();
     $distinct = count($normalized);
     $totalQty = 0;
     foreach ($normalized as $line) {
         $qty = (int) ($line['qty'] ?? 0);
-        if ($qty > 20) {
+        if ($qty > $limits['cart_max_qty_per_item']) {
             jsonError(t('cart_qty_too_high'));
         }
         $totalQty += $qty;
     }
-    if ($distinct > 25) {
+    if ($distinct > $limits['cart_max_distinct_items']) {
         jsonError(t('cart_too_many_items'));
     }
-    if ($totalQty > 50) {
+    if ($totalQty > $limits['cart_max_total_qty']) {
         jsonError(t('cart_total_qty_too_high'));
     }
 }
