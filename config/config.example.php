@@ -40,6 +40,15 @@ return [
     // Cron secret for retention cleanup (Hostinger cron → hit cron/purge_history.php?key=...)
     'cron_secret' => 'CHANGE_ME_TO_RANDOM_STRING',
 
+    // Customer order limits (per table / cart — for busy groups sharing one phone)
+    'order_limits' => [
+        'table_burst_seconds' => 60,       // anti double-tap window per meja
+        'table_burst_max_orders' => 15,      // max unpaid orders in that window
+        'cart_max_qty_per_item' => 99,
+        'cart_max_distinct_items' => 80,
+        'cart_max_total_qty' => 200,
+    ],
+
     // Upload
     'upload_max_bytes' => 2 * 1024 * 1024, // 2MB
     'upload_allowed_types' => ['image/jpeg', 'image/png', 'image/webp'],

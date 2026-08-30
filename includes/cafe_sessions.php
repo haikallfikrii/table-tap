@@ -270,15 +270,18 @@ function assertSessionOrderRateLimit(int $sessionId, int $shopId): void
     if (!orderSessionColumnExists()) {
         return;
     }
+    $limits = orderLimits();
+    $seconds = (int) $limits['table_burst_seconds'];
+    $max = (int) $limits['table_burst_max_orders'];
     $burst = db()->prepare(
         "SELECT COUNT(*) FROM orders
          WHERE session_id = ? AND shop_id = ?
            AND status_bayar = 'belum_bayar'
            AND status_order != 'dibatalkan'
-           AND waktu_order >= DATE_SUB(NOW(), INTERVAL 30 SECOND)"
+           AND waktu_order >= DATE_SUB(NOW(), INTERVAL {$seconds} SECOND)"
     );
     $burst->execute([$sessionId, $shopId]);
-    if ((int) $burst->fetchColumn() >= 3) {
+    if ((int) $burst->fetchColumn() >= $max) {
         jsonError(t('order_rate_limited'), 429);
     }
 }
