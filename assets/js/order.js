@@ -30,7 +30,47 @@
   const cartStore = (staffMode ? 'tt_staff_cart_' : 'tt_cart_') + cartKey;
   const serveStore = (staffMode ? 'tt_staff_serve_' : 'tt_serve_') + cartKey;
   const nameStore = (staffMode ? 'tt_staff_name_' : 'tt_name_') + cartKey;
-  const i18n = JSON.parse(root.dataset.i18n || '{}');
+  const i18n = (function () {
+    try { return JSON.parse(root.dataset.i18n || '{}'); } catch (e) { return {}; }
+  })();
+
+  function resolveFetchUrl(url) {
+    const s = String(url || '').trim();
+    if (!s) {
+      throw new Error(i18n.order_network_error || i18n.order_failed || 'Network error');
+    }
+    try {
+      return new URL(s, window.location.href).href;
+    } catch (e) {
+      throw new Error(i18n.order_network_error || i18n.order_failed || 'Network error');
+    }
+  }
+
+  async function parseJsonResponse(res) {
+    const text = await res.text();
+    if (!text) return {};
+    try {
+      return JSON.parse(text);
+    } catch (e) {
+      throw new Error(i18n.order_bad_response || i18n.order_failed || 'Bad response');
+    }
+  }
+
+  function friendlyOrderError(err) {
+    const msg = String((err && err.message) || '');
+    if (/did not match the expected pattern/i.test(msg)) {
+      return i18n.order_network_error || i18n.order_failed || 'Order failed';
+    }
+    return msg || i18n.order_failed || 'Order failed';
+  }
+
+  function parseItemPayload(raw) {
+    try {
+      return JSON.parse(raw || '{}');
+    } catch (e) {
+      return null;
+    }
+  }
 
   const money = (n) => {
     const v = Number(n) || 0;
@@ -378,18 +418,18 @@
 
   document.querySelectorAll('[data-item]').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      try {
-        handleAddItem(JSON.parse(btn.getAttribute('data-item') || '{}'));
-      } catch (err) { /* ignore */ }
+      const item = parseItemPayload(btn.getAttribute('data-item'));
+      if (!item || !item.id) return;
+      handleAddItem(item);
     });
   });
 
   root.addEventListener('click', function (e) {
     const el = e.target.closest('[data-open-detail]');
     if (!el || el.closest('[data-item]')) return;
-    try {
-      openDetail(JSON.parse(el.getAttribute('data-open-detail') || '{}'));
-    } catch (err) { /* ignore */ }
+    const item = parseItemPayload(el.getAttribute('data-open-detail'));
+    if (!item || !item.id) return;
+    openDetail(item);
   });
 
   document.getElementById('detail-body')?.addEventListener('change', function (e) {
@@ -549,17 +589,21 @@
         payload.table_id = tableId;
         payload.from = staffFrom;
       }
-      const res = await fetch(submitUrl, {
+      const res = await fetch(resolveFetchUrl(submitUrl), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       if (!res.ok || !data.ok) throw new Error(data.error || i18n.order_failed);
       clearCartStorage();
-      window.location.href = data.redirect;
+      if (data.redirect) {
+        window.location.assign(String(data.redirect));
+      } else {
+        throw new Error(i18n.order_failed);
+      }
     } catch (err) {
-      alert(err.message || i18n.order_failed);
+      alert(friendlyOrderError(err));
       if (btn) {
         btn.disabled = false;
         btn.textContent = i18n.submit_order || 'Submit';
@@ -653,7 +697,7 @@
       if (!payMethods[pay]) {
         throw new Error(i18n.pay_method_required || 'Select payment');
       }
-      const res = await fetch(checkoutUrl, {
+      const res = await fetch(resolveFetchUrl(checkoutUrl), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
@@ -668,16 +712,16 @@
           items: cart.map(cartItemPayload),
         }),
       });
-      const data = await res.json();
+      const data = await parseJsonResponse(res);
       if (!res.ok || !data.ok) throw new Error(data.error || i18n.order_failed);
       clearCartStorage();
-      window.location.href = data.redirect;
+      window.location.assign(String(data.redirect || ''));
       return;
     }
     if (requirePhone && !validPhone(checkoutPhone?.value || '')) {
       throw new Error(i18n.phone_required || 'Enter phone');
     }
-    const res = await fetch(checkoutUrl, {
+    const res = await fetch(resolveFetchUrl(checkoutUrl), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({
@@ -691,10 +735,10 @@
         items: cart.map(cartItemPayload),
       }),
     });
-    const data = await res.json();
+    const data = await parseJsonResponse(res);
     if (!res.ok || !data.ok) throw new Error(data.error || i18n.order_failed);
     clearCartStorage();
-    window.location.href = data.redirect;
+    window.location.assign(String(data.redirect || ''));
   }
 
   document.getElementById('btn-checkout-send')?.addEventListener('click', async function () {
@@ -731,7 +775,7 @@
       const btn = document.getElementById('btn-checkout-send');
       if (btn) { btn.disabled = true; btn.textContent = i18n.cafe_sending || 'Sending...'; }
       try {
-        const res = await fetch(sendOtpUrl, {
+        const res = await fetch(resolveFetchUrl(sendOtpUrl), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify({
@@ -742,14 +786,14 @@
             lang: document.documentElement.lang === 'en' ? 'en' : 'my',
           }),
         });
-        const data = await res.json();
+        const data = await parseJsonResponse(res);
         if (!res.ok || !data.ok) throw new Error(data.error || i18n.order_failed);
         if (checkoutOtpSent) checkoutOtpSent.textContent = data.email_masked || email;
         if (checkoutStepDetails) checkoutStepDetails.hidden = true;
         if (checkoutStepOtp) checkoutStepOtp.hidden = false;
         checkoutOtp?.focus();
       } catch (err) {
-        alert(err.message || i18n.order_failed);
+        alert(friendlyOrderError(err));
       } finally {
         if (btn) { btn.disabled = false; btn.textContent = i18n.cafe_send_code || 'Send code'; }
       }
@@ -760,7 +804,7 @@
     try {
       await runCafeCheckout('');
     } catch (err) {
-      alert(err.message || i18n.order_failed);
+      alert(friendlyOrderError(err));
       if (btn) { btn.disabled = false; btn.textContent = i18n.cafe_confirm_order || 'Confirm'; }
     }
   });
@@ -777,7 +821,7 @@
     try {
       await runCafeCheckout(code);
     } catch (err) {
-      alert(err.message || i18n.order_failed);
+      alert(friendlyOrderError(err));
       if (btn) { btn.disabled = false; btn.textContent = i18n.cafe_confirm_order || 'Confirm'; }
     }
   });
