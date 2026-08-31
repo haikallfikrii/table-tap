@@ -82,6 +82,90 @@ $plans = [
     ],
 ];
 
+$addons = [
+    [
+        'img'    => 'img/addons/qr-tent-a6.png',
+        'title'  => t('lp_addon_qr_tent_t'),
+        'desc'   => t('lp_addon_qr_tent_d'),
+        'price'  => 'RM 2',
+        'suffix' => t('lp_addon_per_table'),
+        'badge'  => t('lp_addon_badge_popular'),
+        'soon'   => false,
+    ],
+    [
+        'img'    => 'img/addons/qr-sticker.png',
+        'title'  => t('lp_addon_qr_sticker_t'),
+        'desc'   => t('lp_addon_qr_sticker_d'),
+        'price'  => 'RM 1.50',
+        'suffix' => t('lp_addon_per_table'),
+        'badge'  => null,
+        'soon'   => false,
+    ],
+    [
+        'img'    => 'img/addons/qr-acrylic-stand.png',
+        'title'  => t('lp_addon_qr_stand_t'),
+        'desc'   => t('lp_addon_qr_stand_d'),
+        'price'  => 'RM 12',
+        'suffix' => t('lp_addon_per_unit'),
+        'badge'  => null,
+        'soon'   => false,
+    ],
+    [
+        'img'    => 'img/addons/qr-design-custom.png',
+        'title'  => t('lp_addon_qr_design_t'),
+        'desc'   => t('lp_addon_qr_design_d'),
+        'price'  => t('lp_addon_free'),
+        'suffix' => '',
+        'badge'  => t('lp_addon_badge_free'),
+        'soon'   => false,
+    ],
+    [
+        'img'    => 'img/addons/thermal-printer-bt.png',
+        'title'  => t('lp_addon_printer_t'),
+        'desc'   => t('lp_addon_printer_d'),
+        'price'  => 'RM 55',
+        'suffix' => t('lp_addon_per_unit'),
+        'badge'  => t('lp_addon_badge_popular'),
+        'soon'   => false,
+    ],
+    [
+        'img'    => 'img/addons/remote-setup-kit.png',
+        'title'  => t('lp_addon_remote_t'),
+        'desc'   => t('lp_addon_remote_d'),
+        'price'  => 'RM 99',
+        'suffix' => t('lp_addon_per_unit'),
+        'badge'  => t('lp_addon_badge_remote'),
+        'soon'   => false,
+    ],
+    [
+        'img'    => 'img/addons/kitchen-screen.png',
+        'title'  => t('lp_addon_onsite_t'),
+        'desc'   => t('lp_addon_onsite_d'),
+        'price'  => t('lp_addon_from') . ' RM 150',
+        'suffix' => '',
+        'badge'  => t('lp_addon_badge_onsite'),
+        'soon'   => false,
+    ],
+    [
+        'img'    => 'img/addons/tablet-kasir-stand.png',
+        'title'  => t('lp_addon_tablet_t'),
+        'desc'   => t('lp_addon_tablet_d'),
+        'price'  => t('lp_addon_from') . ' RM 399',
+        'suffix' => t('lp_addon_per_unit'),
+        'badge'  => null,
+        'soon'   => false,
+    ],
+    [
+        'img'    => 'img/addons/cash-drawer.png',
+        'title'  => t('lp_addon_drawer_t'),
+        'desc'   => t('lp_addon_drawer_d'),
+        'price'  => t('lp_addon_soon'),
+        'suffix' => '',
+        'badge'  => null,
+        'soon'   => true,
+    ],
+];
+
 $features = [
     ['qr', t('lp_f1_t'), t('lp_f1_d')],
     ['cafe', t('lp_f7_t'), t('lp_f7_d')],
@@ -119,6 +203,7 @@ $navLinks = [
     '#how'      => t('lp_nav_how'),
     '#demo'     => t('lp_nav_demo'),
     '#pricing'  => t('lp_nav_pricing'),
+    '#addons'   => t('lp_nav_addons'),
     '#faq'      => t('lp_nav_faq'),
     blogUrl()   => t('lp_nav_blog'),
 ];
@@ -893,6 +978,49 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
     </div>
   </section>
 
+  <!-- ================= ADD-ONS ================= -->
+  <section class="sec" id="addons">
+    <div class="wrap">
+      <div class="sec-head center reveal">
+        <span class="kicker"><?= e(t('lp_addons_kicker')) ?></span>
+        <h2><?= e(t('lp_addons_title')) ?></h2>
+        <p><?= e(t('lp_addons_sub')) ?></p>
+      </div>
+
+      <div class="addons-grid">
+        <?php foreach ($addons as $addon): ?>
+          <article class="addon-card reveal<?= !empty($addon['soon']) ? ' addon-soon' : '' ?>">
+            <div class="addon-photo">
+              <img src="<?= e(assetUrl($addon['img'])) ?>" alt="<?= e($addon['title']) ?>" loading="lazy" width="640" height="480">
+              <?php if (!empty($addon['badge'])): ?>
+                <span class="addon-badge"><?= e($addon['badge']) ?></span>
+              <?php endif; ?>
+            </div>
+            <div class="addon-body">
+              <h3><?= e($addon['title']) ?></h3>
+              <p class="addon-desc"><?= e($addon['desc']) ?></p>
+              <div class="addon-price-row">
+                <span class="addon-price"><?= e($addon['price']) ?></span>
+                <?php if (!empty($addon['suffix'])): ?>
+                  <span class="addon-suffix"><?= e($addon['suffix']) ?></span>
+                <?php endif; ?>
+              </div>
+              <?php if (empty($addon['soon'])): ?>
+                <a class="btn btn-outline addon-cta" href="<?= e($waBiz . '?text=' . rawurlencode(t('lp_wa_addon', $addon['title']))) ?>" target="_blank" rel="noopener noreferrer">
+                  <?= e(t('lp_addon_order')) ?>
+                </a>
+              <?php else: ?>
+                <span class="btn btn-outline addon-cta disabled"><?= e(t('lp_addon_ask')) ?></span>
+              <?php endif; ?>
+            </div>
+          </article>
+        <?php endforeach; ?>
+      </div>
+
+      <p class="addons-note"><?= e(t('lp_addons_note')) ?></p>
+    </div>
+  </section>
+
   <?php $blogPreview = array_slice(blogAllPosts(), 0, 3); ?>
   <?php if ($blogPreview !== []): ?>
   <!-- ================= BLOG ================= -->
@@ -981,6 +1109,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
           <li><a href="#how"><?= e(t('lp_nav_how')) ?></a></li>
           <li><a href="#demo"><?= e(t('lp_nav_demo')) ?></a></li>
           <li><a href="#pricing"><?= e(t('lp_nav_pricing')) ?></a></li>
+          <li><a href="#addons"><?= e(t('lp_nav_addons')) ?></a></li>
           <li><a href="<?= e(blogUrl()) ?>"><?= e(t('lp_nav_blog')) ?></a></li>
         </ul>
       </div>
