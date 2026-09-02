@@ -108,7 +108,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 throw new RuntimeException(t('error_generic'));
             }
             $kategori = menuCategoryKind($category);
-            $stationId = resolveMenuStationId($shopId, $kategori, (int) ($_POST['station_id'] ?? 0), $category);
+            $stationId = resolveMenuStationId($shopId, $kategori, (int) ($_POST['station_id'] ?? 0));
             $stok = ($_POST['status_stok'] ?? '') === 'habis' ? 'habis' : 'tersedia';
             $urutan = (int) ($_POST['urutan'] ?? 0);
 

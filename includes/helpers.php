@@ -533,7 +533,11 @@ function createShopOrder(
         $subtotal += $harga * $qty;
         $stationId = null;
         if ($stationCols) {
-            $stationId = resolveOrderItemStationId($shopId, $m);
+            $stationId = (int) ($m['station_id'] ?? 0);
+            if ($stationId <= 0) {
+                $fallback = defaultStationForKategori($shopId, (string) $m['kategori']);
+                $stationId = $fallback ? (int) $fallback['id'] : null;
+            }
         }
         $lines[] = [
             'menu_item_id' => $menuId,
