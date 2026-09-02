@@ -108,7 +108,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 throw new RuntimeException(t('error_generic'));
             }
             $kategori = menuCategoryKind($category);
-            $stationId = resolveMenuStationId($shopId, $kategori, (int) ($_POST['station_id'] ?? 0));
+            $stationId = resolveMenuStationId($shopId, $kategori, (int) ($_POST['station_id'] ?? 0), $category);
             $stok = ($_POST['status_stok'] ?? '') === 'habis' ? 'habis' : 'tersedia';
             $urutan = (int) ($_POST['urutan'] ?? 0);
 
@@ -463,7 +463,17 @@ if (isset($_GET['ok'])) {
 </div>
 
 <div class="table-list-wrap">
-  <table class="table-list">
+  <div class="owner-menu-toolbar">
+    <h2 style="margin:0;font-size:1.05rem"><?= e(t('manage_menu')) ?></h2>
+    <label class="owner-menu-search" for="owner-menu-search">
+      <span class="sr-only"><?= e(t('search')) ?></span>
+      <input type="search" id="owner-menu-search" placeholder="<?= e(t('menu_search_ph')) ?>" autocomplete="off" enterkeyhint="search">
+      <button type="button" class="owner-menu-search-clear" id="owner-menu-search-clear" aria-label="<?= e(t('close')) ?>" hidden>&times;</button>
+    </label>
+  </div>
+  <p class="owner-menu-search-meta" id="owner-menu-search-meta"></p>
+  <p class="owner-menu-search-empty" id="owner-menu-search-empty" hidden><?= e(t('menu_search_empty')) ?></p>
+  <table class="table-list" id="owner-menu-table">
     <thead>
       <tr>
         <th><?= e(t('photo')) ?></th>
@@ -476,8 +486,32 @@ if (isset($_GET['ok'])) {
       </tr>
     </thead>
     <tbody>
-      <?php foreach ($items as $item): ?>
-        <tr>
+      <?php foreach ($items as $item):
+        $cid = (int) ($item['menu_category_id'] ?? 0);
+        $cname = t($item['kategori']);
+        foreach ($menuCategories as $cat) {
+            if ((int) $cat['id'] === $cid) {
+                $cname = menuCategoryLabel($cat, $lang);
+                break;
+            }
+        }
+        $sid = (int) ($item['station_id'] ?? 0);
+        $sname = '';
+        foreach ($stations as $st) {
+            if ((int) $st['id'] === $sid) {
+                $sname = stationLabel($st, $lang);
+                break;
+            }
+        }
+        $searchText = mb_strtolower(
+            ($item['nama_my'] ?? '') . ' '
+            . ($item['nama_en'] ?? '') . ' '
+            . $cname . ' '
+            . $sname . ' '
+            . formatMoney((float) $item['harga'])
+        );
+      ?>
+        <tr data-search="<?= e($searchText) ?>">
           <td>
             <?php if ($item['foto_url']): ?>
               <img src="<?= e(uploadUrl($item['foto_url'])) ?>" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px">
@@ -489,28 +523,8 @@ if (isset($_GET['ok'])) {
             <strong><?= e($item['nama_my']) ?></strong><br>
             <span class="order-meta"><?= e($item['nama_en']) ?></span>
           </td>
-          <td><?php
-            $cid = (int) ($item['menu_category_id'] ?? 0);
-            $cname = t($item['kategori']);
-            foreach ($menuCategories as $cat) {
-                if ((int) $cat['id'] === $cid) {
-                    $cname = menuCategoryLabel($cat, $lang);
-                    break;
-                }
-            }
-            echo e($cname);
-          ?></td>
-          <td><?php
-            $sid = (int) ($item['station_id'] ?? 0);
-            $sname = '—';
-            foreach ($stations as $st) {
-                if ((int) $st['id'] === $sid) {
-                    $sname = stationLabel($st, $lang);
-                    break;
-                }
-            }
-            echo e($sname);
-          ?></td>
+          <td><?php echo e($cname); ?></td>
+          <td><?php echo e($sname !== '' ? $sname : '—'); ?></td>
           <td><?= e(formatMoney($item['harga'])) ?></td>
           <td>
             <span class="badge <?= $item['status_stok'] === 'tersedia' ? 'badge-selesai' : 'badge-belum_bayar' ?>">
@@ -571,6 +585,46 @@ if (isset($_GET['ok'])) {
   });
   bindRemove(document.getElementById('addon-pilihan-rows'));
   bindRemove(document.getElementById('addon-tambahan-rows'));
+
+  const menuSearch = document.getElementById('owner-menu-search');
+  const menuSearchClear = document.getElementById('owner-menu-search-clear');
+  const menuSearchEmpty = document.getElementById('owner-menu-search-empty');
+  const menuSearchMeta = document.getElementById('owner-menu-search-meta');
+  const menuRows = Array.from(document.querySelectorAll('#owner-menu-table tbody tr[data-search]'));
+  const totalRows = menuRows.length;
+
+  function normalizeOwnerSearch(value) {
+    return (value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+
+  function applyOwnerMenuSearch() {
+    const q = normalizeOwnerSearch(menuSearch?.value);
+    const isSearching = q.length > 0;
+    let visible = 0;
+    menuRows.forEach(function (row) {
+      const text = normalizeOwnerSearch(row.getAttribute('data-search') || '');
+      const show = !isSearching || text.indexOf(q) !== -1;
+      row.hidden = !show;
+      if (show) visible++;
+    });
+    if (menuSearchEmpty) menuSearchEmpty.hidden = !isSearching || visible > 0;
+    if (menuSearchClear) menuSearchClear.hidden = !isSearching;
+    if (menuSearchMeta) {
+      if (isSearching) {
+        menuSearchMeta.textContent = visible + ' / ' + totalRows;
+      } else {
+        menuSearchMeta.textContent = totalRows > 0 ? String(totalRows) : '';
+      }
+    }
+  }
+
+  menuSearch?.addEventListener('input', applyOwnerMenuSearch);
+  menuSearchClear?.addEventListener('click', function () {
+    if (menuSearch) menuSearch.value = '';
+    applyOwnerMenuSearch();
+    menuSearch?.focus();
+  });
+  applyOwnerMenuSearch();
 })();
 </script>
 
