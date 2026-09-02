@@ -133,84 +133,11 @@ function defaultStationForKategori(int $shopId, string $kategori): ?array
     return shopStationByKod($shopId, $kod);
 }
 
-/** Customer menu tabs that share the minuman / bar station (Port Santai model). */
-function menuCategoryKodRoutesToMinuman(string $catKod): bool
-{
-    $catKod = strtolower(trim($catKod));
-    if ($catKod === '' || $catKod === 'makanan') {
-        return false;
-    }
-    static $kods = ['minuman', 'western', 'burger', 'drinks', 'air', 'minum', 'beverage', 'beverages'];
-
-    return in_array($catKod, $kods, true);
-}
-
-/**
- * Resolve work station from menu category + legacy kategori (order snapshot).
- *
- * @param array<string,mixed> $menuRow menu_items row (+ optional menu_category_kod from JOIN)
- */
-function resolveOrderItemStationId(int $shopId, array $menuRow): ?int
-{
-    if (!stationsTableExists()) {
-        return null;
-    }
-
-    require_once __DIR__ . '/menu_categories.php';
-
-    $catKod = strtolower(trim((string) ($menuRow['menu_category_kod'] ?? '')));
-    $kategori = (string) ($menuRow['kategori'] ?? 'makanan');
-
-    if (menuCategoryKodRoutesToMinuman($catKod) || $kategori === 'minuman') {
-        $st = shopStationByKod($shopId, 'minuman');
-
-        return $st ? (int) $st['id'] : null;
-    }
-
-    if ($catKod === 'makanan') {
-        $st = shopStationByKod($shopId, 'dapur');
-
-        return $st ? (int) $st['id'] : null;
-    }
-
-    $sid = (int) ($menuRow['station_id'] ?? 0);
-    if ($sid > 0) {
-        $st = findShopStation($shopId, $sid);
-        if ($st && (int) $st['is_active'] === 1) {
-            return $sid;
-        }
-    }
-
-    $fallback = defaultStationForKategori($shopId, $kategori);
-
-    return $fallback ? (int) $fallback['id'] : null;
-}
-
-/**
- * @param array<string,mixed>|null $menuCategory menu_categories row when saving owner menu
- */
-function resolveMenuStationId(int $shopId, string $kategori, int $postedStationId, ?array $menuCategory = null): ?int
+function resolveMenuStationId(int $shopId, string $kategori, int $postedStationId): ?int
 {
     if (!stationsTableExists() || !menuStationColumnExists()) {
         return null;
     }
-
-    require_once __DIR__ . '/menu_categories.php';
-
-    if ($menuCategory) {
-        $catKod = (string) ($menuCategory['kod'] ?? '');
-        if (menuCategoryKodRoutesToMinuman($catKod) || menuCategoryKind($menuCategory) === 'minuman') {
-            $st = shopStationByKod($shopId, 'minuman');
-
-            return $st ? (int) $st['id'] : null;
-        }
-        if ($catKod === 'makanan') {
-            $st = shopStationByKod($shopId, 'dapur');
-
-            return $st ? (int) $st['id'] : null;
-        }
-    }
-
     if ($postedStationId > 0) {
         $st = findShopStation($shopId, $postedStationId);
         if ($st && (int) $st['is_active'] === 1) {
@@ -218,7 +145,6 @@ function resolveMenuStationId(int $shopId, string $kategori, int $postedStationI
         }
     }
     $fallback = defaultStationForKategori($shopId, $kategori);
-
     return $fallback ? (int) $fallback['id'] : null;
 }
 
@@ -352,22 +278,6 @@ function backfillMenuAndOrderStations(?PDO $pdo = null): void
              SET mi.station_id = s.id
              WHERE mi.station_id IS NULL"
         );
-        if (menuCategoryColumnExists() && menuCategoriesTableExists()) {
-            $pdo->exec(
-                "UPDATE menu_items mi
-                 INNER JOIN menu_categories mc ON mc.id = mi.menu_category_id
-                 INNER JOIN stations s ON s.shop_id = mi.shop_id AND s.kod = 'minuman'
-                 SET mi.station_id = s.id
-                 WHERE mc.kod IN ('minuman', 'western', 'burger', 'drinks', 'air')"
-            );
-            $pdo->exec(
-                "UPDATE menu_items mi
-                 INNER JOIN menu_categories mc ON mc.id = mi.menu_category_id
-                 INNER JOIN stations s ON s.shop_id = mi.shop_id AND s.kod = 'dapur'
-                 SET mi.station_id = s.id
-                 WHERE mc.kod = 'makanan'"
-            );
-        }
     }
     if (orderStationColumnExists()) {
         $pdo->exec(
