@@ -492,16 +492,22 @@
     if (splitGuest) splitGuest.value = order.nama_pelanggan || '';
 
     splitBody.innerHTML = (order.items || []).map(function (it) {
-      const line = (Number(it.harga_saat_order) || 0) * (Number(it.qty) || 0);
+      const maxQty = Math.max(1, Number(it.qty) || 1);
+      const unit = Number(it.harga_saat_order) || 0;
       return (
-        '<label class="split-item">' +
-          '<input type="checkbox" data-split-item="' + it.id + '" data-line="' + line + '">' +
-          '<span class="split-item-body">' +
-            '<span class="split-item-name">' + esc(it.qty + '× ' + it.nama) + '</span>' +
+        '<div class="split-item" data-split-row="' + it.id + '" data-unit="' + unit + '" data-max="' + maxQty + '">' +
+          '<div class="split-item-body">' +
+            '<span class="split-item-name">' + esc(it.nama) + '</span>' +
             (it.catatan ? '<span class="item-note">' + esc(it.catatan) + '</span>' : '') +
-          '</span>' +
-          '<span class="split-item-amt">' + money(line) + '</span>' +
-        '</label>'
+            '<span class="split-item-meta">' + esc(money(unit) + ' × ' + maxQty) + '</span>' +
+          '</div>' +
+          '<div class="split-qty" role="group" aria-label="' + esc(it.nama) + '">' +
+            '<button type="button" class="split-qty-btn" data-split-dec="' + it.id + '" aria-label="-">−</button>' +
+            '<span class="split-qty-val" data-split-qty="' + it.id + '">0</span>' +
+            '<button type="button" class="split-qty-btn" data-split-inc="' + it.id + '" aria-label="+">+</button>' +
+          '</div>' +
+          '<span class="split-item-amt" data-split-amt="' + it.id + '">' + money(0) + '</span>' +
+        '</div>'
       );
     }).join('');
 
@@ -516,39 +522,65 @@
     splitOrderId = 0;
   }
 
+  function getSplitSelections() {
+    const rows = [];
+    let selectedUnits = 0;
+    let totalUnits = 0;
+    let sub = 0;
+    splitBody?.querySelectorAll('[data-split-row]').forEach(function (row) {
+      const id = Number(row.getAttribute('data-split-row'));
+      const max = Number(row.getAttribute('data-max')) || 1;
+      const unit = Number(row.getAttribute('data-unit')) || 0;
+      const qtyEl = row.querySelector('[data-split-qty]');
+      const qty = Math.max(0, Math.min(max, Number(qtyEl && qtyEl.textContent) || 0));
+      totalUnits += max;
+      if (qty > 0) {
+        selectedUnits += qty;
+        sub += unit * qty;
+        rows.push({ id: id, qty: qty });
+      }
+      const amtEl = row.querySelector('[data-split-amt]');
+      if (amtEl) amtEl.textContent = money(unit * qty);
+      row.classList.toggle('is-selected', qty > 0);
+    });
+    return { rows: rows, selectedUnits: selectedUnits, totalUnits: totalUnits, sub: sub };
+  }
+
+  function bumpSplitQty(itemId, delta) {
+    if (!splitBody) return;
+    const row = splitBody.querySelector('[data-split-row="' + itemId + '"]');
+    if (!row) return;
+    const max = Number(row.getAttribute('data-max')) || 1;
+    const qtyEl = row.querySelector('[data-split-qty]');
+    if (!qtyEl) return;
+    const next = Math.max(0, Math.min(max, (Number(qtyEl.textContent) || 0) + delta));
+    qtyEl.textContent = String(next);
+    updateSplitPreview();
+  }
+
   function updateSplitPreview() {
     if (!splitBody || !splitTotal) return;
-    let sub = 0;
-    let checked = 0;
-    let totalBoxes = 0;
-    splitBody.querySelectorAll('[data-split-item]').forEach(function (box) {
-      totalBoxes++;
-      if (box.checked) {
-        checked++;
-        sub += Number(box.getAttribute('data-line')) || 0;
-      }
-    });
+    const sel = getSplitSelections();
+    const sub = Math.round(sel.sub * 100) / 100;
     const sst = splitSstEnabled && splitSstRate > 0 ? Math.round(sub * (splitSstRate / 100) * 100) / 100 : 0;
     const total = Math.round((sub + sst) * 100) / 100;
-    const invalidAll = checked > 0 && checked === totalBoxes;
+    const invalidAll = sel.selectedUnits > 0 && sel.selectedUnits >= sel.totalUnits;
     splitTotal.innerHTML =
       '<div>' + esc(i18n.subtotal || 'Subtotal') + ': <strong>' + money(sub) + '</strong></div>' +
       (sst > 0 ? '<div>SST: <strong>' + money(sst) + '</strong></div>' : '') +
       '<div>' + esc(i18n.total || 'Total') + ': <strong>' + money(total) + '</strong></div>' +
       (invalidAll
         ? '<p class="split-hint warn">' + esc(i18n.split_select_partial || 'Leave at least one item unpaid, or mark the whole bill paid.') + '</p>'
-        : '<p class="split-hint">' + esc(i18n.split_hint || 'Tick items this guest pays now. Remaining stay unpaid.') + '</p>');
+        : '<p class="split-hint">' + esc(i18n.split_hint || 'Choose how many of each item this guest pays now. Remaining stay unpaid.') + '</p>');
 
     const confirmBtn = document.getElementById('btn-split-confirm');
-    if (confirmBtn) confirmBtn.disabled = checked === 0 || invalidAll;
+    if (confirmBtn) confirmBtn.disabled = sel.selectedUnits === 0 || invalidAll;
   }
 
   async function confirmSplit() {
     if (!splitUrl || !splitOrderId) return;
-    const ids = [];
-    splitBody?.querySelectorAll('[data-split-item]:checked').forEach(function (box) {
-      ids.push(Number(box.getAttribute('data-split-item')));
-    });
+    const sel = getSplitSelections();
+    if (!sel.rows.length) return;
     const btn = document.getElementById('btn-split-confirm');
     if (btn) btn.disabled = true;
     try {
@@ -558,7 +590,7 @@
         credentials: 'same-origin',
         body: JSON.stringify({
           order_id: splitOrderId,
-          item_ids: ids,
+          items: sel.rows,
           nama_pelanggan: (splitGuest && splitGuest.value.trim()) || '',
         }),
       });
@@ -876,6 +908,19 @@
 
   splitBody?.addEventListener('change', function (e) {
     if (e.target && e.target.matches('[data-split-item]')) updateSplitPreview();
+  });
+  splitBody?.addEventListener('click', function (e) {
+    const dec = e.target.closest('[data-split-dec]');
+    if (dec) {
+      e.preventDefault();
+      bumpSplitQty(Number(dec.getAttribute('data-split-dec')), -1);
+      return;
+    }
+    const inc = e.target.closest('[data-split-inc]');
+    if (inc) {
+      e.preventDefault();
+      bumpSplitQty(Number(inc.getAttribute('data-split-inc')), 1);
+    }
   });
   document.getElementById('btn-split-confirm')?.addEventListener('click', confirmSplit);
   document.getElementById('btn-close-split')?.addEventListener('click', closeSplitModal);
