@@ -466,11 +466,11 @@ function createShopOrder(
         jsonError('No valid items');
     }
 
-    assertCartLimits($normalized);
+    assertCartLimits($normalized, $shop);
     if ($sessionId !== null && $sessionId > 0 && function_exists('assertSessionOrderRateLimit')) {
-        assertSessionOrderRateLimit($sessionId, $shopId);
+        assertSessionOrderRateLimit($sessionId, $shopId, $shop);
     } else {
-        assertTableOrderRateLimit((int) $table['id'], $shopId, $jenisHidang);
+        assertTableOrderRateLimit((int) $table['id'], $shopId, $jenisHidang, $shop);
     }
 
     $pdo = db();

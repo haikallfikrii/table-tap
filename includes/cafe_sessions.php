@@ -265,12 +265,15 @@ function findSessionByToken(string $sessionToken): ?array
     return $row;
 }
 
-function assertSessionOrderRateLimit(int $sessionId, int $shopId): void
+function assertSessionOrderRateLimit(int $sessionId, int $shopId, ?array $shop = null): void
 {
     if (!orderSessionColumnExists()) {
         return;
     }
-    $limits = orderLimits();
+    if ($shop === null) {
+        $shop = findShopById($shopId);
+    }
+    $limits = orderLimits($shop);
     $seconds = (int) $limits['table_burst_seconds'];
     $max = (int) $limits['table_burst_max_orders'];
     $burst = db()->prepare(

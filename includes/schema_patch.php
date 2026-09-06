@@ -418,6 +418,18 @@ function ensureAppSchema(PDO $pdo): void
                  ADD COLUMN printer_beep_kasir TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER printer_beep_kitchen'
             );
         }
+
+        $orderBurstCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'order_burst_max'")->fetch();
+        if (!$orderBurstCol) {
+            $pdo->exec(
+                'ALTER TABLE shops
+                 ADD COLUMN order_burst_seconds SMALLINT UNSIGNED NOT NULL DEFAULT 90 AFTER printer_beep_kasir,
+                 ADD COLUMN order_burst_max SMALLINT UNSIGNED NOT NULL DEFAULT 30 AFTER order_burst_seconds,
+                 ADD COLUMN cart_max_qty_per_item SMALLINT UNSIGNED NOT NULL DEFAULT 99 AFTER order_burst_max,
+                 ADD COLUMN cart_max_distinct_items SMALLINT UNSIGNED NOT NULL DEFAULT 100 AFTER cart_max_qty_per_item,
+                 ADD COLUMN cart_max_total_qty SMALLINT UNSIGNED NOT NULL DEFAULT 300 AFTER cart_max_distinct_items'
+            );
+        }
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }

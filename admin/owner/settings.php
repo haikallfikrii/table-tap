@@ -40,6 +40,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $kasirPrintOnPaid = isset($_POST['kasir_print_on_paid']) ? 1 : 0;
         $printerBeepKitchen = max(0, min(9, (int) ($_POST['printer_beep_kitchen'] ?? 4)));
         $printerBeepKasir = max(0, min(9, (int) ($_POST['printer_beep_kasir'] ?? 0)));
+        $orderBurstSeconds = max(10, min(600, (int) ($_POST['order_burst_seconds'] ?? 90)));
+        $orderBurstMax = max(1, min(200, (int) ($_POST['order_burst_max'] ?? 30)));
+        $cartMaxQtyPerItem = max(1, min(999, (int) ($_POST['cart_max_qty_per_item'] ?? 99)));
+        $cartMaxDistinct = max(1, min(500, (int) ($_POST['cart_max_distinct_items'] ?? 100)));
+        $cartMaxTotalQty = max(1, min(2000, (int) ($_POST['cart_max_total_qty'] ?? 300)));
         $fulfillment = (string) ($_POST['fulfillment_mode'] ?? 'waiter');
         if (!in_array($fulfillment, ['waiter', 'self_pickup'], true)) {
             $fulfillment = 'waiter';
@@ -94,6 +99,19 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 'UPDATE shops SET kasir_print_on_paid = ?, printer_beep_kitchen = ?, printer_beep_kasir = ?
                  WHERE id = ?'
             )->execute([$kasirPrintOnPaid, $printerBeepKitchen, $printerBeepKasir, $shopId]);
+        }
+
+        $orderLimitCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'order_burst_max'")->fetch();
+        if ($orderLimitCol) {
+            $pdo->prepare(
+                'UPDATE shops SET order_burst_seconds = ?, order_burst_max = ?,
+                        cart_max_qty_per_item = ?, cart_max_distinct_items = ?, cart_max_total_qty = ?
+                 WHERE id = ?'
+            )->execute([
+                $orderBurstSeconds, $orderBurstMax,
+                $cartMaxQtyPerItem, $cartMaxDistinct, $cartMaxTotalQty,
+                $shopId,
+            ]);
         }
 
         if (orderingModeColumnExists()) {
@@ -368,6 +386,39 @@ $retentionLabel = $shop['retention_days'] === null
       </div>
     </fieldset>
     <?php endif; ?>
+
+    <fieldset class="settings-fieldset">
+      <legend><?= e(t('order_limits_settings')) ?></legend>
+      <p class="settings-fieldset-desc"><?= e(t('order_limits_settings_hint')) ?></p>
+      <?php
+        $ol = orderLimits($shop);
+      ?>
+      <div class="form-group">
+        <label><?= e(t('order_burst_max')) ?></label>
+        <input type="number" min="1" max="200" name="order_burst_max" value="<?= (int) ($shop['order_burst_max'] ?? $ol['table_burst_max_orders']) ?>">
+        <p class="order-meta"><?= e(t('order_burst_max_hint')) ?></p>
+      </div>
+      <div class="form-group">
+        <label><?= e(t('order_burst_seconds')) ?></label>
+        <input type="number" min="10" max="600" name="order_burst_seconds" value="<?= (int) ($shop['order_burst_seconds'] ?? $ol['table_burst_seconds']) ?>">
+        <p class="order-meta"><?= e(t('order_burst_seconds_hint')) ?></p>
+      </div>
+      <div class="form-group">
+        <label><?= e(t('cart_max_qty_per_item')) ?></label>
+        <input type="number" min="1" max="999" name="cart_max_qty_per_item" value="<?= (int) ($shop['cart_max_qty_per_item'] ?? $ol['cart_max_qty_per_item']) ?>">
+        <p class="order-meta"><?= e(t('cart_max_qty_per_item_hint')) ?></p>
+      </div>
+      <div class="form-group">
+        <label><?= e(t('cart_max_distinct_items')) ?></label>
+        <input type="number" min="1" max="500" name="cart_max_distinct_items" value="<?= (int) ($shop['cart_max_distinct_items'] ?? $ol['cart_max_distinct_items']) ?>">
+        <p class="order-meta"><?= e(t('cart_max_distinct_items_hint')) ?></p>
+      </div>
+      <div class="form-group">
+        <label><?= e(t('cart_max_total_qty')) ?></label>
+        <input type="number" min="1" max="2000" name="cart_max_total_qty" value="<?= (int) ($shop['cart_max_total_qty'] ?? $ol['cart_max_total_qty']) ?>">
+        <p class="order-meta"><?= e(t('cart_max_total_qty_hint')) ?></p>
+      </div>
+    </fieldset>
 
     <fieldset class="settings-fieldset">
       <legend><?= e(t('printer_settings')) ?></legend>
