@@ -40,13 +40,13 @@ return [
     // Cron secret for retention cleanup (Hostinger cron → hit cron/purge_history.php?key=...)
     'cron_secret' => 'CHANGE_ME_TO_RANDOM_STRING',
 
-    // Customer order limits (per table / cart — for busy groups sharing one phone)
+    // Customer order limits (per table / cart — shop settings can override)
     'order_limits' => [
-        'table_burst_seconds' => 60,       // anti double-tap window per meja
-        'table_burst_max_orders' => 15,      // max unpaid orders in that window
+        'table_burst_seconds' => 90,         // anti double-tap window per meja
+        'table_burst_max_orders' => 30,      // max unpaid orders in that window
         'cart_max_qty_per_item' => 99,
-        'cart_max_distinct_items' => 80,
-        'cart_max_total_qty' => 200,
+        'cart_max_distinct_items' => 100,
+        'cart_max_total_qty' => 300,
     ],
 
     // Upload

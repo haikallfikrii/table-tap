@@ -24,26 +24,64 @@ function generateOrderGuestToken(): string
     return bin2hex(random_bytes(16));
 }
 
-/** @return array{table_burst_seconds:int,table_burst_max_orders:int,cart_max_qty_per_item:int,cart_max_distinct_items:int,cart_max_total_qty:int} */
-function orderLimits(): array
+/**
+ * Global defaults from config (fallback when shop has no overrides).
+ *
+ * @return array{table_burst_seconds:int,table_burst_max_orders:int,cart_max_qty_per_item:int,cart_max_distinct_items:int,cart_max_total_qty:int}
+ */
+function orderLimitsDefaults(): array
 {
     $c = getConfig()['order_limits'] ?? [];
     return [
-        'table_burst_seconds' => max(10, (int) ($c['table_burst_seconds'] ?? 60)),
-        'table_burst_max_orders' => max(1, (int) ($c['table_burst_max_orders'] ?? 15)),
+        'table_burst_seconds' => max(10, (int) ($c['table_burst_seconds'] ?? 90)),
+        'table_burst_max_orders' => max(1, (int) ($c['table_burst_max_orders'] ?? 30)),
         'cart_max_qty_per_item' => max(1, (int) ($c['cart_max_qty_per_item'] ?? 99)),
-        'cart_max_distinct_items' => max(1, (int) ($c['cart_max_distinct_items'] ?? 80)),
-        'cart_max_total_qty' => max(1, (int) ($c['cart_max_total_qty'] ?? 200)),
+        'cart_max_distinct_items' => max(1, (int) ($c['cart_max_distinct_items'] ?? 100)),
+        'cart_max_total_qty' => max(1, (int) ($c['cart_max_total_qty'] ?? 300)),
     ];
 }
 
-function assertTableOrderRateLimit(int $tableId, int $shopId, ?string $jenisHidang = null): void
+/**
+ * Per-shop order limits (owner settings) with config fallback.
+ *
+ * @param array<string,mixed>|null $shop
+ * @return array{table_burst_seconds:int,table_burst_max_orders:int,cart_max_qty_per_item:int,cart_max_distinct_items:int,cart_max_total_qty:int}
+ */
+function orderLimits(?array $shop = null): array
+{
+    $defaults = orderLimitsDefaults();
+    if ($shop === null) {
+        return $defaults;
+    }
+    // Shop columns only override when present (schema patched).
+    if (array_key_exists('order_burst_seconds', $shop) && $shop['order_burst_seconds'] !== null && $shop['order_burst_seconds'] !== '') {
+        $defaults['table_burst_seconds'] = max(10, min(600, (int) $shop['order_burst_seconds']));
+    }
+    if (array_key_exists('order_burst_max', $shop) && $shop['order_burst_max'] !== null && $shop['order_burst_max'] !== '') {
+        $defaults['table_burst_max_orders'] = max(1, min(200, (int) $shop['order_burst_max']));
+    }
+    if (array_key_exists('cart_max_qty_per_item', $shop) && $shop['cart_max_qty_per_item'] !== null && $shop['cart_max_qty_per_item'] !== '') {
+        $defaults['cart_max_qty_per_item'] = max(1, min(999, (int) $shop['cart_max_qty_per_item']));
+    }
+    if (array_key_exists('cart_max_distinct_items', $shop) && $shop['cart_max_distinct_items'] !== null && $shop['cart_max_distinct_items'] !== '') {
+        $defaults['cart_max_distinct_items'] = max(1, min(500, (int) $shop['cart_max_distinct_items']));
+    }
+    if (array_key_exists('cart_max_total_qty', $shop) && $shop['cart_max_total_qty'] !== null && $shop['cart_max_total_qty'] !== '') {
+        $defaults['cart_max_total_qty'] = max(1, min(2000, (int) $shop['cart_max_total_qty']));
+    }
+    return $defaults;
+}
+
+function assertTableOrderRateLimit(int $tableId, int $shopId, ?string $jenisHidang = null, ?array $shop = null): void
 {
     // Shared virtual "Delivery" table must NOT block concurrent customers.
     if ($jenisHidang === 'delivery') {
         return;
     }
-    $limits = orderLimits();
+    if ($shop === null) {
+        $shop = findShopById($shopId);
+    }
+    $limits = orderLimits($shop);
     $seconds = (int) $limits['table_burst_seconds'];
     $max = (int) $limits['table_burst_max_orders'];
     // Anti double-tap: unpaid orders in the burst window (per physical table).
@@ -84,9 +122,9 @@ function assertDeliveryContactRateLimit(int $shopId, string $email): void
 }
 
 /** @param array<int, array{qty:int}> $normalized */
-function assertCartLimits(array $normalized): void
+function assertCartLimits(array $normalized, ?array $shop = null): void
 {
-    $limits = orderLimits();
+    $limits = orderLimits($shop);
     $distinct = count($normalized);
     $totalQty = 0;
     foreach ($normalized as $line) {
