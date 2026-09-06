@@ -1,7 +1,8 @@
 <?php
 /**
- * Split unpaid order by selected items → new paid bill + residual unpaid bill.
- * POST JSON: { order_id, item_ids: number[], nama_pelanggan? }
+ * Split unpaid order by selected item quantities → new paid bill + residual unpaid bill.
+ * POST JSON: { order_id, items: [{id, qty}, ...], nama_pelanggan? }
+ * Legacy: { order_id, item_ids: number[] } still works (whole lines).
  */
 
 declare(strict_types=1);
@@ -16,14 +17,11 @@ requirePost();
 
 $body = readJsonBody();
 $orderId = (int) ($body['order_id'] ?? 0);
-$itemIds = $body['item_ids'] ?? [];
-if (!is_array($itemIds)) {
-    $itemIds = [];
-}
 $guest = isset($body['nama_pelanggan']) ? trim((string) $body['nama_pelanggan']) : null;
 $lang = currentLang();
 
-$result = splitOrderBill($shopId, $orderId, $itemIds, $lang, $guest);
+$want = normalizeSplitSelections($body['items'] ?? null, $body['item_ids'] ?? null);
+$result = splitOrderBill($shopId, $orderId, $want, $lang, $guest);
 if (!$result['ok']) {
     $map = [
         'invalid_items' => [t('split_invalid_items'), 400],

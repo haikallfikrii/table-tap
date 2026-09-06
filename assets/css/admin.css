@@ -143,14 +143,18 @@ body.admin {
 
 .split-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto auto;
   gap: 10px;
   align-items: center;
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-elevated);
-  cursor: pointer;
+}
+
+.split-item.is-selected {
+  border-color: var(--brand, #e85d04);
+  background: #fff7f0;
 }
 
 .split-item input {
@@ -163,9 +167,49 @@ body.admin {
   display: block;
 }
 
+.split-item-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.8rem;
+  color: var(--ink-muted);
+}
+
+.split-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+.split-qty-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+.split-qty-btn:active {
+  transform: scale(0.96);
+}
+
+.split-qty-val {
+  min-width: 1.5rem;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
 .split-item-amt {
   font-weight: 700;
   white-space: nowrap;
+  min-width: 4.5rem;
+  text-align: right;
 }
 
 .split-total {
