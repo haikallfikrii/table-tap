@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/includes/auth.php';
 require_once dirname(__DIR__) . '/includes/i18n.php';
 require_once dirname(__DIR__) . '/includes/shift.php';
+require_once dirname(__DIR__) . '/includes/print_bridge.php';
 
 requireLogin(['kasir', 'owner']);
 
@@ -87,6 +88,7 @@ $i18n = [
     'cancel_order_failed' => t('cancel_order_failed'),
     'order_not_found' => t('order_not_found'),
     'kasir_print_need_bt' => t('kasir_print_need_bt'),
+    'print_bridge_queued' => t('print_bridge_queued'),
     'delivery'      => t('delivery'),
     'pay_cod'       => t('pay_cod'),
     'pay_duitnow'   => t('pay_duitnow'),
@@ -150,6 +152,7 @@ $i18n = [
      data-receipt-url="<?= e(baseUrl('admin/receipt.php')) ?>"
      data-receipt-json-url="<?= e(baseUrl('admin/api/receipt_json.php')) ?>"
      data-send-receipt-url="<?= e(baseUrl('admin/api/send_receipt.php')) ?>"
+     data-print-bridge-url="<?= e(shopPrintBridgeEnabled($shop) ? baseUrl('admin/api/print_bridge_receipt.php') : '') ?>"
      data-shop-name="<?= e((string) ($user['shop_name'] ?? $shop['nama_kedai'] ?? 'TableTap')) ?>"
      data-print-on-paid="<?= !empty($printerPrefs['kasir_print_on_paid']) ? '1' : '0' ?>"
      data-beep-kasir="<?= (int) $printerPrefs['beep_kasir'] ?>"

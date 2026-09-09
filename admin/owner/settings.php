@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/helpers.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
+require_once dirname(__DIR__, 2) . '/includes/print_bridge.php';
 
 requireLogin(['owner']);
 
@@ -68,6 +69,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $payDuitnow = isset($_POST['pay_duitnow']) ? 1 : 0;
         $holdKitchen = isset($_POST['hold_kitchen_until_paid']) ? 1 : 0;
         $regenDeliveryToken = isset($_POST['regen_delivery_token']);
+        $printBridgeEnabled = isset($_POST['print_bridge_enabled']) ? 1 : 0;
+        $regenBridgeToken = isset($_POST['regen_print_bridge_token']);
         if ($namaKedai === '') {
             throw new RuntimeException(t('shop_name') . ' required');
         }
@@ -99,6 +102,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 'UPDATE shops SET kasir_print_on_paid = ?, printer_beep_kitchen = ?, printer_beep_kasir = ?
                  WHERE id = ?'
             )->execute([$kasirPrintOnPaid, $printerBeepKitchen, $printerBeepKasir, $shopId]);
+        }
+
+        if (printBridgeColumnsExist()) {
+            $pdo->prepare('UPDATE shops SET print_bridge_enabled = ? WHERE id = ?')
+                ->execute([$printBridgeEnabled, $shopId]);
+            if ($printBridgeEnabled) {
+                if ($regenBridgeToken) {
+                    regenerateShopPrintBridgeToken($shopId);
+                } else {
+                    ensureShopPrintBridgeToken($shop);
+                }
+            }
         }
 
         $orderLimitCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'order_burst_max'")->fetch();
@@ -201,6 +216,18 @@ if ($isCafeMode && orderingModeColumnExists()) {
 if ($isDelivery && deliveryColumnsExist()) {
     $dToken = ensureDeliveryToken($shop);
     $deliveryEntryUrl = deliveryEntryUrl((string) $shop['slug'], $dToken);
+}
+$bridgeReady = printBridgeReady();
+$bridgeOn = shopPrintBridgeEnabled($shop);
+$bridgeToken = $bridgeOn ? (string) ($shop['print_bridge_token'] ?? '') : '';
+$bridgeQueue = $bridgeOn ? printBridgeQueueStats($shopId) : ['pending' => 0, 'printing' => 0, 'failed' => 0, 'last_seen' => null];
+$bridgeStations = [];
+if ($bridgeOn) {
+    $bridgeStations[] = ['kod' => 'kasir', 'name' => t('kasir_title')];
+    foreach (shopStations($shopId, true) as $st) {
+        $bridgeStations[] = ['kod' => (string) $st['kod'], 'name' => stationLabel($st, $lang)];
+    }
+    $adminScripts[] = assetUrl('js/print-bridge-settings.js');
 }
 $retentionLabel = $shop['retention_days'] === null
     ? t('retention_forever')
@@ -439,6 +466,70 @@ $retentionLabel = $shop['retention_days'] === null
         <p class="order-meta"><?= e(t('printer_beep_kasir_hint')) ?></p>
       </div>
     </fieldset>
+
+    <?php if ($bridgeReady): ?>
+    <fieldset class="settings-fieldset" id="print-bridge-settings"
+              data-test-url="<?= e(baseUrl('admin/api/print_bridge_test.php')) ?>"
+              data-queued-label="<?= e(t('print_bridge_test_queued')) ?>"
+              data-failed-label="<?= e(t('print_bridge_queue_failed')) ?>">
+      <legend><?= e(t('print_bridge_settings')) ?></legend>
+      <p class="settings-fieldset-desc"><?= e(t('print_bridge_settings_hint')) ?></p>
+      <label class="settings-check">
+        <input type="checkbox" name="print_bridge_enabled" value="1" <?= $bridgeOn ? 'checked' : '' ?>>
+        <span><?= e(t('print_bridge_enable')) ?></span>
+      </label>
+      <p class="order-meta"><?= e(t('print_bridge_enable_hint')) ?></p>
+
+      <?php if ($bridgeOn && $bridgeToken !== ''): ?>
+        <div class="settings-block" style="margin-top:14px">
+          <label class="settings-block-label"><?= e(t('print_bridge_token')) ?></label>
+          <input type="text" value="<?= e($bridgeToken) ?>" readonly onclick="this.select()">
+          <p class="order-meta"><?= e(t('print_bridge_token_hint')) ?></p>
+        </div>
+        <label class="settings-check">
+          <input type="checkbox" name="regen_print_bridge_token" value="1">
+          <span><?= e(t('print_bridge_regen_token')) ?></span>
+        </label>
+        <p class="order-meta"><?= e(t('print_bridge_regen_token_hint')) ?></p>
+
+        <div class="settings-block" style="margin-top:14px">
+          <label class="settings-block-label"><?= e(t('print_bridge_status')) ?></label>
+          <p class="order-meta">
+            <?= e(t('print_bridge_queue_pending')) ?>: <?= (int) $bridgeQueue['pending'] ?> ·
+            <?= e(t('print_bridge_queue_printing')) ?>: <?= (int) $bridgeQueue['printing'] ?> ·
+            <?= e(t('print_bridge_queue_failed_count')) ?>: <?= (int) $bridgeQueue['failed'] ?>
+          </p>
+          <p class="order-meta">
+            <?= e(t('print_bridge_last_seen')) ?>:
+            <?= e($bridgeQueue['last_seen'] !== null ? (string) $bridgeQueue['last_seen'] : t('print_bridge_never_seen')) ?>
+          </p>
+        </div>
+
+        <div class="settings-block" style="margin-top:14px">
+          <label class="settings-block-label"><?= e(t('print_bridge_test')) ?></label>
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <?php foreach ($bridgeStations as $bs): ?>
+              <button type="button" class="btn btn-secondary btn-sm" data-bridge-test="<?= e($bs['kod']) ?>">
+                <?= e($bs['name']) ?>
+              </button>
+            <?php endforeach; ?>
+          </div>
+          <p class="order-meta" id="print-bridge-test-status"><?= e(t('print_bridge_test_hint')) ?></p>
+        </div>
+
+        <div class="settings-block" style="margin-top:14px">
+          <label class="settings-block-label"><?= e(t('print_bridge_setup')) ?></label>
+          <ol class="order-meta" style="padding-left:18px;line-height:1.7">
+            <li><?= e(t('print_bridge_step_1')) ?></li>
+            <li><?= e(t('print_bridge_step_2')) ?></li>
+            <li><?= e(t('print_bridge_step_3')) ?></li>
+            <li><?= e(t('print_bridge_step_4')) ?></li>
+          </ol>
+          <p class="order-meta"><?= e(t('print_bridge_note_no_phone')) ?></p>
+        </div>
+      <?php endif; ?>
+    </fieldset>
+    <?php endif; ?>
 
     <fieldset class="settings-fieldset">
       <legend><?= e(t('sound_settings')) ?></legend>

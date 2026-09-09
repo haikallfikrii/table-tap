@@ -14,6 +14,7 @@
   const receiptUrlBase = root.dataset.receiptUrl || '';
   const receiptJsonUrl = root.dataset.receiptJsonUrl || '';
   const sendReceiptUrl = root.dataset.sendReceiptUrl || '';
+  const printBridgeUrl = root.dataset.printBridgeUrl || '';
   const shopName = root.dataset.shopName || 'TableTap';
   const interval = Number(root.dataset.interval) || 3000;
   const lang = root.dataset.lang || 'my';
@@ -100,6 +101,23 @@
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Receipt failed');
     return data.receipt;
+  }
+
+  /** Wi-Fi Print Bridge: queue the receipt for the LAN printer (Bluetooth still runs too). */
+  async function queueBridgeReceipt(orderId) {
+    if (!printBridgeUrl || !orderId) return false;
+    try {
+      const res = await fetch(printBridgeUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ order_id: orderId }),
+      });
+      const data = await res.json();
+      return !!data.ok;
+    } catch (e) {
+      return false;
+    }
   }
 
   async function silentPrintReceipt(receiptOrId) {
@@ -795,7 +813,12 @@
       if (!orderId) return;
       printBtn.disabled = true;
       try {
-        await printPaidReceipt(orderId, null, { interactive: true });
+        const queued = await queueBridgeReceipt(orderId);
+        if (queued && (!window.TableTapPrint || !TableTapPrint.supported())) {
+          updatePrintStatus(i18n.print_bridge_queued || 'Sent to network printer');
+        } else {
+          await printPaidReceipt(orderId, null, { interactive: true });
+        }
       } finally {
         printBtn.disabled = false;
       }

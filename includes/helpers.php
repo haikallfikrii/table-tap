@@ -727,11 +727,41 @@ function createShopOrder(
         touchSessionActivity($sessionId);
     }
 
+    queueKitchenTicketsForPrintBridge($shopId, $orderId, $shop);
+
     return [
         'order_id' => $orderId,
         'totals' => $totals,
         'guest_token' => $guestToken ?? '',
     ];
+}
+
+/**
+ * Mirror the kitchen tickets to the Wi-Fi Print Bridge queue.
+ * Bluetooth auto-print on the station tablets is unaffected — both can run together.
+ */
+function queueKitchenTicketsForPrintBridge(int $shopId, int $orderId, ?array $shop = null): void
+{
+    require_once __DIR__ . '/print_bridge.php';
+    try {
+        $shop = $shop ?? findShopById($shopId);
+        if (!shopPrintBridgeEnabled($shop)) {
+            return;
+        }
+        $payCols = orderDeliveryColumnsExist() ? ', payment_method, payment_proof_status' : '';
+        $stmt = db()->prepare(
+            "SELECT jenis_hidang, status_bayar{$payCols}
+             FROM orders WHERE id = ? AND shop_id = ? LIMIT 1"
+        );
+        $stmt->execute([$orderId, $shopId]);
+        $order = $stmt->fetch();
+        if (!$order || orderNeedsPaymentHold($order, $shop)) {
+            return;
+        }
+        enqueueKitchenPrintJobs($shopId, $orderId, $shop, function_exists('currentLang') ? currentLang() : 'my');
+    } catch (Throwable $e) {
+        // Printing must never block an order from being saved.
+    }
 }
 
 function getMenuGrouped(int $shopId, string $lang = 'my'): array

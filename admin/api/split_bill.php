@@ -10,6 +10,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 require_once dirname(__DIR__, 2) . '/includes/billing.php';
+require_once dirname(__DIR__, 2) . '/includes/print_bridge.php';
 
 requireLoginApi(['kasir', 'owner']);
 $shopId = requireShopIdApi();
@@ -35,6 +36,8 @@ if (!$result['ok']) {
     $info = $map[$err] ?? [t('split_failed'), 400];
     jsonError($info[0], $info[1]);
 }
+
+enqueueReceiptPrintJob($shopId, (int) $result['paid_order_id'], null, $lang);
 
 jsonResponse([
     'ok' => true,
