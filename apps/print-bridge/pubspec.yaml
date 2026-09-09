@@ -1,0 +1,20 @@
+name: print_bridge
+description: TableTap Print Bridge — polls the TableTap server and prints to Wi-Fi/LAN ESC-POS thermal printers.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+  shared_preferences: ^2.2.2
+  wakelock_plus: ^1.2.5
+
+dev_dependencies:
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

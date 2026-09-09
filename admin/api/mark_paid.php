@@ -9,6 +9,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 require_once dirname(__DIR__, 2) . '/includes/receipt.php';
+require_once dirname(__DIR__, 2) . '/includes/print_bridge.php';
 
 requireLoginApi(['kasir', 'owner']);
 $shopId = requireShopIdApi();
@@ -80,6 +81,11 @@ if ($sendReceipt) {
 }
 
 $receipt = fetchOrderReceipt($orderId, $shopId, $lang);
+
+// Wi-Fi Print Bridge: release any kitchen ticket held for payment, then the receipt.
+$bridgeShop = findShopById($shopId);
+queueKitchenTicketsForPrintBridge($shopId, $orderId, $bridgeShop);
+enqueueReceiptPrintJob($shopId, $orderId, $bridgeShop, $lang);
 
 jsonResponse([
     'ok' => true,
