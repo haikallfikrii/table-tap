@@ -26,6 +26,11 @@ if ($key === '' || !hash_equals((string) ($config['cron_secret'] ?? ''), $key)) 
 
 header('Content-Type: application/json; charset=utf-8');
 
+@ini_set('max_execution_time', '300');
+@ini_set('memory_limit', '512M');
+@set_time_limit(300);
+
+try {
 $pdo = db();
 $slug = 'big-tree-western';
 $shopStmt = $pdo->prepare('SELECT * FROM shops WHERE slug = ? LIMIT 1');
@@ -38,7 +43,14 @@ if (!$shop) {
 }
 
 $shopId = (int) $shop['id'];
-$catalog = require __DIR__ . '/data/big_tree_western_menu.php';
+$catalogFile = __DIR__ . '/data/big_tree_western_menu.php';
+if (!is_file($catalogFile)) {
+    throw new RuntimeException('Catalog missing: cron/data/big_tree_western_menu.php');
+}
+$catalog = require $catalogFile;
+if (!is_array($catalog) || empty($catalog['items']) || empty($catalog['categories'])) {
+    throw new RuntimeException('Catalog invalid or empty');
+}
 $out = [
     'ok' => true,
     'shop_id' => $shopId,
@@ -378,3 +390,12 @@ $out['stations'] = [
 ];
 
 echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+} catch (Throwable $e) {
+    http_response_code(500);
+    echo json_encode([
+        'ok' => false,
+        'error' => $e->getMessage(),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine(),
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+}
