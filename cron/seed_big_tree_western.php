@@ -280,7 +280,7 @@ foreach ($catalog['items'] as $i => $row) {
         if ($hasCatCol && $hasStationColMenu) {
             $pdo->prepare(
                 'UPDATE menu_items SET nama_en = ?, deskripsi_my = ?, deskripsi_en = ?, harga = ?, kategori = ?,
-                        menu_category_id = ?, station_id = ?, photo_url = COALESCE(?, photo_url), status_stok = ?,
+                        menu_category_id = ?, station_id = ?, foto_url = COALESCE(?, foto_url), status_stok = ?,
                         urutan = ?, is_active = 1
                  WHERE id = ? AND shop_id = ?'
             )->execute([
@@ -290,7 +290,7 @@ foreach ($catalog['items'] as $i => $row) {
         } elseif ($hasStationColMenu) {
             $pdo->prepare(
                 'UPDATE menu_items SET nama_en = ?, deskripsi_my = ?, deskripsi_en = ?, harga = ?, kategori = ?,
-                        station_id = ?, photo_url = COALESCE(?, photo_url), status_stok = ?, urutan = ?, is_active = 1
+                        station_id = ?, foto_url = COALESCE(?, foto_url), status_stok = ?, urutan = ?, is_active = 1
                  WHERE id = ? AND shop_id = ?'
             )->execute([
                 $namaEn, $descMy, $descEn, $harga, $kategori, $stationId, $foto, 'tersedia', $urutan,
@@ -299,7 +299,7 @@ foreach ($catalog['items'] as $i => $row) {
         } else {
             $pdo->prepare(
                 'UPDATE menu_items SET nama_en = ?, deskripsi_my = ?, deskripsi_en = ?, harga = ?, kategori = ?,
-                        photo_url = COALESCE(?, photo_url), status_stok = ?, urutan = ?, is_active = 1
+                        foto_url = COALESCE(?, foto_url), status_stok = ?, urutan = ?, is_active = 1
                  WHERE id = ? AND shop_id = ?'
             )->execute([
                 $namaEn, $descMy, $descEn, $harga, $kategori, $foto, 'tersedia', $urutan, $itemId, $shopId,
@@ -310,7 +310,7 @@ foreach ($catalog['items'] as $i => $row) {
         if ($hasCatCol && $hasStationColMenu) {
             $pdo->prepare(
                 'INSERT INTO menu_items
-                 (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, menu_category_id, station_id, photo_url, status_stok, urutan, is_active)
+                 (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, menu_category_id, station_id, foto_url, status_stok, urutan, is_active)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
             )->execute([
                 $shopId, $namaMy, $namaEn, $descMy, $descEn, $harga, $kategori, $catId, $stationId, $foto, 'tersedia', $urutan,
@@ -318,7 +318,7 @@ foreach ($catalog['items'] as $i => $row) {
         } elseif ($hasStationColMenu) {
             $pdo->prepare(
                 'INSERT INTO menu_items
-                 (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, station_id, photo_url, status_stok, urutan, is_active)
+                 (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, station_id, foto_url, status_stok, urutan, is_active)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
             )->execute([
                 $shopId, $namaMy, $namaEn, $descMy, $descEn, $harga, $kategori, $stationId, $foto, 'tersedia', $urutan,
@@ -326,7 +326,7 @@ foreach ($catalog['items'] as $i => $row) {
         } else {
             $pdo->prepare(
                 'INSERT INTO menu_items
-                 (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, photo_url, status_stok, urutan, is_active)
+                 (shop_id, nama_my, nama_en, deskripsi_my, deskripsi_en, harga, kategori, foto_url, status_stok, urutan, is_active)
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)'
             )->execute([
                 $shopId, $namaMy, $namaEn, $descMy, $descEn, $harga, $kategori, $foto, 'tersedia', $urutan,
