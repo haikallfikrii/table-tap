@@ -89,12 +89,14 @@ function shopSoundSettings(?array $shop): array
 
 /**
  * Thermal printer prefs for kasir / kitchen screens.
- * @return array{kasir_print_on_paid:bool,beep_kitchen:int,beep_kasir:int}
+ * @return array{kasir_print_on_paid:bool,kasir_print_hub:bool,kasir_open_drawer:bool,beep_kitchen:int,beep_kasir:int}
  */
 function shopPrinterSettings(?array $shop): array
 {
     return [
         'kasir_print_on_paid' => (int) ($shop['kasir_print_on_paid'] ?? 1) === 1,
+        'kasir_print_hub' => (int) ($shop['kasir_print_hub'] ?? 0) === 1,
+        'kasir_open_drawer' => (int) ($shop['kasir_open_drawer'] ?? 0) === 1,
         'beep_kitchen' => max(0, min(9, (int) ($shop['printer_beep_kitchen'] ?? 4))),
         'beep_kasir' => max(0, min(9, (int) ($shop['printer_beep_kasir'] ?? 0))),
     ];

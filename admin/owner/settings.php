@@ -39,6 +39,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $soundInterval = max(400, min(5000, (int) ($_POST['sound_interval_ms'] ?? 900)));
         $soundVolume = max(20, min(100, (int) ($_POST['sound_volume'] ?? 100)));
         $kasirPrintOnPaid = isset($_POST['kasir_print_on_paid']) ? 1 : 0;
+        $kasirPrintHub = isset($_POST['kasir_print_hub']) ? 1 : 0;
+        $kasirOpenDrawer = isset($_POST['kasir_open_drawer']) ? 1 : 0;
         $printerBeepKitchen = max(0, min(9, (int) ($_POST['printer_beep_kitchen'] ?? 4)));
         $printerBeepKasir = max(0, min(9, (int) ($_POST['printer_beep_kasir'] ?? 0)));
         $orderBurstSeconds = max(10, min(600, (int) ($_POST['order_burst_seconds'] ?? 90)));
@@ -102,6 +104,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 'UPDATE shops SET kasir_print_on_paid = ?, printer_beep_kitchen = ?, printer_beep_kasir = ?
                  WHERE id = ?'
             )->execute([$kasirPrintOnPaid, $printerBeepKitchen, $printerBeepKasir, $shopId]);
+        }
+
+        $hubCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'kasir_print_hub'")->fetch();
+        if ($hubCol) {
+            $pdo->prepare(
+                'UPDATE shops SET kasir_print_hub = ?, kasir_open_drawer = ? WHERE id = ?'
+            )->execute([$kasirPrintHub, $kasirOpenDrawer, $shopId]);
         }
 
         if (printBridgeColumnsExist()) {
@@ -455,6 +464,16 @@ $retentionLabel = $shop['retention_days'] === null
         <span><?= e(t('kasir_print_on_paid')) ?></span>
       </label>
       <p class="order-meta" style="margin:-8px 0 14px"><?= e(t('kasir_print_on_paid_hint')) ?></p>
+      <label class="settings-check" style="margin-bottom:14px">
+        <input type="checkbox" name="kasir_print_hub" value="1" <?= (int) ($shop['kasir_print_hub'] ?? 0) === 1 ? 'checked' : '' ?>>
+        <span><?= e(t('kasir_print_hub')) ?></span>
+      </label>
+      <p class="order-meta" style="margin:-8px 0 14px"><?= e(t('kasir_print_hub_hint')) ?></p>
+      <label class="settings-check" style="margin-bottom:14px">
+        <input type="checkbox" name="kasir_open_drawer" value="1" <?= (int) ($shop['kasir_open_drawer'] ?? 0) === 1 ? 'checked' : '' ?>>
+        <span><?= e(t('kasir_open_drawer')) ?></span>
+      </label>
+      <p class="order-meta" style="margin:-8px 0 14px"><?= e(t('kasir_open_drawer_hint')) ?></p>
       <div class="form-group">
         <label><?= e(t('printer_beep_kitchen')) ?></label>
         <input type="number" min="0" max="9" name="printer_beep_kitchen" value="<?= (int) ($shop['printer_beep_kitchen'] ?? 4) ?>">

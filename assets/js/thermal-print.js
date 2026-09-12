@@ -495,6 +495,16 @@
     ]));
   }
 
+  /**
+   * Kick cash drawer via printer kick-out pin (ESC p).
+   * Common for ESC/POS printers with an RJ11 drawer cable.
+   */
+  function openCashDrawer() {
+    return printRaw(new Uint8Array([
+      0x1b, 0x70, 0x00, 0x19, 0xfa, // ESC p m t1 t2 (pin 2)
+    ]));
+  }
+
   global.TableTapPrint = {
     supported: supported,
     isConnected: isConnected,
@@ -508,6 +518,7 @@
     printReceipt: printReceipt,
     printTest: printTest,
     printBeep: printBeep,
+    openCashDrawer: openCashDrawer,
     buildKitchenTicket: buildKitchenTicket,
     buildReceiptTicket: buildReceiptTicket,
   };

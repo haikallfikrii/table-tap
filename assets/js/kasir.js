@@ -15,18 +15,27 @@
   const receiptJsonUrl = root.dataset.receiptJsonUrl || '';
   const sendReceiptUrl = root.dataset.sendReceiptUrl || '';
   const printBridgeUrl = root.dataset.printBridgeUrl || '';
+  const printHubUrl = root.dataset.printHubUrl || '';
   const shopName = root.dataset.shopName || 'TableTap';
   const interval = Number(root.dataset.interval) || 3000;
   const lang = root.dataset.lang || 'my';
   const i18n = JSON.parse(root.dataset.i18n || '{}');
 
   let sinceId = 0;
+  let hubSinceId = 0;
   let busy = false;
+  let hubBusy = false;
+  let hubPrintBusy = false;
   let latestOrders = [];
   let autoPrint = true;
+  let printHub = root.dataset.printHub === '1';
+  let openDrawer = root.dataset.openDrawer === '1';
   let beepKasir = Math.max(0, Math.min(9, Number(root.dataset.beepKasir) || 0));
+  let beepKitchen = Math.max(0, Math.min(9, Number(root.dataset.beepKitchen) || 4));
   let ownerPrintOnPaid = root.dataset.printOnPaid !== '0';
   const autoKey = 'tt_kasir_autoprint';
+  const hubPrintedIds = new Set();
+  let hubPrimed = false;
   try {
     const saved = localStorage.getItem(autoKey);
     if (saved === '0') autoPrint = false;
@@ -147,6 +156,13 @@
     try {
       await TableTapPrint.ensureConnected({ interactive: interactive });
       await silentPrintReceipt(receiptPayload || orderId);
+      if (openDrawer && typeof TableTapPrint.openCashDrawer === 'function') {
+        try {
+          await TableTapPrint.openCashDrawer();
+        } catch (drawerErr) {
+          console.warn('Cash drawer kick failed', drawerErr);
+        }
+      }
       updatePrintStatus(i18n.print_test_ok || 'Printed');
       return true;
     } catch (err) {
@@ -163,6 +179,123 @@
         updatePrintStatus(i18n.print_failed || 'Print failed');
       }
       return false;
+    }
+  }
+
+  function serveLabel(jenis) {
+    if (jenis === 'takeaway') return i18n.takeaway || 'Takeaway';
+    if (jenis === 'delivery') return i18n.delivery || 'Delivery';
+    return i18n.dine_in || 'Dine in';
+  }
+
+  function kitchenLabels() {
+    return {
+      dine_in: i18n.dine_in || 'Dine in',
+      takeaway: i18n.takeaway || 'Takeaway',
+      kitchen_ticket: i18n.kitchen_ticket || 'KITCHEN TICKET',
+      beep_count: beepKitchen,
+    };
+  }
+
+  /** One ticket per station per order — staff tears and walks to stations. */
+  function groupHubTickets(items, newIds) {
+    const idSet = new Set(newIds || []);
+    const byTicket = {};
+    items.forEach(function (it) {
+      if (!idSet.has(it.id) || hubPrintedIds.has(it.id)) return;
+      if (it.status_item !== 'menunggu') return;
+      const grp = it.ticket_group || it.station_kod || 'default';
+      const key = it.order_id + ':' + grp;
+      const label = it.ticket_label || grp;
+      if (!byTicket[key]) {
+        byTicket[key] = {
+          shopName: shopName,
+          stationName: label,
+          table: it.nomor_meja,
+          orderId: it.order_id,
+          serveLabel: serveLabel(it.jenis_hidang),
+          guest: it.nama_pelanggan || '',
+          time: it.waktu_order || '',
+          items: [],
+          itemIds: [],
+        };
+      }
+      byTicket[key].items.push({
+        qty: it.qty,
+        nama: it.nama,
+        catatan: it.catatan || '',
+      });
+      byTicket[key].itemIds.push(it.id);
+    });
+    return Object.keys(byTicket).map(function (k) { return byTicket[k]; });
+  }
+
+  async function autoPrintHubTickets(items, newIds) {
+    if (!printHub || !autoPrint || !window.TableTapPrint || !TableTapPrint.supported()) return;
+    if (!hubPrimed || hubPrintBusy) return;
+    const tickets = groupHubTickets(items, newIds);
+    if (!tickets.length) return;
+
+    hubPrintBusy = true;
+    try {
+      try {
+        await TableTapPrint.ensureConnected({ interactive: false });
+      } catch (e) {
+        return;
+      }
+      for (let i = 0; i < tickets.length; i++) {
+        const t = tickets[i];
+        try {
+          await TableTapPrint.printKitchenTicket(t, kitchenLabels());
+          t.itemIds.forEach(function (id) { hubPrintedIds.add(id); });
+          if (i < tickets.length - 1) {
+            await new Promise(function (r) { setTimeout(r, 400); });
+          }
+        } catch (err) {
+          console.warn('Hub station print failed', err);
+          updatePrintStatus(i18n.print_failed || 'Print failed');
+          break;
+        }
+      }
+    } finally {
+      hubPrintBusy = false;
+    }
+  }
+
+  async function pollPrintHub() {
+    if (!printHub || !printHubUrl || hubBusy) return;
+    hubBusy = true;
+    try {
+      const url = printHubUrl +
+        '?since_id=' + encodeURIComponent(String(hubSinceId)) +
+        '&lang=' + encodeURIComponent(lang);
+      const res = await TableTapLive.fetch(url);
+      if (res.status === 401) return;
+      const data = await res.json();
+      if (!data.ok) return;
+      if (data.enabled === false) {
+        printHub = false;
+        return;
+      }
+      applyPrinterSettings(data.printer);
+      const newIds = data.new_item_ids || [];
+      if (hubSinceId > 0 && newIds.length) {
+        await autoPrintHubTickets(data.items || [], newIds);
+      } else if (hubSinceId === 0) {
+        // First poll: mark existing waiting items as already seen (no reprint flood).
+        (data.items || []).forEach(function (it) {
+          if (it.status_item === 'menunggu') hubPrintedIds.add(it.id);
+        });
+        hubPrimed = true;
+      }
+      if (typeof data.max_id === 'number') {
+        hubSinceId = Math.max(hubSinceId, data.max_id);
+      }
+      if (!hubPrimed) hubPrimed = true;
+    } catch (e) {
+      // keep polling
+    } finally {
+      hubBusy = false;
     }
   }
 
@@ -645,6 +778,15 @@
     if (printer.beep_kasir != null) {
       beepKasir = Math.max(0, Math.min(9, Number(printer.beep_kasir) || 0));
     }
+    if (printer.beep_kitchen != null) {
+      beepKitchen = Math.max(0, Math.min(9, Number(printer.beep_kitchen) || 0));
+    }
+    if (typeof printer.kasir_print_hub === 'boolean') {
+      printHub = printer.kasir_print_hub;
+    }
+    if (typeof printer.kasir_open_drawer === 'boolean') {
+      openDrawer = printer.kasir_open_drawer;
+    }
     if (typeof printer.kasir_print_on_paid === 'boolean') {
       ownerPrintOnPaid = printer.kasir_print_on_paid;
       // First visit (no local override yet): follow owner default
@@ -687,7 +829,8 @@
         el.className = 'print-status warn';
       } else if (connected) {
         el.textContent = (i18n.printer_connected || 'Printer connected') +
-          (autoPrint ? ' · ' + (i18n.autoprint_on || 'Auto-print on') : '');
+          (autoPrint ? ' · ' + (i18n.autoprint_on || 'Auto-print on') : '') +
+          (printHub ? ' · ' + (i18n.kasir_print_hub_on || 'Station hub ON') : '');
         el.className = 'print-status ok';
       } else {
         el.textContent = i18n.kasir_printer_hint || i18n.printer_hint ||
@@ -785,6 +928,9 @@
       }
       applyPrinterSettings(data.printer);
       render(data);
+      if (printHub) {
+        pollPrintHub();
+      }
     } catch (e) {
       // keep polling
     } finally {
