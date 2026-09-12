@@ -446,6 +446,28 @@ function ensureAppSchema(PDO $pdo): void
             }
         }
 
+        // One Bluetooth printer at kasir prints all station tickets (tear & deliver).
+        $hubCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'kasir_print_hub'")->fetch();
+        if (!$hubCol) {
+            try {
+                $pdo->exec(
+                    'ALTER TABLE shops
+                     ADD COLUMN kasir_print_hub TINYINT(1) NOT NULL DEFAULT 0 AFTER printer_beep_kasir,
+                     ADD COLUMN kasir_open_drawer TINYINT(1) NOT NULL DEFAULT 0 AFTER kasir_print_hub'
+                );
+            } catch (Throwable $e) {
+                try {
+                    $pdo->exec(
+                        'ALTER TABLE shops
+                         ADD COLUMN kasir_print_hub TINYINT(1) NOT NULL DEFAULT 0,
+                         ADD COLUMN kasir_open_drawer TINYINT(1) NOT NULL DEFAULT 0'
+                    );
+                } catch (Throwable $e2) {
+                    // host may lack ALTER privilege
+                }
+            }
+        }
+
         $pdo->exec(
             "CREATE TABLE IF NOT EXISTS print_jobs (
                 id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

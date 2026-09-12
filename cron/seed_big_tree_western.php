@@ -55,18 +55,47 @@ $out = [
 ensureShopStations($shopId);
 ensureShopMenuCategories($shopId);
 
-// Rename drinks station label for demo clarity
+// Rename system stations for Big Tree field ops
 $pdo->prepare(
     "UPDATE stations SET nama_my = 'Bar Minuman', nama_en = 'Drinks Bar' WHERE shop_id = ? AND kod = 'minuman'"
 )->execute([$shopId]);
 $pdo->prepare(
-    "UPDATE stations SET nama_my = 'Dapur Makanan', nama_en = 'Hot Kitchen' WHERE shop_id = ? AND kod = 'dapur'"
+    "UPDATE stations SET nama_my = 'Dapur Panas', nama_en = 'Hot Kitchen' WHERE shop_id = ? AND kod = 'dapur'"
 )->execute([$shopId]);
+
+// Pro custom station: Western (separate tickets / screen from hot kitchen)
+$western = shopStationByKod($shopId, 'western');
+if (!$western) {
+    $ord = $pdo->prepare('SELECT COALESCE(MAX(urutan), 0) + 1 FROM stations WHERE shop_id = ?');
+    $ord->execute([$shopId]);
+    $urutan = (int) $ord->fetchColumn();
+    $pdo->prepare(
+        "INSERT INTO stations (shop_id, kod, nama_my, nama_en, is_system, urutan, is_active)
+         VALUES (?, 'western', 'Western', 'Western', 0, ?, 1)"
+    )->execute([$shopId, $urutan]);
+    $western = shopStationByKod($shopId, 'western');
+    $out['notes'][] = 'created station: western';
+} else {
+    $pdo->prepare(
+        "UPDATE stations SET nama_my = 'Western', nama_en = 'Western', is_active = 1 WHERE id = ? AND shop_id = ?"
+    )->execute([(int) $western['id'], $shopId]);
+}
 
 $dapur = shopStationByKod($shopId, 'dapur');
 $minuman = shopStationByKod($shopId, 'minuman');
+$western = shopStationByKod($shopId, 'western');
 $dapurId = $dapur ? (int) $dapur['id'] : null;
 $minumanId = $minuman ? (int) $minuman['id'] : null;
+$westernId = $western ? (int) $western['id'] : null;
+
+// One Bluetooth printer at kasir prints all station tickets + optional drawer kick
+$hubCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'kasir_print_hub'")->fetch();
+if ($hubCol) {
+    $pdo->prepare(
+        'UPDATE shops SET kasir_print_hub = 1, kasir_open_drawer = 1 WHERE id = ?'
+    )->execute([$shopId]);
+    $out['notes'][] = 'kasir_print_hub + kasir_open_drawer enabled';
+}
 
 // More tables for dine-in demo (6–12)
 $insTable = $pdo->prepare(
@@ -87,7 +116,8 @@ for ($i = 6; $i <= 12; $i++) {
 $hash = password_hash('Demo1234!', PASSWORD_DEFAULT);
 $staff = [
     ['kasirbigtree', 'kasir', 'Kasir Big Tree', null],
-    ['dapurbigtree', 'dapur', 'Dapur Big Tree', $dapurId],
+    ['dapurbigtree', 'dapur', 'Dapur Panas Big Tree', $dapurId],
+    ['westernbigtree', 'dapur', 'Western Big Tree', $westernId],
     ['minumanbigtree', 'minuman', 'Bar Minuman Big Tree', $minumanId],
     ['waiterbigtree', 'waiter', 'Waiter Big Tree', null],
 ];
@@ -95,7 +125,12 @@ $chkUser = $pdo->prepare('SELECT id FROM users WHERE username = ? LIMIT 1');
 $hasStationCol = userStationColumnExists();
 foreach ($staff as [$username, $role, $nama, $stationId]) {
     $chkUser->execute([$username]);
-    if ($chkUser->fetch()) {
+    $existingUser = $chkUser->fetch();
+    if ($existingUser) {
+        if ($hasStationCol && $stationId) {
+            $pdo->prepare('UPDATE users SET station_id = ?, nama_paparan = ? WHERE id = ?')
+                ->execute([$stationId, $nama, (int) $existingUser['id']]);
+        }
         $out['notes'][] = "user exists: {$username}";
         continue;
     }
@@ -218,20 +253,19 @@ $addonsNasi = static function (): array {
 };
 
 $menu = [
-    // Western -> dapur
-    ['western', 'Spaghetti Aglio Olio', 'Spaghetti Aglio Olio', 'By Chef Faizal — garlic, chili, olive oil.', 18.50, 'spaghetti', 'dapur', $addonsLevel],
-    ['western', 'Macaroni Aglio Olio', 'Macaroni Aglio Olio', 'Garlic olive oil macaroni with a kick.', 17.90, 'spaghetti', 'dapur', $addonsLevel],
-    ['western', 'Mac & Cheese', 'Mac & Cheese', 'By Chef Faizal — creamy cheese macaroni.', 16.90, 'maccheese', 'dapur', null],
-    ['western', 'Chicken Chop', 'Chicken Chop', 'Crispy chicken chop with fries & coleslaw.', 18.90, 'chicken-chop', 'dapur', null],
-    ['western', 'Nasi Goreng Chicken Chop Besar', 'Big Fried Rice Chicken Chop', 'Savory fried rice with large crispy chop.', 31.90, 'chicken-chop', 'dapur', null],
-    ['western', 'Macaroni Tomyam', 'Macaroni Tomyam', 'Tangy spicy tomyam macaroni.', 23.90, 'maccheese', 'dapur', $addonsLevel],
+    // Western station
+    ['western', 'Spaghetti Aglio Olio', 'Spaghetti Aglio Olio', 'By Chef Faizal — garlic, chili, olive oil.', 18.50, 'spaghetti', 'western', $addonsLevel],
+    ['western', 'Macaroni Aglio Olio', 'Macaroni Aglio Olio', 'Garlic olive oil macaroni with a kick.', 17.90, 'spaghetti', 'western', $addonsLevel],
+    ['western', 'Mac & Cheese', 'Mac & Cheese', 'By Chef Faizal — creamy cheese macaroni.', 16.90, 'maccheese', 'western', null],
+    ['western', 'Chicken Chop', 'Chicken Chop', 'Crispy chicken chop with fries & coleslaw.', 18.90, 'chicken-chop', 'western', null],
+    ['western', 'Nasi Goreng Chicken Chop Besar', 'Big Fried Rice Chicken Chop', 'Savory fried rice with large crispy chop.', 31.90, 'chicken-chop', 'western', null],
+    ['western', 'Macaroni Tomyam', 'Macaroni Tomyam', 'Tangy spicy tomyam macaroni.', 23.90, 'maccheese', 'western', $addonsLevel],
 
-    // Burger -> dapur
+    // Hot kitchen / goreng
     ['burger', 'Burger Daging Special', 'Special Beef Burger', 'Ramly-style beef, egg, coleslaw, mayo & chili.', 10.00, 'burger', 'dapur', $addonsBurger],
     ['burger', 'Marvellous Burger', 'Marvellous Burger', 'Sesame bun, chicken & beef, fries, sauce.', 18.90, 'burger', 'dapur', $addonsBurger],
     ['burger', 'Western Chicken Burger', 'Western Chicken Burger', 'Crispy chicken burger with salad & sauce.', 13.50, 'burger', 'dapur', $addonsBurger],
 
-    // Local -> dapur
     ['local', 'Nasi Goreng Kampung', 'Kampung Fried Rice', 'Village-style fried rice, fragrant & spicy.', 10.50, 'nasi-goreng', 'dapur', $addonsNasi],
     ['local', 'Mee Goreng Mamak', 'Mamak Fried Mee', 'Classic mamak fried noodles.', 12.50, 'nasi-goreng', 'dapur', $addonsNasi],
     ['local', 'Bihun Goreng By Chef Min', 'Fried Vermicelli by Chef Min', 'Signature fried bihun.', 10.90, 'nasi-goreng', 'dapur', $addonsNasi],
@@ -239,13 +273,12 @@ $menu = [
     ['local', 'Nasi Lemak Sahaja', 'Nasi Lemak Plain', 'Coconut rice with sambal, bilis, egg & cucumber.', 4.20, 'nasi-lemak', 'dapur', $addonsNasi],
     ['local', 'Kuew Teow Goreng', 'Fried Kuey Teow', 'By Chef — wok-fried flat noodles.', 10.90, 'nasi-goreng', 'dapur', $addonsNasi],
 
-    // Sides -> dapur
     ['sides', 'Cheezy Mayo Fries', 'Cheezy Mayo Fries', 'Crispy fries with cheese mayo drizzle.', 13.50, 'fries', 'dapur', null],
     ['sides', 'Kentang Goreng', 'French Fries', 'Crispy shoestring fries.', 8.60, 'fries', 'dapur', null],
     ['sides', 'Telur Mata Kerbau', 'Sunny Side Egg', 'Soft fried egg.', 2.50, null, 'dapur', null],
     ['sides', 'Popcorn Chicken', 'Popcorn Chicken', 'Crispy bite-size fried chicken.', 8.90, 'chicken-chop', 'dapur', null],
 
-    // Drinks -> minuman
+    // Drinks
     ['minuman', 'Thai Iced Milk Tea', 'Thai Iced Milk Tea', 'Sweet creamy Thai tea over ice.', 4.00, 'thai-tea', 'minuman', $addonsDrink],
     ['minuman', 'Teh Ais', 'Iced Tea', 'Classic Malaysian iced tea.', 3.50, 'thai-tea', 'minuman', $addonsDrink],
     ['minuman', 'Kopi Ais', 'Iced Coffee', 'Iced local coffee.', 3.99, 'thai-tea', 'minuman', $addonsDrink],
@@ -260,20 +293,34 @@ $chkItem = $pdo->prepare(
 $hasCatCol = menuCategoryColumnExists();
 $hasStationColMenu = menuStationColumnExists();
 
+$stationIdForKod = static function (string $kod) use ($dapurId, $minumanId, $westernId): ?int {
+    if ($kod === 'minuman') {
+        return $minumanId;
+    }
+    if ($kod === 'western') {
+        return $westernId ?: $dapurId;
+    }
+    return $dapurId;
+};
+
 foreach ($menu as $i => $row) {
     [$catKod, $namaMy, $namaEn, $desc, $harga, $photoKey, $stationKod, $addonFn] = $row;
     $chkItem->execute([$shopId, $namaMy]);
     $existingId = $chkItem->fetchColumn();
+    $stationId = $stationIdForKod((string) $stationKod);
+    $kategori = $stationKod === 'minuman' ? 'minuman' : 'makanan';
+    $catId = $catIds[$catKod] ?? null;
+    $foto = ($photoKey && isset($copiedPhotos[$photoKey])) ? $copiedPhotos[$photoKey] : null;
+    $urutan = $i + 1;
+
     if ($existingId) {
+        if ($hasStationColMenu && $stationId) {
+            $pdo->prepare('UPDATE menu_items SET station_id = ?, kategori = ? WHERE id = ? AND shop_id = ?')
+                ->execute([$stationId, $kategori, (int) $existingId, $shopId]);
+        }
         $out['notes'][] = "item exists: {$namaMy}";
         continue;
     }
-
-    $catId = $catIds[$catKod] ?? null;
-    $stationId = $stationKod === 'minuman' ? $minumanId : $dapurId;
-    $kategori = $stationKod === 'minuman' ? 'minuman' : 'makanan';
-    $foto = ($photoKey && isset($copiedPhotos[$photoKey])) ? $copiedPhotos[$photoKey] : null;
-    $urutan = $i + 1;
 
     if ($hasCatCol && $hasStationColMenu) {
         $pdo->prepare(
@@ -332,8 +379,18 @@ $out['login'] = [
     'owner' => ['username' => 'ownerbigtree', 'password' => 'BigtreeDemo2026!'],
     'kasir' => ['username' => 'kasirbigtree', 'password' => 'Demo1234!'],
     'dapur' => ['username' => 'dapurbigtree', 'password' => 'Demo1234!'],
+    'western' => ['username' => 'westernbigtree', 'password' => 'Demo1234!'],
     'minuman' => ['username' => 'minumanbigtree', 'password' => 'Demo1234!'],
     'waiter' => ['username' => 'waiterbigtree', 'password' => 'Demo1234!'],
+];
+$out['stations'] = [
+    'dapur' => 'Dapur Panas (goreng / hot)',
+    'western' => 'Western',
+    'minuman' => 'Bar Minuman',
+];
+$out['print'] = [
+    'mode' => 'kasir_print_hub',
+    'note' => 'One Bluetooth printer at kasir auto-prints one ticket per station; staff tear and deliver. Cash drawer kicks on paid receipt.',
 ];
 $out['urls'] = [
     'login' => 'https://tabletap.my/admin/login.php',

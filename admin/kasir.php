@@ -89,6 +89,8 @@ $i18n = [
     'order_not_found' => t('order_not_found'),
     'kasir_print_need_bt' => t('kasir_print_need_bt'),
     'print_bridge_queued' => t('print_bridge_queued'),
+    'kitchen_ticket' => t('kitchen_ticket'),
+    'kasir_print_hub_on' => t('kasir_print_hub_on'),
     'delivery'      => t('delivery'),
     'pay_cod'       => t('pay_cod'),
     'pay_duitnow'   => t('pay_duitnow'),
@@ -153,9 +155,13 @@ $i18n = [
      data-receipt-json-url="<?= e(baseUrl('admin/api/receipt_json.php')) ?>"
      data-send-receipt-url="<?= e(baseUrl('admin/api/send_receipt.php')) ?>"
      data-print-bridge-url="<?= e(shopPrintBridgeEnabled($shop) ? baseUrl('admin/api/print_bridge_receipt.php') : '') ?>"
+     data-print-hub-url="<?= e(baseUrl('admin/api/print_hub_poll.php')) ?>"
      data-shop-name="<?= e((string) ($user['shop_name'] ?? $shop['nama_kedai'] ?? 'TableTap')) ?>"
      data-print-on-paid="<?= !empty($printerPrefs['kasir_print_on_paid']) ? '1' : '0' ?>"
+     data-print-hub="<?= !empty($printerPrefs['kasir_print_hub']) ? '1' : '0' ?>"
+     data-open-drawer="<?= !empty($printerPrefs['kasir_open_drawer']) ? '1' : '0' ?>"
      data-beep-kasir="<?= (int) $printerPrefs['beep_kasir'] ?>"
+     data-beep-kitchen="<?= (int) $printerPrefs['beep_kitchen'] ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 3000) ?>"
      data-lang="<?= e($lang) ?>"
      data-i18n="<?= e(json_encode($i18n, JSON_UNESCAPED_UNICODE)) ?>">
