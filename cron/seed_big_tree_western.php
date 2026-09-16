@@ -114,7 +114,8 @@ $insTable = $pdo->prepare(
     'INSERT INTO tables (shop_id, nomor_meja, token_akses, status) VALUES (?, ?, ?, ?)'
 );
 $chkTable = $pdo->prepare('SELECT id FROM tables WHERE shop_id = ? AND nomor_meja = ? LIMIT 1');
-for ($i = 1; $i <= 12; $i++) {
+$tableTarget = 25;
+for ($i = 1; $i <= $tableTarget; $i++) {
     $nomor = (string) $i;
     $chkTable->execute([$shopId, $nomor]);
     if ($chkTable->fetch()) {
@@ -388,6 +389,21 @@ $out['stations'] = [
     'western' => 'Western',
     'minuman' => 'Bar Minuman',
 ];
+
+$tableRows = $pdo->prepare(
+    'SELECT nomor_meja, token_akses FROM tables WHERE shop_id = ? AND status = ? ORDER BY CAST(nomor_meja AS UNSIGNED), nomor_meja'
+);
+$tableRows->execute([$shopId, 'aktif']);
+$out['tables'] = [];
+foreach ($tableRows->fetchAll() as $tr) {
+    $nomor = (string) $tr['nomor_meja'];
+    $token = (string) $tr['token_akses'];
+    $out['tables'][$nomor] = [
+        'token' => $token,
+        'url' => 'https://tabletap.my/public/order.php?meja=' . rawurlencode($nomor) . '&token=' . rawurlencode($token),
+    ];
+}
+$out['counts']['tables_active'] = count($out['tables']);
 
 echo json_encode($out, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 } catch (Throwable $e) {
