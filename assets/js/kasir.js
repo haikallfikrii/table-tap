@@ -16,6 +16,7 @@
   const sendReceiptUrl = root.dataset.sendReceiptUrl || '';
   const printBridgeUrl = root.dataset.printBridgeUrl || '';
   const printHubUrl = root.dataset.printHubUrl || '';
+  const itemStatusUrl = root.dataset.itemStatusUrl || '';
   const shopName = root.dataset.shopName || 'TableTap';
   const interval = Number(root.dataset.interval) || 3000;
   const lang = root.dataset.lang || 'my';
@@ -27,6 +28,7 @@
   let hubBusy = false;
   let hubPrintBusy = false;
   let latestOrders = [];
+  let fulfillment = 'waiter';
   let autoPrint = true;
   let printHub = root.dataset.printHub === '1';
   let openDrawer = root.dataset.openDrawer === '1';
@@ -408,6 +410,39 @@
     return serve + orderStatus + payStatus + method;
   }
 
+  function itemPrepActions(it) {
+    const st = String(it.status_item || '');
+    if (st === 'dihantar') {
+      return '';
+    }
+    let btns = '';
+    if (st === 'menunggu') {
+      btns +=
+        '<button type="button" class="btn btn-secondary btn-xs" data-item-status="sedang_dimasak" data-item-id="' + it.id + '">' +
+          esc(i18n.mark_cooking || 'Start') +
+        '</button>';
+      btns +=
+        '<button type="button" class="btn btn-success btn-xs" data-item-status="siap" data-item-id="' + it.id + '">' +
+          esc(fulfillment === 'self_pickup'
+            ? (i18n.mark_ready_self || i18n.mark_ready || 'Ready')
+            : (i18n.mark_ready || i18n.mark_done || 'Ready')) +
+        '</button>';
+    } else if (st === 'sedang_dimasak') {
+      btns +=
+        '<button type="button" class="btn btn-success btn-xs" data-item-status="siap" data-item-id="' + it.id + '">' +
+          esc(fulfillment === 'self_pickup'
+            ? (i18n.mark_ready_self || i18n.mark_ready || 'Ready')
+            : (i18n.mark_ready || i18n.mark_done || 'Ready')) +
+        '</button>';
+    } else if (st === 'siap' || st === 'diambil') {
+      btns +=
+        '<button type="button" class="btn btn-primary btn-xs" data-item-status="dihantar" data-item-id="' + it.id + '">' +
+          esc(i18n.mark_collected || 'Collected') +
+        '</button>';
+    }
+    return btns ? '<div class="kasir-item-actions">' + btns + '</div>' : '';
+  }
+
   function renderOrderCard(o, newSet) {
     const unpaid = o.status_bayar === 'belum_bayar';
     const isNew = newSet.has(o.id);
@@ -415,13 +450,22 @@
       const note = it.catatan
         ? '<span class="item-note">' + esc(i18n.notes || 'Notes') + ': ' + esc(it.catatan) + '</span>'
         : '';
+      const station = it.station_label
+        ? '<span class="kasir-item-station">' + esc(it.station_label) + '</span>'
+        : '';
       const st = it.status_item
-        ? '<span class="item-note">' + esc(i18n['status_item_' + it.status_item] || it.status_item) + '</span>'
+        ? '<span class="kasir-item-status status-' + esc(it.status_item) + '">' +
+            esc(i18n['status_item_' + it.status_item] || it.status_item) +
+          '</span>'
         : '';
       return (
-        '<li>' +
-          '<div><span class="qty">' + it.qty + '×</span> ' + esc(it.nama) + note + st + '</div>' +
-          '<div>' + money(it.harga_saat_order * it.qty) + '</div>' +
+        '<li class="kasir-item-row">' +
+          '<div class="kasir-item-main">' +
+            '<div><span class="qty">' + it.qty + '×</span> ' + esc(it.nama) + note + '</div>' +
+            '<div class="kasir-item-meta">' + station + st + '</div>' +
+            itemPrepActions(it) +
+          '</div>' +
+          '<div class="kasir-item-price">' + money(it.harga_saat_order * it.qty) + '</div>' +
         '</li>'
       );
     }).join('');
@@ -534,6 +578,7 @@
   }
 
   function render(data) {
+    if (data.fulfillment) fulfillment = data.fulfillment;
     const stats = data.stats || {};
     const elOrders = document.getElementById('stat-orders');
     const elUnpaid = document.getElementById('stat-unpaid');
@@ -949,6 +994,29 @@
   }
 
   root.addEventListener('click', async (e) => {
+    const itemStatusBtn = e.target.closest('[data-item-status][data-item-id]');
+    if (itemStatusBtn && itemStatusUrl) {
+      const itemId = Number(itemStatusBtn.getAttribute('data-item-id'));
+      const status = itemStatusBtn.getAttribute('data-item-status');
+      if (!itemId || !status) return;
+      itemStatusBtn.disabled = true;
+      try {
+        const res = await fetch(itemStatusUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({ item_id: itemId, status: status }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Failed');
+        await poll();
+      } catch (err) {
+        alert(err.message || 'Error');
+        itemStatusBtn.disabled = false;
+      }
+      return;
+    }
+
     const cancelBtn = e.target.closest('[data-cancel-order]');
     if (cancelBtn) {
       const orderId = Number(cancelBtn.getAttribute('data-cancel-order'));

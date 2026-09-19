@@ -52,6 +52,7 @@ return [
     'kasir_open_drawer' => 'Open cash drawer when printing receipt',
     'kasir_open_drawer_hint' => 'ON = send ESC/POS drawer-kick to the printer that has the cash drawer cable attached.',
     'kasir_print_hub_on' => 'Station hub ON',
+    'kasir_prep_hint' => 'No kitchen/barista screen? Mark items here: Start cooking → Ready → Collected, so orders do not get stuck.',
     'printer_beep_kitchen' => 'Kitchen / drinks / station printer beeps',
     'printer_beep_kitchen_hint' => '0 = silent. 1–9 = how many beeps on each kitchen ticket. Default 4.',
     'printer_beep_kasir' => 'Cashier printer beeps on receipt',

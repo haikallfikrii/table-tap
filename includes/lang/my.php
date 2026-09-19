@@ -52,6 +52,7 @@ return [
     'kasir_open_drawer' => 'Buka laci wang (cash drawer) bila cetak resit',
     'kasir_open_drawer_hint' => 'ON = hantar isyarat ESC/POS ke printer yang bersambung dengan cash drawer. Pastikan kabel drawer disambung ke printer thermal.',
     'kasir_print_hub_on' => 'Hub stesen ON',
+    'kasir_prep_hint' => 'Tiada skrin dapur/barista? Tandakan item di sini: Mula masak → Siap → Diambil, supaya order tidak tersangkut.',
     'printer_beep_kitchen' => 'Bunyi printer dapur / minuman / stesen (kali)',
     'printer_beep_kitchen_hint' => '0 = senyap. 1–9 = tit berapa kali setiap tiket dapur keluar. Default 4.',
     'printer_beep_kasir' => 'Bunyi printer kasir bila cetak resit (kali)',
