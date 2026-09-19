@@ -9,7 +9,7 @@ require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 require_once dirname(__DIR__, 2) . '/includes/menu_categories.php';
 
-requireLogin(['owner']);
+requireLogin(['owner', 'kasir']);
 
 $user = currentUser();
 $shopId = requireShopId();

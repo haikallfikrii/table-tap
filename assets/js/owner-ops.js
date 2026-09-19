@@ -1,5 +1,5 @@
 /**
- * Owner dashboard — live station / handover / unpaid counts
+ * Owner dashboard — live station / handover / unpaid counts + alerts
  */
 (function () {
   const root = document.getElementById('ops-board');
@@ -7,7 +7,13 @@
 
   const pollUrl = root.dataset.pollUrl;
   const interval = Number(root.dataset.interval) || 4000;
+  const alertsRoot = document.getElementById('owner-alerts');
+  const alertsList = document.getElementById('owner-alerts-list');
+  const alertsBadge = document.getElementById('owner-alerts-badge');
+  const alertsReadBtn = document.getElementById('btn-alerts-read');
+  const alertsReadUrl = alertsRoot ? (alertsRoot.dataset.readUrl || '') : '';
   let busy = false;
+  let lastUnread = -1;
 
   function setText(id, value) {
     const el = document.getElementById(id);
@@ -23,6 +29,50 @@
 
   function setBusy(cardId, n) {
     document.getElementById(cardId)?.classList.toggle('is-busy', Number(n) > 0);
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderAlerts(alerts) {
+    if (!alertsList) return;
+    const items = (alerts && alerts.items) || [];
+    const unread = Number((alerts && alerts.unread) || 0);
+    if (alertsBadge) {
+      alertsBadge.textContent = String(unread);
+      alertsBadge.classList.toggle('hidden', unread <= 0);
+    }
+    if (alertsReadBtn) {
+      alertsReadBtn.hidden = unread <= 0;
+    }
+    if (lastUnread >= 0 && unread > lastUnread) {
+      try {
+        if (window.TableTapSound && typeof TableTapSound.beep === 'function') {
+          TableTapSound.beep();
+        }
+      } catch (e) { /* ignore */ }
+    }
+    lastUnread = unread;
+
+    if (!items.length) {
+      const empty = (alertsRoot && alertsRoot.dataset.empty) || '—';
+      alertsList.innerHTML = '<p class="order-meta" id="owner-alerts-empty">' + esc(empty) + '</p>';
+      return;
+    }
+    alertsList.innerHTML = items.map(function (al) {
+      return (
+        '<article class="owner-alert-item' + (al.is_read ? ' is-read' : ' is-unread') + '" data-alert-id="' + al.id + '">' +
+          '<div class="owner-alert-title">' + esc(al.title) + '</div>' +
+          '<div class="owner-alert-body">' + esc(al.body) + '</div>' +
+          '<div class="order-meta">' + esc(al.created_at || '') + '</div>' +
+        '</article>'
+      );
+    }).join('');
   }
 
   function apply(ops) {
@@ -64,6 +114,8 @@
       setBusy('ops-card-delivery', d.needs_action || d.orders || 0);
       document.getElementById('ops-card-delivery')?.classList.toggle('is-alert', Number(d.needs_action) > 0);
     }
+
+    if (ops.alerts) renderAlerts(ops.alerts);
   }
 
   async function poll() {
@@ -78,6 +130,26 @@
     } finally {
       busy = false;
     }
+  }
+
+  if (alertsReadBtn && alertsReadUrl) {
+    alertsReadBtn.addEventListener('click', async function () {
+      alertsReadBtn.disabled = true;
+      try {
+        const res = await fetch(alertsReadUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          credentials: 'same-origin',
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (data.ok) await poll();
+      } catch (e) {
+        /* ignore */
+      } finally {
+        alertsReadBtn.disabled = false;
+      }
+    });
   }
 
   TableTapLive.loop(poll, interval);

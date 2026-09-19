@@ -94,6 +94,32 @@ function ownerOpsChip(string $label, int $n, string $id, string $mod = ''): void
   <h2><?= e(t('ops_live')) ?></h2>
   <p><?= e(t('ops_open')) ?></p>
 </div>
+
+<section class="owner-alerts" id="owner-alerts"
+         data-read-url="<?= e(baseUrl('admin/api/owner_alerts_read.php')) ?>"
+         data-empty="<?= e(t('owner_alerts_empty')) ?>">
+  <div class="owner-alerts-head">
+    <h2><?= e(t('owner_alerts')) ?> <span class="owner-alerts-badge<?= ($ops['alerts']['unread'] ?? 0) > 0 ? '' : ' hidden' ?>" id="owner-alerts-badge"><?= (int) ($ops['alerts']['unread'] ?? 0) ?></span></h2>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-alerts-read"<?= ($ops['alerts']['unread'] ?? 0) > 0 ? '' : ' hidden' ?>><?= e(t('owner_alerts_mark_read')) ?></button>
+  </div>
+  <div id="owner-alerts-list" class="owner-alerts-list">
+    <?php
+    $alertItems = $ops['alerts']['items'] ?? [];
+    if ($alertItems === []):
+    ?>
+      <p class="order-meta" id="owner-alerts-empty"><?= e(t('owner_alerts_empty')) ?></p>
+    <?php else: ?>
+      <?php foreach ($alertItems as $al): ?>
+        <article class="owner-alert-item<?= !empty($al['is_read']) ? ' is-read' : ' is-unread' ?>" data-alert-id="<?= (int) $al['id'] ?>">
+          <div class="owner-alert-title"><?= e((string) $al['title']) ?></div>
+          <div class="owner-alert-body"><?= e((string) $al['body']) ?></div>
+          <div class="order-meta"><?= e((string) $al['created_at']) ?></div>
+        </article>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </div>
+</section>
+
 <div class="ops-board" id="ops-board"
      data-poll-url="<?= e(baseUrl('admin/api/owner_ops_poll.php')) ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 4000) ?>">
