@@ -8,5 +8,6 @@ declare(strict_types=1);
     <script src="<?= e($src) ?>"></script>
   <?php endforeach; ?>
 <?php endif; ?>
+<?= chatlmWidgetHtml() ?>
 </body>
 </html>
