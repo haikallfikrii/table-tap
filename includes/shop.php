@@ -224,6 +224,139 @@ function cancelShopOrder(int $orderId, int $shopId): bool
     return true;
 }
 
+function shopAlertsTableExists(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        $ok = (bool) db()->query("SHOW TABLES LIKE 'shop_alerts'")->fetch();
+    } catch (Throwable $e) {
+        $ok = false;
+    }
+    return $ok;
+}
+
+/**
+ * @param array<string,mixed> $meta
+ */
+function createShopAlert(int $shopId, string $jenis, string $title, string $body = '', array $meta = []): ?int
+{
+    if ($shopId <= 0 || !shopAlertsTableExists()) {
+        return null;
+    }
+    try {
+        $json = $meta !== [] ? json_encode($meta, JSON_UNESCAPED_UNICODE) : null;
+        db()->prepare(
+            'INSERT INTO shop_alerts (shop_id, jenis, title, body, meta_json, is_read, created_at)
+             VALUES (?, ?, ?, ?, ?, 0, ?)'
+        )->execute([
+            $shopId,
+            substr($jenis, 0, 40),
+            substr($title, 0, 160),
+            substr($body, 0, 500),
+            $json,
+            function_exists('appNow') ? appNow() : date('Y-m-d H:i:s'),
+        ]);
+        return (int) db()->lastInsertId();
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
+/**
+ * @return list<array<string,mixed>>
+ */
+function listShopAlerts(int $shopId, int $limit = 12, bool $unreadOnly = false): array
+{
+    if ($shopId <= 0 || !shopAlertsTableExists()) {
+        return [];
+    }
+    $limit = max(1, min(50, $limit));
+    try {
+        $sql = 'SELECT id, jenis, title, body, meta_json, is_read, created_at
+                FROM shop_alerts
+                WHERE shop_id = ?';
+        if ($unreadOnly) {
+            $sql .= ' AND is_read = 0';
+        }
+        $sql .= ' ORDER BY id DESC LIMIT ' . $limit;
+        $stmt = db()->prepare($sql);
+        $stmt->execute([$shopId]);
+        $out = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $meta = [];
+            if (!empty($row['meta_json'])) {
+                $decoded = json_decode((string) $row['meta_json'], true);
+                if (is_array($decoded)) {
+                    $meta = $decoded;
+                }
+            }
+            $out[] = [
+                'id' => (int) $row['id'],
+                'jenis' => (string) $row['jenis'],
+                'title' => (string) $row['title'],
+                'body' => (string) $row['body'],
+                'meta' => $meta,
+                'is_read' => (int) $row['is_read'] === 1,
+                'created_at' => (string) $row['created_at'],
+            ];
+        }
+        return $out;
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+function countUnreadShopAlerts(int $shopId): int
+{
+    if ($shopId <= 0 || !shopAlertsTableExists()) {
+        return 0;
+    }
+    try {
+        $stmt = db()->prepare('SELECT COUNT(*) FROM shop_alerts WHERE shop_id = ? AND is_read = 0');
+        $stmt->execute([$shopId]);
+        return (int) $stmt->fetchColumn();
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
+/**
+ * @param list<int> $ids empty = mark all unread for shop
+ */
+function markShopAlertsRead(int $shopId, array $ids = []): int
+{
+    if ($shopId <= 0 || !shopAlertsTableExists()) {
+        return 0;
+    }
+    try {
+        $clean = [];
+        foreach ($ids as $id) {
+            $id = (int) $id;
+            if ($id > 0) {
+                $clean[$id] = true;
+            }
+        }
+        if ($clean === []) {
+            $stmt = db()->prepare('UPDATE shop_alerts SET is_read = 1 WHERE shop_id = ? AND is_read = 0');
+            $stmt->execute([$shopId]);
+            return $stmt->rowCount();
+        }
+        $idList = array_keys($clean);
+        $ph = implode(',', array_fill(0, count($idList), '?'));
+        $params = array_merge([$shopId], $idList);
+        $stmt = db()->prepare(
+            "UPDATE shop_alerts SET is_read = 1 WHERE shop_id = ? AND id IN ($ph) AND is_read = 0"
+        );
+        $stmt->execute($params);
+        return $stmt->rowCount();
+    } catch (Throwable $e) {
+        return 0;
+    }
+}
+
 function collectSelfPickupReadyItems(PDO $pdo, int $orderId, int $shopId): void
 {
     $pdo->prepare(
@@ -364,6 +497,9 @@ function ownerOpsSnapshot(int $shopId, ?array $shop = null): array
     require_once __DIR__ . '/delivery.php';
     $delivery = deliveryOpsSnapshot($shopId, $shop);
 
+    $alerts = listShopAlerts($shopId, 10, false);
+    $alertsUnread = countUnreadShopAlerts($shopId);
+
     return [
         'fulfillment' => $pickup ? 'self_pickup' : 'waiter',
         'stations' => $stationsOut,
@@ -376,5 +512,9 @@ function ownerOpsSnapshot(int $shopId, ?array $shop = null): array
             'amount_fmt' => formatMoney((float) $payRow['amt']),
         ],
         'delivery' => $delivery,
+        'alerts' => [
+            'unread' => $alertsUnread,
+            'items' => $alerts,
+        ],
     ];
 }

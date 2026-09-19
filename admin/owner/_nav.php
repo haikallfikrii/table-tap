@@ -1,17 +1,28 @@
 <?php
-/** Owner sub-nav. Expects $nav active key. */
-$links = [
-    'home'     => ['url' => baseUrl('admin/owner/index.php'), 'label' => t('owner_title')],
-    'menu'     => ['url' => baseUrl('admin/owner/menu.php'), 'label' => t('manage_menu')],
-    'categories' => ['url' => baseUrl('admin/owner/categories.php'), 'label' => t('manage_menu_categories')],
-    'stations' => ['url' => baseUrl('admin/owner/stations.php'), 'label' => t('manage_stations')],
-    'tables'   => ['url' => baseUrl('admin/owner/tables.php'), 'label' => t('manage_tables')],
-    'reports'  => ['url' => baseUrl('admin/owner/reports.php'), 'label' => t('reports')],
-    'shift'    => ['url' => baseUrl('admin/owner/shift.php'), 'label' => t('shift_nav')],
-    'history'  => ['url' => baseUrl('admin/owner/history.php'), 'label' => t('order_history')],
-    'settings' => ['url' => baseUrl('admin/owner/settings.php'), 'label' => t('shop_settings')],
-    'users'    => ['url' => baseUrl('admin/owner/users.php'), 'label' => t('manage_users')],
-];
+/** Owner / kasir sub-nav. Expects $nav active key. */
+$role = (string) (($user['role'] ?? currentUser()['role'] ?? ''));
+if ($role === 'kasir') {
+    $links = [
+        'kasir'   => ['url' => baseUrl('admin/kasir.php'), 'label' => t('kasir_title')],
+        'menu'    => ['url' => baseUrl('admin/owner/menu.php'), 'label' => t('manage_menu')],
+        'categories' => ['url' => baseUrl('admin/owner/categories.php'), 'label' => t('manage_menu_categories')],
+        'history' => ['url' => baseUrl('admin/owner/history.php'), 'label' => t('order_history')],
+        'shift'   => ['url' => baseUrl('admin/owner/shift.php'), 'label' => t('shift_nav')],
+    ];
+} else {
+    $links = [
+        'home'     => ['url' => baseUrl('admin/owner/index.php'), 'label' => t('owner_title')],
+        'menu'     => ['url' => baseUrl('admin/owner/menu.php'), 'label' => t('manage_menu')],
+        'categories' => ['url' => baseUrl('admin/owner/categories.php'), 'label' => t('manage_menu_categories')],
+        'stations' => ['url' => baseUrl('admin/owner/stations.php'), 'label' => t('manage_stations')],
+        'tables'   => ['url' => baseUrl('admin/owner/tables.php'), 'label' => t('manage_tables')],
+        'reports'  => ['url' => baseUrl('admin/owner/reports.php'), 'label' => t('reports')],
+        'shift'    => ['url' => baseUrl('admin/owner/shift.php'), 'label' => t('shift_nav')],
+        'history'  => ['url' => baseUrl('admin/owner/history.php'), 'label' => t('order_history')],
+        'settings' => ['url' => baseUrl('admin/owner/settings.php'), 'label' => t('shop_settings')],
+        'users'    => ['url' => baseUrl('admin/owner/users.php'), 'label' => t('manage_users')],
+    ];
+}
 $nav = $nav ?? 'home';
 ?>
 <nav class="owner-nav">

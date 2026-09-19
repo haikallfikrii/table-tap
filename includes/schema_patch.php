@@ -490,6 +490,22 @@ function ensureAppSchema(PDO $pdo): void
                 KEY idx_print_jobs_claim (claim_token)
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
+
+        $pdo->exec(
+            "CREATE TABLE IF NOT EXISTS shop_alerts (
+                id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                shop_id INT UNSIGNED NOT NULL,
+                jenis VARCHAR(40) NOT NULL,
+                title VARCHAR(160) NOT NULL,
+                body VARCHAR(500) NOT NULL DEFAULT '',
+                meta_json TEXT NULL,
+                is_read TINYINT(1) NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL,
+                PRIMARY KEY (id),
+                KEY idx_shop_alerts_unread (shop_id, is_read, id),
+                KEY idx_shop_alerts_created (shop_id, created_at)
+             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
     }
