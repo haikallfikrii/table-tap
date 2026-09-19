@@ -46,20 +46,24 @@ $shop = findShopById((int) $item['shop_id']);
 $selfPickup = shopFulfillment($shop) === 'self_pickup';
 
 if (in_array($status, $kitchenStatuses, true)) {
-    $user = requireLoginApi(['dapur', 'minuman', 'owner']);
-    $shopIdCheck = (int) $item['shop_id'];
-    $sid = (int) ($item['station_id_saat_order'] ?? 0);
-    $station = $sid > 0 ? findShopStation($shopIdCheck, $sid) : null;
-    if (!$station) {
-        $station = defaultStationForKategori($shopIdCheck, (string) $item['kategori_saat_order']);
-    }
-    if (!userCanAccessStation($user, $station)) {
-        jsonError('Forbidden', 403);
+    $user = requireLoginApi(['dapur', 'minuman', 'kasir', 'owner']);
+    $role = (string) ($user['role'] ?? '');
+    // Kasir hub (no station tablets) and owner may advance any station item.
+    if ($role !== 'kasir' && $role !== 'owner') {
+        $shopIdCheck = (int) $item['shop_id'];
+        $sid = (int) ($item['station_id_saat_order'] ?? 0);
+        $station = $sid > 0 ? findShopStation($shopIdCheck, $sid) : null;
+        if (!$station) {
+            $station = defaultStationForKategori($shopIdCheck, (string) $item['kategori_saat_order']);
+        }
+        if (!userCanAccessStation($user, $station)) {
+            jsonError('Forbidden', 403);
+        }
     }
 } elseif ($status === 'dihantar' && $selfPickup) {
     requireLoginApi(['dapur', 'minuman', 'kasir', 'owner']);
 } else {
-    requireLoginApi(['waiter', 'owner']);
+    requireLoginApi(['waiter', 'kasir', 'owner']);
 }
 
 $shopId = requireShopIdApi();

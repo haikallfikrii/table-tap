@@ -49,9 +49,14 @@ $i18n = [
     'status_item_siap' => t('status_item_siap'),
     'status_item_diambil' => t('status_item_diambil'),
     'status_item_dihantar' => t('status_item_dihantar'),
+    'mark_cooking'  => t('mark_cooking'),
+    'mark_ready'    => t('mark_ready'),
+    'mark_ready_self' => t('mark_ready_self'),
+    'mark_done'     => t('mark_done'),
+    'mark_collected'=> t('mark_collected'),
+    'kasir_prep_hint' => t('kasir_prep_hint'),
     'dine_in'       => t('dine_in'),
     'takeaway'      => t('takeaway'),
-    'mark_collected'=> t('mark_collected'),
     'silence_alert' => t('silence_alert'),
     'sourced_staff' => t('sourced_staff'),
     'print_receipt' => t('print_receipt'),
@@ -122,6 +127,8 @@ $i18n = [
   <?php endif; ?>
 </p>
 
+<p class="order-meta" style="margin:0 0 12px"><?= e(t('kasir_prep_hint')) ?></p>
+
 <p class="print-status" id="print-status"><?= e(t('kasir_printer_hint')) ?></p>
 
 <div class="stat-row">
@@ -151,6 +158,7 @@ $i18n = [
      data-confirm-url="<?= e(baseUrl('admin/api/confirm_payment.php')) ?>"
      data-split-url="<?= e(baseUrl('admin/api/split_bill.php')) ?>"
      data-pickup-url="<?= e(baseUrl('admin/api/pickup_action.php')) ?>"
+     data-item-status-url="<?= e(baseUrl('admin/api/item_status.php')) ?>"
      data-receipt-url="<?= e(baseUrl('admin/receipt.php')) ?>"
      data-receipt-json-url="<?= e(baseUrl('admin/api/receipt_json.php')) ?>"
      data-send-receipt-url="<?= e(baseUrl('admin/api/send_receipt.php')) ?>"

@@ -9,6 +9,7 @@ require_once dirname(__DIR__, 2) . '/includes/auth.php';
 require_once dirname(__DIR__, 2) . '/includes/shop.php';
 require_once dirname(__DIR__, 2) . '/includes/verification.php';
 require_once dirname(__DIR__, 2) . '/includes/delivery.php';
+require_once dirname(__DIR__, 2) . '/includes/stations.php';
 
 $user = requireLoginApi(['kasir', 'owner']);
 $shopId = requireShopIdApi();
@@ -46,11 +47,17 @@ $orders = $stmt->fetchAll();
 $orderIds = array_map(static fn($o) => (int) $o['id'], $orders);
 $itemsByOrder = [];
 
+$stationsById = [];
+foreach (shopStations($shopId, true) as $st) {
+    $stationsById[(int) $st['id']] = $st;
+}
+
 if ($orderIds !== []) {
     $placeholders = implode(',', array_fill(0, count($orderIds), '?'));
+    $stationSelect = orderStationColumnExists() ? ', station_id_saat_order' : '';
     $itemStmt = $pdo->prepare(
         "SELECT id, order_id, qty, catatan, status_item,
-                harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order
+                harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order{$stationSelect}
          FROM order_items
          WHERE order_id IN ($placeholders)
          ORDER BY id ASC"
@@ -59,6 +66,13 @@ if ($orderIds !== []) {
     foreach ($itemStmt->fetchAll() as $item) {
         $oid = (int) $item['order_id'];
         $item['nama'] = $lang === 'en' ? $item['nama_saat_order_en'] : $item['nama_saat_order_my'];
+        $sid = (int) ($item['station_id_saat_order'] ?? 0);
+        $station = $sid > 0 ? ($stationsById[$sid] ?? null) : null;
+        if (!$station) {
+            $station = defaultStationForKategori($shopId, (string) ($item['kategori_saat_order'] ?? 'makanan'));
+        }
+        $item['station_kod'] = (string) ($station['kod'] ?? '');
+        $item['station_label'] = $station ? stationLabel($station, $lang) : '';
         $itemsByOrder[$oid][] = $item;
     }
 }

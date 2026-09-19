@@ -514,6 +514,81 @@ body.admin {
   font-style: italic;
 }
 
+.kasir-item-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.kasir-item-main {
+  min-width: 0;
+  flex: 1;
+}
+
+.kasir-item-price {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.kasir-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  align-items: center;
+}
+
+.kasir-item-station {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  background: rgba(0, 0, 0, 0.05);
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.kasir-item-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: #fff3e0;
+  color: #c44d03;
+}
+
+.kasir-item-status.status-sedang_dimasak {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.kasir-item-status.status-siap,
+.kasir-item-status.status-diambil {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.kasir-item-status.status-dihantar {
+  background: #eceff1;
+  color: #546e7a;
+}
+
+.kasir-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.btn-xs {
+  font-size: 0.78rem;
+  padding: 5px 10px;
+  border-radius: 8px;
+  line-height: 1.2;
+}
+
 .order-card-footer {
   display: flex;
   flex-wrap: wrap;
