@@ -89,5 +89,6 @@ $config = getConfig();
     </div>
   </div>
   <script src="<?= e(assetUrl('js/i18n.js')) ?>"></script>
+  <?= chatlmWidgetHtml() ?>
 </body>
 </html>
