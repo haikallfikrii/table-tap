@@ -287,13 +287,19 @@ function enqueueKitchenPrintJobs(int $shopId, int $orderId, ?array $shop = null,
             );
 
             $stationKod = (string) ($station['kod'] ?? 'dapur');
-            $key = $stationKod . '|' . $meta['ticket_group'];
+            $stationName = stationLabel($station, $lang);
+            $hubMode = !empty($printer['kasir_print_hub']);
+            // Hub (1 printer at kasir): one slip per station, never merge.
+            // Multi-printer: keep category splits within a station (e.g. drinks counter).
+            $key = $hubMode ? $stationKod : ($stationKod . '|' . $meta['ticket_group']);
             if (!isset($tickets[$key])) {
                 $tickets[$key] = [
                     'type' => 'kitchen',
                     'station' => $stationKod,
-                    'station_name' => stationLabel($station, $lang),
-                    'ticket_label' => $meta['ticket_label'],
+                    'station_name' => $stationName,
+                    'ticket_label' => $hubMode
+                        ? ($stationName !== '' ? $stationName : $meta['ticket_label'])
+                        : $meta['ticket_label'],
                     'shop_name' => (string) ($shop['nama_kedai'] ?? 'TableTap'),
                     'order_id' => $orderId,
                     'table' => (string) ($order['nomor_meja'] ?? '-'),
@@ -313,9 +319,13 @@ function enqueueKitchenPrintJobs(int $shopId, int $orderId, ?array $shop = null,
             ];
         }
 
+        // Hub: all slips print on the kasir device; payload still names the real station.
+        $routeKod = !empty($printer['kasir_print_hub']) ? 'kasir' : null;
+
         $queued = 0;
         foreach ($tickets as $ticket) {
-            if (enqueuePrintJob($shopId, (string) $ticket['station'], 'kitchen', $ticket, $orderId) !== null) {
+            $target = $routeKod ?? (string) $ticket['station'];
+            if (enqueuePrintJob($shopId, $target, 'kitchen', $ticket, $orderId) !== null) {
                 $queued++;
             }
         }

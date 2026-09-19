@@ -27,7 +27,9 @@
   let beepKitchen = 4;
 
   const autoKey = 'tt_kitchen_autoprint_' + (stationId || kategori);
-  let autoPrint = true;
+  const kasirHub = root.dataset.printHub === '1';
+  // When kasir prints all station slips, keep station screens silent by default.
+  let autoPrint = !kasirHub;
   try {
     const saved = localStorage.getItem(autoKey);
     if (saved === '0') autoPrint = false;
