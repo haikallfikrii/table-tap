@@ -197,14 +197,15 @@
     };
   }
 
-  /** One ticket per station per order — staff tears and walks to stations. */
+  /** One tear-off slip per station per order — never merge stations into one print. */
   function groupHubTickets(items, newIds) {
     const idSet = new Set(newIds || []);
     const byTicket = {};
     items.forEach(function (it) {
       if (!idSet.has(it.id) || hubPrintedIds.has(it.id)) return;
       if (it.status_item !== 'menunggu') return;
-      const grp = it.ticket_group || it.station_kod || 'default';
+      // Key by station only (dapur / western / minuman) — separate physical prints.
+      const grp = String(it.station_kod || it.ticket_group || 'default');
       const key = it.order_id + ':' + grp;
       const label = it.ticket_label || grp;
       if (!byTicket[key]) {
@@ -216,6 +217,7 @@
           serveLabel: serveLabel(it.jenis_hidang),
           guest: it.nama_pelanggan || '',
           time: it.waktu_order || '',
+          stationKod: grp,
           items: [],
           itemIds: [],
         };
@@ -227,11 +229,18 @@
       });
       byTicket[key].itemIds.push(it.id);
     });
-    return Object.keys(byTicket).map(function (k) { return byTicket[k]; });
+    const order = { dapur: 0, western: 1, minuman: 2 };
+    return Object.keys(byTicket).map(function (k) { return byTicket[k]; }).sort(function (a, b) {
+      const ao = order[a.stationKod] != null ? order[a.stationKod] : 50;
+      const bo = order[b.stationKod] != null ? order[b.stationKod] : 50;
+      if (ao !== bo) return ao - bo;
+      return a.orderId - b.orderId;
+    });
   }
 
   async function autoPrintHubTickets(items, newIds) {
-    if (!printHub || !autoPrint || !window.TableTapPrint || !TableTapPrint.supported()) return;
+    // Hub prints whenever enabled — not gated on receipt auto-print toggle.
+    if (!printHub || !window.TableTapPrint || !TableTapPrint.supported()) return;
     if (!hubPrimed || hubPrintBusy) return;
     const tickets = groupHubTickets(items, newIds);
     if (!tickets.length) return;
@@ -246,10 +255,11 @@
       for (let i = 0; i < tickets.length; i++) {
         const t = tickets[i];
         try {
+          // Separate ESC/POS job + cut per station (never one combined slip).
           await TableTapPrint.printKitchenTicket(t, kitchenLabels());
           t.itemIds.forEach(function (id) { hubPrintedIds.add(id); });
           if (i < tickets.length - 1) {
-            await new Promise(function (r) { setTimeout(r, 400); });
+            await new Promise(function (r) { setTimeout(r, 700); });
           }
         } catch (err) {
           console.warn('Hub station print failed', err);

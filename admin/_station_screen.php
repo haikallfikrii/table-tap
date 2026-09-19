@@ -57,6 +57,8 @@ $allStations = [];
 if (($user['role'] ?? '') === 'owner') {
     $allStations = shopStations((int) $shop['id'], true);
 }
+$printerPrefs = shopPrinterSettings($shop);
+$kasirPrintHub = !empty($printerPrefs['kasir_print_hub']);
 ?>
 <?php require dirname(__DIR__) . '/includes/admin_header.php'; ?>
 
@@ -70,6 +72,12 @@ if (($user['role'] ?? '') === 'owner') {
   </nav>
 <?php endif; ?>
 
+<?php if ($kasirPrintHub): ?>
+  <p class="order-meta" style="margin:0 0 10px">
+    <?= e(t('kasir_print_hub_hint')) ?>
+  </p>
+<?php endif; ?>
+
 <p class="print-status" id="print-status"><?= e(t('printer_hint')) ?></p>
 
 <div id="kitchen-root" class="kitchen-grid"
@@ -80,6 +88,7 @@ if (($user['role'] ?? '') === 'owner') {
      data-station-name="<?= e(stationLabel($station, $lang)) ?>"
      data-shop-name="<?= e((string) ($shop['nama_kedai'] ?? $user['shop_name'] ?? 'TableTap')) ?>"
      data-fulfillment="<?= e($selfPickup ? 'self_pickup' : 'waiter') ?>"
+     data-print-hub="<?= $kasirPrintHub ? '1' : '0' ?>"
      data-interval="<?= (int) ($config['poll_interval_ms'] ?? 3000) ?>"
      data-lang="<?= e($lang) ?>"
      data-i18n="<?= e(json_encode($i18n, JSON_UNESCAPED_UNICODE)) ?>">

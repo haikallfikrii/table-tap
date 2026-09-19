@@ -105,9 +105,9 @@ $westernId = $western ? (int) $western['id'] : null;
 $hubCol = $pdo->query("SHOW COLUMNS FROM shops LIKE 'kasir_print_hub'")->fetch();
 if ($hubCol) {
     $pdo->prepare(
-        'UPDATE shops SET kasir_print_hub = 1, kasir_open_drawer = 1 WHERE id = ?'
+        'UPDATE shops SET kasir_print_hub = 1, kasir_open_drawer = 1, kasir_print_on_paid = 1 WHERE id = ?'
     )->execute([$shopId]);
-    $out['notes'][] = 'kasir_print_hub + kasir_open_drawer enabled';
+    $out['notes'][] = 'kasir_print_hub ON (all station slips → kasir printer, separate per station) + drawer + print on paid';
 }
 
 $insTable = $pdo->prepare(
