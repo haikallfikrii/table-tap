@@ -17,8 +17,10 @@ $checkoutUrl = $checkoutUrl ?? '';
 $sendOtpUrl = $sendOtpUrl ?? '';
 $checkoutNeedsOtp = $deliveryMode || in_array($cafeVerify, ['email', 'email_phone'], true);
 $checkoutRequirePhone = $deliveryMode
-    ? (bool) $deliveryRequirePhone
+    ? (bool) $deliveryRequirePhone || in_array($cafeVerify, ['phone', 'email_phone'], true)
     : in_array($cafeVerify, ['phone', 'email_phone'], true);
+// Table QR / cafe session cart: collect phone when shop asks for phone (not only cafe-browse checkout).
+$requireCartPhone = !$cafeBrowseMode && !$staffMode && in_array($cafeVerify, ['phone', 'email_phone'], true);
 $showGuestName = ($selfPickup || $staffMode) && !$cafeBrowseMode && empty($sessionToken);
 $cafeMode = $cafeMode ?? false;
 $sessionToken = $sessionToken ?? '';
@@ -65,7 +67,8 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
   data-shop-token="<?= e($shopTokenParam) ?>"
   data-cafe-verify="<?= e($cafeVerify) ?>"
   data-needs-otp="<?= $checkoutNeedsOtp ? '1' : '0' ?>"
-  data-require-phone="<?= $checkoutRequirePhone ? '1' : '0' ?>"
+  data-require-phone="<?= ($checkoutRequirePhone || $requireCartPhone) ? '1' : '0' ?>"
+  data-cart-phone="<?= $requireCartPhone ? '1' : '0' ?>"
   data-pay-methods="<?= e(json_encode($payMethods)) ?>"
   data-duitnow-qr="<?= e($duitnowQrUrl) ?>"
   data-checkout-url="<?= e($checkoutUrl) ?>"
@@ -247,6 +250,13 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
     <?php elseif ($cafeMode && $selfPickup && $prefillGuestName !== ''): ?>
       <p class="order-meta cafe-name-note"><?= e(t('cafe_order_as', $prefillGuestName)) ?></p>
     <?php endif; ?>
+    <?php if ($requireCartPhone): ?>
+      <div class="guest-name-field guest-phone-field">
+        <label for="guest-phone"><?= e(t('phone')) ?> *</label>
+        <input type="tel" id="guest-phone" maxlength="20" autocomplete="tel" placeholder="<?= e(t('phone_ph')) ?>" inputmode="tel" required>
+        <p class="order-meta"><?= e(t('phone_cart_hint')) ?></p>
+      </div>
+    <?php endif; ?>
     <button type="button" class="btn btn-primary" id="btn-submit-order" style="width:100%" disabled>
       <?= e(t('submit_order')) ?>
     </button>
@@ -274,7 +284,7 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
       <?php
         $showCheckoutEmail = $deliveryMode || in_array($cafeVerify, ['email', 'email_phone'], true);
         $showCheckoutPhone = $deliveryMode
-            ? $deliveryRequirePhone
+            ? ($deliveryRequirePhone || in_array($cafeVerify, ['phone', 'email_phone'], true))
             : in_array($cafeVerify, ['phone', 'email_phone'], true);
         $checkoutNeedsOtp = $deliveryMode || in_array($cafeVerify, ['email', 'email_phone'], true);
       ?>
@@ -284,8 +294,8 @@ $pageSubtitle = $pageSubtitle ?? ($cafeBrowseMode
       <p class="order-meta cafe-spam-note"><?= e($deliveryMode ? t('delivery_email_otp_note') : t('cafe_spam_note')) ?></p>
       <?php endif; ?>
       <?php if ($showCheckoutPhone): ?>
-      <label for="checkout-phone" style="margin-top:12px"><?= e(t('phone')) ?><?= $deliveryMode || $cafeVerify === 'email_phone' ? ' *' : '' ?></label>
-      <input type="tel" id="checkout-phone" maxlength="20" autocomplete="tel" placeholder="<?= e(t('phone_ph')) ?>" inputmode="tel" <?= ($deliveryMode && $deliveryRequirePhone) || $cafeVerify === 'phone' || $cafeVerify === 'email_phone' ? 'required' : '' ?>>
+      <label for="checkout-phone" style="margin-top:12px"><?= e(t('phone')) ?> *</label>
+      <input type="tel" id="checkout-phone" maxlength="20" autocomplete="tel" placeholder="<?= e(t('phone_ph')) ?>" inputmode="tel" required>
       <?php endif; ?>
 
       <?php if ($deliveryMode): ?>
