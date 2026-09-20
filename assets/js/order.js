@@ -16,6 +16,7 @@
   const cafeVerify = root.dataset.cafeVerify || 'email';
   const needsOtp = root.dataset.needsOtp === '1' || cafeVerify === 'email' || cafeVerify === 'email_phone';
   const requirePhone = root.dataset.requirePhone === '1' || cafeVerify === 'phone' || cafeVerify === 'email_phone';
+  const cartPhoneRequired = root.dataset.cartPhone === '1';
   const checkoutUrl = root.dataset.checkoutUrl || '';
   const sendOtpUrl = root.dataset.sendOtpUrl || '';
   const prefillName = (root.dataset.prefillName || '').trim();
@@ -30,6 +31,7 @@
   const cartStore = (staffMode ? 'tt_staff_cart_' : 'tt_cart_') + cartKey;
   const serveStore = (staffMode ? 'tt_staff_serve_' : 'tt_serve_') + cartKey;
   const nameStore = (staffMode ? 'tt_staff_name_' : 'tt_name_') + cartKey;
+  const phoneStore = (staffMode ? 'tt_staff_phone_' : 'tt_phone_') + cartKey;
   const i18n = (function () {
     try { return JSON.parse(root.dataset.i18n || '{}'); } catch (e) { return {}; }
   })();
@@ -127,6 +129,9 @@
     const savedName = sessionStorage.getItem(nameStore);
     const nameInput = document.getElementById('guest-name');
     if (nameInput && savedName) nameInput.value = savedName;
+    const savedPhone = sessionStorage.getItem(phoneStore);
+    const phoneInput = document.getElementById('guest-phone');
+    if (phoneInput && savedPhone) phoneInput.value = savedPhone;
   } catch (e) {
     cart = [];
   }
@@ -137,6 +142,8 @@
       sessionStorage.setItem(serveStore, serveType);
       const nameInput = document.getElementById('guest-name');
       if (nameInput) sessionStorage.setItem(nameStore, nameInput.value.trim());
+      const phoneInput = document.getElementById('guest-phone');
+      if (phoneInput) sessionStorage.setItem(phoneStore, phoneInput.value.trim());
     } catch (e) { /* ignore */ }
   }
 
@@ -527,6 +534,7 @@
   });
 
   document.getElementById('guest-name')?.addEventListener('input', persist);
+  document.getElementById('guest-phone')?.addEventListener('input', persist);
 
   function resolveGuestName() {
     const nameInput = document.getElementById('guest-name');
@@ -535,6 +543,14 @@
       if (v.length >= 2) return v;
     }
     if (prefillName.length >= 2) return prefillName;
+    return '';
+  }
+
+  function resolveGuestPhone() {
+    const phoneInput = document.getElementById('guest-phone');
+    if (phoneInput) {
+      return (phoneInput.value || '').trim();
+    }
     return '';
   }
 
@@ -561,6 +577,11 @@
       document.getElementById('guest-name')?.focus();
       return;
     }
+    if ((cartPhoneRequired || requirePhone) && !cafeBrowse && !validPhone(resolveGuestPhone())) {
+      alert(i18n.phone_required || 'Enter phone');
+      document.getElementById('guest-phone')?.focus();
+      return;
+    }
     if (cafeBrowse) {
       openCheckoutSheet();
       return;
@@ -581,6 +602,8 @@
         nama_pelanggan: guestName,
         items: cart.map(cartItemPayload),
       };
+      const phone = resolveGuestPhone();
+      if (phone) payload.phone = phone;
       if (sessionToken) {
         payload.session = sessionToken;
       } else {

@@ -70,6 +70,9 @@ if ($sessionToken !== '') {
     }
 } elseif ($nomorMeja !== '' && $token !== '') {
     $table = findTableByAccess($nomorMeja, $token);
+    if ($table) {
+        $cafeVerify = shopCafeVerify($table);
+    }
 }
 
 $brand = $table ? shopBrand($table) : ($config['app_name'] ?? 'TableTap');

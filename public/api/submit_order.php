@@ -10,6 +10,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/includes/helpers.php';
 require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 require_once dirname(__DIR__, 2) . '/includes/shift.php';
+require_once dirname(__DIR__, 2) . '/includes/delivery.php';
 
 requirePost();
 
@@ -19,6 +20,7 @@ $nomorMeja = trim((string) ($body['meja'] ?? ''));
 $token = trim((string) ($body['token'] ?? ''));
 $items = $body['items'] ?? [];
 $jenisHidang = (($body['jenis_hidang'] ?? '') === 'takeaway') ? 'takeaway' : 'dine_in';
+$phoneRaw = trim((string) ($body['phone'] ?? ''));
 
 $session = null;
 $table = null;
@@ -51,6 +53,17 @@ if (!$shop || $shop['status'] !== 'aktif') {
 }
 assertShopAcceptingOrders($shop);
 
+$phone = '';
+if ($phoneRaw !== '') {
+    if (!isValidPhone($phoneRaw)) {
+        jsonError(t('phone_required'), 400);
+    }
+    $phone = normalizePhone($phoneRaw) ?? $phoneRaw;
+}
+if (shopRequiresPhone($shop) && $phone === '') {
+    jsonError(t('phone_required'), 400);
+}
+
 $created = createShopOrder(
     $table,
     $shop,
@@ -67,6 +80,11 @@ $created = createShopOrder(
 $orderId = $created['order_id'];
 $guestToken = (string) ($created['guest_token'] ?? '');
 $totals = $created['totals'];
+
+if ($phone !== '' && orderDeliveryColumnsExist()) {
+    db()->prepare('UPDATE orders SET phone = ? WHERE id = ? AND shop_id = ?')
+        ->execute([$phone, $orderId, $shopId]);
+}
 
 if ($sessionToken !== '') {
     $redirect = cafeSessionTrackUrl($sessionToken, $orderId, $guestToken);

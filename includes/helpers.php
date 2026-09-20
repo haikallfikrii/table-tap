@@ -334,6 +334,7 @@ function findTableByAccess(string $nomorMeja, string $token): ?array
     $stmt = db()->prepare(
         "SELECT t.*, s.nama_kedai, s.slug, s.status AS shop_status,
                 s.sst_enabled, s.sst_rate, s.package_id, s.fulfillment_mode,
+                s.cafe_verify,
                 p.kod AS package_kod
          FROM tables t
          INNER JOIN shops s ON s.id = t.shop_id
@@ -351,6 +352,7 @@ function findTableByIdForShop(int $tableId, int $shopId): ?array
     $stmt = db()->prepare(
         "SELECT t.*, s.nama_kedai, s.slug, s.status AS shop_status,
                 s.sst_enabled, s.sst_rate, s.package_id, s.fulfillment_mode,
+                s.cafe_verify,
                 p.kod AS package_kod
          FROM tables t
          INNER JOIN shops s ON s.id = t.shop_id
