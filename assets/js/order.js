@@ -63,7 +63,34 @@
     if (/did not match the expected pattern/i.test(msg)) {
       return i18n.order_network_error || i18n.order_failed || 'Order failed';
     }
+    if (/failed to fetch|networkerror|load failed|abort/i.test(msg)) {
+      return i18n.order_network_error || i18n.order_failed || 'Order failed';
+    }
     return msg || i18n.order_failed || 'Order failed';
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  async function postOrder(payload, attempt) {
+    const res = await fetch(resolveFetchUrl(submitUrl), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(payload),
+      credentials: 'same-origin',
+      cache: 'no-store',
+    });
+    const data = await parseJsonResponse(res);
+    if (res.ok && data.ok) return data;
+
+    const status = res.status || 0;
+    const transient = status === 0 || status === 408 || status === 429 || status >= 500;
+    if (transient && attempt < 2) {
+      await sleep(attempt === 0 ? 400 : 900);
+      return postOrder(payload, attempt + 1);
+    }
+    throw new Error(data.error || i18n.order_failed);
   }
 
   function parseItemPayload(raw) {
@@ -612,16 +639,31 @@
         payload.table_id = tableId;
         payload.from = staffFrom;
       }
-      const res = await fetch(resolveFetchUrl(submitUrl), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await parseJsonResponse(res);
-      if (!res.ok || !data.ok) throw new Error(data.error || i18n.order_failed);
+      let data;
+      try {
+        data = await postOrder(payload, 0);
+      } catch (err) {
+        // One more pass for flaky mobile networks (Failed to fetch).
+        const msg = String((err && err.message) || '');
+        if (/failed to fetch|networkerror|load failed/i.test(msg)) {
+          await sleep(700);
+          data = await postOrder(payload, 1);
+        } else {
+          throw err;
+        }
+      }
       clearCartStorage();
       if (data.redirect) {
-        window.location.assign(String(data.redirect));
+        const dest = String(data.redirect);
+        // Keep kasir/waiter dashboard tab alive (Bluetooth printer stays connected).
+        if (staffMode && window.opener && !window.opener.closed) {
+          try {
+            window.opener.location.assign(dest);
+            window.close();
+            return;
+          } catch (e) { /* fall through */ }
+        }
+        window.location.assign(dest);
       } else {
         throw new Error(i18n.order_failed);
       }
@@ -639,6 +681,7 @@
       sessionStorage.removeItem(cartStore);
       sessionStorage.removeItem(serveStore);
       sessionStorage.removeItem(nameStore);
+      sessionStorage.removeItem(phoneStore);
     } catch (e) { /* ignore */ }
   }
 

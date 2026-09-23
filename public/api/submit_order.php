@@ -82,8 +82,13 @@ $guestToken = (string) ($created['guest_token'] ?? '');
 $totals = $created['totals'];
 
 if ($phone !== '' && orderDeliveryColumnsExist()) {
-    db()->prepare('UPDATE orders SET phone = ? WHERE id = ? AND shop_id = ?')
-        ->execute([$phone, $orderId, $shopId]);
+    try {
+        db()->prepare('UPDATE orders SET phone = ? WHERE id = ? AND shop_id = ?')
+            ->execute([$phone, $orderId, $shopId]);
+    } catch (Throwable $e) {
+        // Order already saved — never fail the customer response on phone persist.
+        error_log('submit_order phone update failed: ' . $e->getMessage());
+    }
 }
 
 if ($sessionToken !== '') {

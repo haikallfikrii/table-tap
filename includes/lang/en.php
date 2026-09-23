@@ -31,6 +31,7 @@ return [
     'printer_connect'   => 'Connect printer',
     'printer_disconnect'=> 'Disconnect printer',
     'printer_connected' => 'Printer connected',
+    'printer_reconnecting' => 'Reconnecting printer…',
     'printer_hint'      => 'Connect a Bluetooth thermal printer on this kitchen device for silent auto-print tickets.',
     'printer_unsupported' => 'Bluetooth auto-print needs Chrome/Edge (Android or desktop). iPhone is not supported.',
     'printer_cancelled' => 'No printer selected',

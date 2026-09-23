@@ -901,10 +901,39 @@
     TableTapPrint.onChange(function () { updatePrintStatus(); });
     updatePrintStatus();
 
-    // Same as kitchen: restore previous BT grant without picker
-    TableTapPrint.reconnect().then(function () {
-      updatePrintStatus();
-    }).catch(function () { /* first visit / no grant yet */ });
+    function tryReconnect(reason) {
+      if (!TableTapPrint.supported() || TableTapPrint.isConnected() || TableTapPrint.connecting()) {
+        return;
+      }
+      const returning = /[?&]ordered=/.test(window.location.search) || reason === 'focus';
+      const attempts = returning ? 5 : 3;
+      updatePrintStatus(i18n.printer_reconnecting || 'Menyambung semula printer…');
+      TableTapPrint.reconnectWithRetry(attempts, 800).then(function () {
+        updatePrintStatus();
+      }).catch(function () {
+        updatePrintStatus();
+      });
+    }
+
+    // Restore previous BT grant without picker (retry — printers often need a moment after tab return)
+    tryReconnect('boot');
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') tryReconnect('focus');
+    });
+    window.addEventListener('pageshow', function () { tryReconnect('focus'); });
+    window.addEventListener('focus', function () { tryReconnect('focus'); });
+
+    document.querySelectorAll('a[data-staff-order-popup]').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        // Keep this kasir tab alive so the Bluetooth GATT session stays connected.
+        e.preventDefault();
+        const w = window.open(a.href, 'tt_staff_order');
+        if (!w) {
+          window.location.assign(a.href);
+        }
+      });
+    });
 
     document.getElementById('btn-connect-printer')?.addEventListener('click', async function () {
       const connectBtn = this;

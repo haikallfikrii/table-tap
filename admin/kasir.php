@@ -78,6 +78,7 @@ $i18n = [
     'printer_connect' => t('printer_connect'),
     'printer_disconnect' => t('printer_disconnect'),
     'printer_connected' => t('printer_connected'),
+    'printer_reconnecting' => t('printer_reconnecting'),
     'printer_hint'  => t('printer_hint'),
     'kasir_printer_hint' => t('kasir_printer_hint'),
     'printer_unsupported' => t('printer_unsupported'),
@@ -121,7 +122,7 @@ $i18n = [
 <?php require dirname(__DIR__) . '/includes/staff_order_flash.php'; ?>
 
 <p style="margin:0 0 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-  <a class="btn btn-primary" href="<?= e(baseUrl('admin/staff_order.php?from=kasir')) ?>"><?= e(t('staff_order')) ?></a>
+  <a class="btn btn-primary" href="<?= e(baseUrl('admin/staff_order.php?from=kasir')) ?>" data-staff-order-popup="1"><?= e(t('staff_order')) ?></a>
   <a class="btn btn-secondary" href="<?= e(baseUrl('admin/owner/menu.php')) ?>"><?= e(t('manage_menu')) ?></a>
   <?php if (shiftColumnsExist()): ?>
     <a class="btn btn-secondary" href="<?= e(baseUrl('admin/owner/shift.php')) ?>"><?= e(t('shift_kasir_link')) ?></a>

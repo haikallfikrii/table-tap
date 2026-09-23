@@ -20,13 +20,8 @@ function getConfig(): array
     return $config;
 }
 
-function db(): PDO
+function dbConnect(): PDO
 {
-    static $pdo = null;
-    if ($pdo instanceof PDO) {
-        return $pdo;
-    }
-
     $c = getConfig();
     $dsn = sprintf(
         'mysql:host=%s;dbname=%s;charset=%s',
@@ -35,19 +30,50 @@ function db(): PDO
         $c['db_charset'] ?? 'utf8mb4'
     );
 
-    $pdo = new PDO($dsn, $c['db_user'], $c['db_pass'], [
+    return new PDO($dsn, $c['db_user'], $c['db_pass'], [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
     ]);
+}
+
+/** @return array{pdo:?PDO,patched:bool} */
+function &dbState(): array
+{
+    static $state = ['pdo' => null, 'patched' => false];
+    return $state;
+}
+
+function db(): PDO
+{
+    $state = &dbState();
+    if ($state['pdo'] instanceof PDO) {
+        return $state['pdo'];
+    }
+
+    $state['pdo'] = dbConnect();
 
     // Do not SET time_zone here — some shared hosts reject it and used to break login.
     // All app timestamps use appNow() (PHP Asia/Kuala_Lumpur) instead.
 
-    require_once __DIR__ . '/schema_patch.php';
-    ensureAppSchema($pdo);
+    if (!$state['patched']) {
+        require_once __DIR__ . '/schema_patch.php';
+        ensureAppSchema($state['pdo']);
+        $state['patched'] = true;
+    }
 
-    return $pdo;
+    return $state['pdo'];
+}
+
+/**
+ * Drop the cached PDO and open a fresh connection (MySQL "gone away" / idle timeout).
+ * Schema patch is skipped — already applied on the first connection of this request.
+ */
+function dbReconnect(): PDO
+{
+    $state = &dbState();
+    $state['pdo'] = dbConnect();
+    return $state['pdo'];
 }
 
 /**
