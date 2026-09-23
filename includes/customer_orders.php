@@ -19,6 +19,20 @@ function orderGuestTokenColumnExists(): bool
     return $exists;
 }
 
+function orderSumberColumnExists(): bool
+{
+    static $exists = null;
+    if ($exists !== null) {
+        return $exists;
+    }
+    try {
+        $exists = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'sumber_order'")->fetch();
+    } catch (Throwable $e) {
+        $exists = false;
+    }
+    return $exists;
+}
+
 function generateOrderGuestToken(): string
 {
     return bin2hex(random_bytes(16));

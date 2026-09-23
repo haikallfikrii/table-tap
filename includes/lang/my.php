@@ -31,6 +31,7 @@ return [
     'printer_connect'   => 'Sambung printer',
     'printer_disconnect'=> 'Putus printer',
     'printer_connected' => 'Printer bersambung',
+    'printer_reconnecting' => 'Menyambung semula printer…',
     'printer_hint'      => 'Sambung printer thermal Bluetooth pada peranti dapur ini untuk auto-print tiket (tanpa dialog).',
     'printer_unsupported' => 'Auto-print Bluetooth perlu Chrome/Edge (Android atau desktop). iPhone tidak disokong.',
     'printer_cancelled' => 'Tiada printer dipilih',

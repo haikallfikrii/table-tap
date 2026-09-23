@@ -27,6 +27,8 @@
   var characteristic = null;
   var connecting = false;
   var listeners = [];
+  var PREFERRED_KEY = 'tt_bt_printer_id';
+  var reconnectTimer = null;
 
   /** 58mm / 5.5cm thermal — ~32 chars normal, ~16 when double width+height. */
   var PAPER_WIDTH = 32;
@@ -242,11 +244,27 @@
     device.addEventListener('gattserverdisconnected', function () {
       characteristic = null;
       notify();
+      // Soft auto-recover when the printer briefly drops (common after print / sleep).
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(function () {
+        reconnect().catch(function () { /* stay disconnected until next ensureConnected */ });
+      }, 1200);
     });
+  }
+
+  function rememberDevice(dev) {
+    try {
+      if (dev && dev.id) localStorage.setItem(PREFERRED_KEY, String(dev.id));
+    } catch (e) { /* ignore */ }
+  }
+
+  function preferredDeviceId() {
+    try { return localStorage.getItem(PREFERRED_KEY) || ''; } catch (e) { return ''; }
   }
 
   function bindDevice(dev) {
     device = dev;
+    rememberDevice(dev);
     attachDisconnect();
     return device.gatt.connect().then(function (server) {
       return findWritable(server).catch(function () {
@@ -280,9 +298,17 @@
 
     return navigator.bluetooth.getDevices().then(function (devices) {
       if (!devices || !devices.length) throw new Error('no_saved');
-      // Prefer a device that still looks reachable / last used
+      var preferred = preferredDeviceId();
+      var ordered = devices.slice();
+      if (preferred) {
+        ordered.sort(function (a, b) {
+          if (a.id === preferred) return -1;
+          if (b.id === preferred) return 1;
+          return 0;
+        });
+      }
       var queue = Promise.reject(new Error('no_saved'));
-      devices.forEach(function (dev) {
+      ordered.forEach(function (dev) {
         queue = queue.catch(function () {
           return bindDevice(dev);
         });
@@ -300,6 +326,26 @@
       notify();
       throw err;
     });
+  }
+
+  function sleep(ms) {
+    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+  }
+
+  /** Retry reconnect without showing the Bluetooth picker. */
+  function reconnectWithRetry(attempts, delayMs) {
+    attempts = Math.max(1, attempts || 3);
+    delayMs = delayMs || 700;
+    var tryOnce = function (n) {
+      return reconnect().catch(function (err) {
+        if (n >= attempts) throw err;
+        if (err && err.message === 'busy') {
+          return sleep(delayMs).then(function () { return tryOnce(n); });
+        }
+        return sleep(delayMs * n).then(function () { return tryOnce(n + 1); });
+      });
+    };
+    return tryOnce(1);
   }
 
   function connect() {
@@ -511,6 +557,7 @@
     connecting: function () { return connecting; },
     connect: connect,
     reconnect: reconnect,
+    reconnectWithRetry: reconnectWithRetry,
     ensureConnected: ensureConnected,
     disconnect: disconnect,
     onChange: onChange,

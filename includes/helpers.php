@@ -469,10 +469,13 @@ function createShopOrder(
     }
 
     assertCartLimits($normalized, $shop);
-    if ($sessionId !== null && $sessionId > 0 && function_exists('assertSessionOrderRateLimit')) {
-        assertSessionOrderRateLimit($sessionId, $shopId, $shop);
-    } else {
-        assertTableOrderRateLimit((int) $table['id'], $shopId, $jenisHidang, $shop);
+    // Staff key-in (Grab/Foodpanda/kasir) must not be blocked by guest anti-spam burst limits.
+    if ($sumber !== 'staf') {
+        if ($sessionId !== null && $sessionId > 0 && function_exists('assertSessionOrderRateLimit')) {
+            assertSessionOrderRateLimit($sessionId, $shopId, $shop);
+        } else {
+            assertTableOrderRateLimit((int) $table['id'], $shopId, $jenisHidang, $shop);
+        }
     }
 
     $pdo = db();
@@ -558,171 +561,199 @@ function createShopOrder(
 
     $totals = calculateTotals($subtotal, $shop);
     $sumber = $sumber === 'staf' ? 'staf' : 'qr';
-    $hasSumber = (bool) $pdo->query("SHOW COLUMNS FROM orders LIKE 'sumber_order'")->fetch();
+    $hasSumber = orderSumberColumnExists();
     $hasGuestToken = orderGuestTokenColumnExists();
     $hasSessionId = orderSessionColumnExists();
     $guestToken = $hasGuestToken ? generateOrderGuestToken() : null;
     $useSession = $hasSessionId && $sessionId !== null && $sessionId > 0;
 
-    try {
-        $pdo->beginTransaction();
-        if ($useSession && $hasSumber && $hasGuestToken) {
-            $insOrder = $pdo->prepare(
-                'INSERT INTO orders
-                 (shop_id, table_id, session_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-            $insOrder->execute([
-                $shopId,
-                (int) $table['id'],
-                $sessionId,
-                appNow(),
-                'menunggu',
-                'belum_bayar',
-                $jenisHidang,
-                $guestName !== '' ? $guestName : null,
-                $guestToken,
-                $sumber,
-                $totals['subtotal'],
-                $totals['sst_rate'],
-                $totals['sst_jumlah'],
-                $totals['total'],
-            ]);
-        } elseif ($hasSumber && $hasGuestToken) {
-            $insOrder = $pdo->prepare(
-                'INSERT INTO orders
-                 (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-            $insOrder->execute([
-                $shopId,
-                (int) $table['id'],
-                appNow(),
-                'menunggu',
-                'belum_bayar',
-                $jenisHidang,
-                $guestName !== '' ? $guestName : null,
-                $guestToken,
-                $sumber,
-                $totals['subtotal'],
-                $totals['sst_rate'],
-                $totals['sst_jumlah'],
-                $totals['total'],
-            ]);
-        } elseif ($hasSumber) {
-            $insOrder = $pdo->prepare(
-                'INSERT INTO orders
-                 (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-            $insOrder->execute([
-                $shopId,
-                (int) $table['id'],
-                appNow(),
-                'menunggu',
-                'belum_bayar',
-                $jenisHidang,
-                $guestName !== '' ? $guestName : null,
-                $sumber,
-                $totals['subtotal'],
-                $totals['sst_rate'],
-                $totals['sst_jumlah'],
-                $totals['total'],
-            ]);
-        } elseif ($hasGuestToken) {
-            $insOrder = $pdo->prepare(
-                'INSERT INTO orders
-                 (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, subtotal, sst_rate, sst_jumlah, total_harga)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-            $insOrder->execute([
-                $shopId,
-                (int) $table['id'],
-                appNow(),
-                'menunggu',
-                'belum_bayar',
-                $jenisHidang,
-                $guestName !== '' ? $guestName : null,
-                $guestToken,
-                $totals['subtotal'],
-                $totals['sst_rate'],
-                $totals['sst_jumlah'],
-                $totals['total'],
-            ]);
-        } else {
-            $insOrder = $pdo->prepare(
-                'INSERT INTO orders
-                 (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, subtotal, sst_rate, sst_jumlah, total_harga)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-            $insOrder->execute([
-                $shopId,
-                (int) $table['id'],
-                appNow(),
-                'menunggu',
-                'belum_bayar',
-                $jenisHidang,
-                $guestName !== '' ? $guestName : null,
-                $totals['subtotal'],
-                $totals['sst_rate'],
-                $totals['sst_jumlah'],
-                $totals['total'],
-            ]);
-        }
-        $orderId = (int) $pdo->lastInsertId();
-
-        if ($customerEmail !== null && $customerEmail !== '') {
-            saveOrderCustomerEmail($orderId, $customerEmail);
-        }
-
-        $snapStation = orderStationColumnExists();
-        if ($snapStation && $snapMenuCat) {
-            $insItem = $pdo->prepare(
-                'INSERT INTO order_items
-                 (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order, station_id_saat_order, menu_category_kod_saat_order, menu_category_nama_my_saat_order, menu_category_nama_en_saat_order)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-        } elseif ($snapStation) {
-            $insItem = $pdo->prepare(
-                'INSERT INTO order_items
-                 (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order, station_id_saat_order)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-        } else {
-            $insItem = $pdo->prepare(
-                'INSERT INTO order_items
-                 (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            );
-        }
-        foreach ($lines as $line) {
-            $args = [
-                $orderId,
-                $line['menu_item_id'],
-                $line['qty'],
-                $line['catatan'],
-                'menunggu',
-                $line['harga_saat_order'],
-                $line['nama_saat_order_my'],
-                $line['nama_saat_order_en'],
-                $line['kategori_saat_order'],
-            ];
-            if ($snapStation) {
-                $args[] = $line['station_id_saat_order'];
+    $orderId = 0;
+    $attempts = 0;
+    $lastError = null;
+    while ($attempts < 2) {
+        $attempts++;
+        $pdo = $attempts === 1 ? db() : dbReconnect();
+        try {
+            $pdo->beginTransaction();
+            if ($useSession && $hasSumber && $hasGuestToken) {
+                $insOrder = $pdo->prepare(
+                    'INSERT INTO orders
+                     (shop_id, table_id, session_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+                $insOrder->execute([
+                    $shopId,
+                    (int) $table['id'],
+                    $sessionId,
+                    appNow(),
+                    'menunggu',
+                    'belum_bayar',
+                    $jenisHidang,
+                    $guestName !== '' ? $guestName : null,
+                    $guestToken,
+                    $sumber,
+                    $totals['subtotal'],
+                    $totals['sst_rate'],
+                    $totals['sst_jumlah'],
+                    $totals['total'],
+                ]);
+            } elseif ($hasSumber && $hasGuestToken) {
+                $insOrder = $pdo->prepare(
+                    'INSERT INTO orders
+                     (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+                $insOrder->execute([
+                    $shopId,
+                    (int) $table['id'],
+                    appNow(),
+                    'menunggu',
+                    'belum_bayar',
+                    $jenisHidang,
+                    $guestName !== '' ? $guestName : null,
+                    $guestToken,
+                    $sumber,
+                    $totals['subtotal'],
+                    $totals['sst_rate'],
+                    $totals['sst_jumlah'],
+                    $totals['total'],
+                ]);
+            } elseif ($hasSumber) {
+                $insOrder = $pdo->prepare(
+                    'INSERT INTO orders
+                     (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, sumber_order, subtotal, sst_rate, sst_jumlah, total_harga)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+                $insOrder->execute([
+                    $shopId,
+                    (int) $table['id'],
+                    appNow(),
+                    'menunggu',
+                    'belum_bayar',
+                    $jenisHidang,
+                    $guestName !== '' ? $guestName : null,
+                    $sumber,
+                    $totals['subtotal'],
+                    $totals['sst_rate'],
+                    $totals['sst_jumlah'],
+                    $totals['total'],
+                ]);
+            } elseif ($hasGuestToken) {
+                $insOrder = $pdo->prepare(
+                    'INSERT INTO orders
+                     (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, guest_token, subtotal, sst_rate, sst_jumlah, total_harga)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+                $insOrder->execute([
+                    $shopId,
+                    (int) $table['id'],
+                    appNow(),
+                    'menunggu',
+                    'belum_bayar',
+                    $jenisHidang,
+                    $guestName !== '' ? $guestName : null,
+                    $guestToken,
+                    $totals['subtotal'],
+                    $totals['sst_rate'],
+                    $totals['sst_jumlah'],
+                    $totals['total'],
+                ]);
+            } else {
+                $insOrder = $pdo->prepare(
+                    'INSERT INTO orders
+                     (shop_id, table_id, waktu_order, status_order, status_bayar, jenis_hidang, nama_pelanggan, subtotal, sst_rate, sst_jumlah, total_harga)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+                $insOrder->execute([
+                    $shopId,
+                    (int) $table['id'],
+                    appNow(),
+                    'menunggu',
+                    'belum_bayar',
+                    $jenisHidang,
+                    $guestName !== '' ? $guestName : null,
+                    $totals['subtotal'],
+                    $totals['sst_rate'],
+                    $totals['sst_jumlah'],
+                    $totals['total'],
+                ]);
             }
+            $orderId = (int) $pdo->lastInsertId();
+
+            if ($customerEmail !== null && $customerEmail !== '') {
+                saveOrderCustomerEmail($orderId, $customerEmail);
+            }
+
+            $snapStation = orderStationColumnExists();
             if ($snapStation && $snapMenuCat) {
-                $args[] = $line['menu_category_kod_saat_order'] ?: null;
-                $args[] = $line['menu_category_nama_my_saat_order'] ?: null;
-                $args[] = $line['menu_category_nama_en_saat_order'] ?: null;
+                $insItem = $pdo->prepare(
+                    'INSERT INTO order_items
+                     (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order, station_id_saat_order, menu_category_kod_saat_order, menu_category_nama_my_saat_order, menu_category_nama_en_saat_order)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+            } elseif ($snapStation) {
+                $insItem = $pdo->prepare(
+                    'INSERT INTO order_items
+                     (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order, station_id_saat_order)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+            } else {
+                $insItem = $pdo->prepare(
+                    'INSERT INTO order_items
+                     (order_id, menu_item_id, qty, catatan, status_item, harga_saat_order, nama_saat_order_my, nama_saat_order_en, kategori_saat_order)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
             }
-            $insItem->execute($args);
+            foreach ($lines as $line) {
+                $args = [
+                    $orderId,
+                    $line['menu_item_id'],
+                    $line['qty'],
+                    $line['catatan'],
+                    'menunggu',
+                    $line['harga_saat_order'],
+                    $line['nama_saat_order_my'],
+                    $line['nama_saat_order_en'],
+                    $line['kategori_saat_order'],
+                ];
+                if ($snapStation) {
+                    $args[] = $line['station_id_saat_order'];
+                }
+                if ($snapStation && $snapMenuCat) {
+                    $args[] = $line['menu_category_kod_saat_order'] ?: null;
+                    $args[] = $line['menu_category_nama_my_saat_order'] ?: null;
+                    $args[] = $line['menu_category_nama_en_saat_order'] ?: null;
+                }
+                $insItem->execute($args);
+            }
+            $pdo->commit();
+            $lastError = null;
+            break;
+        } catch (Throwable $e) {
+            $lastError = $e;
+            if ($pdo->inTransaction()) {
+                try {
+                    $pdo->rollBack();
+                } catch (Throwable $rollErr) {
+                    // ignore — connection may already be dead
+                }
+            }
+            $msg = $e->getMessage();
+            $transient = (bool) preg_match(
+                '/gone away|Lost connection|Error while sending|server has gone away|Deadlock|Lock wait timeout|SQLSTATE\[HY000\].*2006|SQLSTATE\[HY000\].*2013/i',
+                $msg
+            );
+            if (!$transient || $attempts >= 2) {
+                error_log('createShopOrder failed: ' . $msg);
+                jsonError(t('order_failed'), 500);
+            }
+            // brief pause then reconnect + retry once
+            usleep(150000);
         }
-        $pdo->commit();
-    } catch (Throwable $e) {
-        if ($pdo->inTransaction()) {
-            $pdo->rollBack();
-        }
-        jsonError('Failed to save order', 500);
+    }
+    if ($lastError !== null || $orderId <= 0) {
+        error_log('createShopOrder failed after retry: ' . ($lastError ? $lastError->getMessage() : 'no order id'));
+        jsonError(t('order_failed'), 500);
     }
 
     if ($sessionId !== null && $sessionId > 0) {
