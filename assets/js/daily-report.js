@@ -61,5 +61,23 @@
     reconnect.then(function () {
       setStatus(i18n.printer_connected || 'Printer connected', true);
     }).catch(function () { /* first visit */ });
+
+    document.getElementById('btn-connect-printer')?.addEventListener('click', async function () {
+      const btn = this;
+      if (TableTapPrint.isConnected()) {
+        TableTapPrint.disconnect();
+        setStatus(i18n.printer_connect || 'Connect printer', false);
+        return;
+      }
+      btn.disabled = true;
+      try {
+        await TableTapPrint.ensureConnected({ interactive: true });
+        setStatus(i18n.printer_connected || 'Printer connected', true);
+      } catch (err) {
+        setStatus(i18n.print_failed || 'Print failed', false);
+      } finally {
+        btn.disabled = false;
+      }
+    });
   }
 })();
