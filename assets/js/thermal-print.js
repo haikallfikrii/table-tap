@@ -506,6 +506,72 @@
     return printRaw(buildReceiptTicket(receipt, labels));
   }
 
+  /**
+   * End-of-day closing slip (58mm) — summary + compact order lines.
+   */
+  function buildDailyClosing(report, labels) {
+    labels = labels || {};
+    var width = PAPER_WIDTH;
+    var chunks = [];
+    chunks.push(new Uint8Array([0x1b, 0x40]));
+    chunks.push(line((report && report.shop_name) || 'TableTap', { align: 'center', bold: true }));
+    chunks.push(line(labels.daily_closing_title || 'LAPORAN HARIAN', { align: 'center', bold: true, wide: true }));
+    chunks.push(line((labels.daily_closing_date || 'Tarikh') + ': ' + ((report && report.date) || ''), { align: 'center' }));
+    if (report && report.printed_at) {
+      chunks.push(line(String(report.printed_at).slice(0, 19), { align: 'center' }));
+    }
+    chunks.push(separator(width));
+    chunks.push(line(padMoneyLine(labels.daily_orders_paid || 'Order lunas', String((report && report.order_count) || 0))));
+    chunks.push(line(padMoneyLine(labels.subtotal || 'Subtotal', formatRm(report && report.subtotal))));
+    chunks.push(line(padMoneyLine(labels.sst || 'SST', formatRm(report && report.sst))));
+    chunks.push(line(padMoneyLine(labels.daily_sales_total || 'JUMLAH', formatRm(report && report.total)), { bold: true }));
+    chunks.push(separator(width));
+    chunks.push(line(labels.pay_method || 'Bayaran', { bold: true }));
+    var pay = (report && report.by_pay) || {};
+    chunks.push(line(padMoneyLine(labels.pay_counter || 'Kaunter', formatRm(pay.counter))));
+    chunks.push(line(padMoneyLine(labels.pay_cod || 'COD', formatRm(pay.cod))));
+    chunks.push(line(padMoneyLine(labels.pay_duitnow || 'DuitNow', formatRm(pay.duitnow))));
+    if ((pay.other || 0) > 0) {
+      chunks.push(line(padMoneyLine(labels.other || 'Lain', formatRm(pay.other))));
+    }
+    chunks.push(separator(width));
+    var serve = (report && report.by_serve) || {};
+    chunks.push(line(padMoneyLine(labels.dine_in || 'Makan sini', formatRm(serve.dine_in))));
+    chunks.push(line(padMoneyLine(labels.takeaway || 'Bungkus', formatRm(serve.takeaway))));
+    chunks.push(line(padMoneyLine(labels.delivery || 'Delivery', formatRm(serve.delivery))));
+    if (report && (report.unpaid_count || 0) > 0) {
+      chunks.push(separator(width));
+      chunks.push(line(padMoneyLine(
+        (labels.daily_unpaid_open || 'Belum bayar') + ' x' + report.unpaid_count,
+        formatRm(report.unpaid_total)
+      )));
+    }
+    var orders = (report && report.orders) || [];
+    if (orders.length) {
+      chunks.push(separator(width));
+      chunks.push(line(labels.order_history || 'Order', { bold: true }));
+      // Keep slip short: max ~40 lines; remaining as "+N more"
+      var maxLines = 40;
+      var show = orders.slice(0, maxLines);
+      show.forEach(function (o) {
+        var left = '#' + o.id + ' M' + (o.meja || '-') ;
+        chunks.push(line(padMoneyLine(left, formatRm(o.total))));
+      });
+      if (orders.length > maxLines) {
+        chunks.push(line('+' + (orders.length - maxLines) + ' ' + (labels.more || 'lagi')));
+      }
+    }
+    chunks.push(separator(width));
+    chunks.push(line(labels.thank_you || 'TableTap', { align: 'center' }));
+    chunks.push(new Uint8Array([0x0a, 0x0a, 0x0a]));
+    chunks.push(new Uint8Array([0x1d, 0x56, 0x00]));
+    return concatBytes(chunks);
+  }
+
+  function printDailyClosing(report, labels) {
+    return printRaw(buildDailyClosing(report, labels));
+  }
+
   function printTest(labels) {
     labels = labels || {};
     if (labels.mode === 'receipt') {
@@ -563,6 +629,7 @@
     onChange: onChange,
     printKitchenTicket: printKitchenTicket,
     printReceipt: printReceipt,
+    printDailyClosing: printDailyClosing,
     printTest: printTest,
     printBeep: printBeep,
     openCashDrawer: openCashDrawer,

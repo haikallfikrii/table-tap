@@ -187,3 +187,125 @@ function assertShopAcceptingOrders(?array $shop): void
         jsonError(t('shop_closed_hours'), 403);
     }
 }
+
+/**
+ * Inclusive business-day window [start, end) for a Y-m-d date.
+ * Overnight hours (open 16:00, close 02:00) span into the next calendar day.
+ *
+ * @return array{0:string,1:string}
+ */
+function shopBusinessDayBounds(?array $shop, string $ymd): array
+{
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $ymd)) {
+        $ymd = date('Y-m-d');
+    }
+    if (!shopHoursEnabled($shop)) {
+        return appDayBounds($ymd);
+    }
+    $openRaw = trim((string) ($shop['open_time'] ?? '00:00:00'));
+    $closeRaw = trim((string) ($shop['close_time'] ?? '23:59:59'));
+    $open = strlen($openRaw) === 5 ? $openRaw . ':00' : $openRaw;
+    $close = strlen($closeRaw) === 5 ? $closeRaw . ':00' : $closeRaw;
+    $openM = shopTimeToMinutes($openRaw);
+    $closeM = shopTimeToMinutes($closeRaw);
+    $start = $ymd . ' ' . $open;
+    if ($closeM <= $openM && $closeM > 0) {
+        $end = date('Y-m-d', strtotime($ymd . ' +1 day')) . ' ' . $close;
+    } else {
+        $end = $ymd . ' ' . $close;
+    }
+    return [$start, $end];
+}
+
+/**
+ * Paid orders + summary for closing report (one business day).
+ *
+ * @return array{
+ *   date:string,start:string,end:string,
+ *   order_count:int,subtotal:float,sst:float,total:float,
+ *   unpaid_count:int,unpaid_total:float,
+ *   by_pay:array<string,float>,by_serve:array<string,float>,
+ *   orders:list<array<string,mixed>>
+ * }
+ */
+function dailyClosingReport(int $shopId, ?array $shop, string $ymd): array
+{
+    [$start, $end] = shopBusinessDayBounds($shop, $ymd);
+    $pdo = db();
+    $hasPay = orderDeliveryColumnsExist();
+    $payCol = $hasPay ? ', o.payment_method' : '';
+    $stmt = $pdo->prepare(
+        "SELECT o.id, o.waktu_order, o.waktu_lunas, o.subtotal, o.sst_jumlah, o.total_harga,
+                o.jenis_hidang, o.nama_pelanggan, t.nomor_meja{$payCol}
+         FROM orders o
+         INNER JOIN tables t ON t.id = o.table_id
+         WHERE o.shop_id = ?
+           AND o.status_bayar = 'lunas'
+           AND o.status_order != 'dibatalkan'
+           AND o.waktu_lunas >= ? AND o.waktu_lunas < ?
+         ORDER BY o.waktu_lunas ASC, o.id ASC"
+    );
+    $stmt->execute([$shopId, $start, $end]);
+    $orders = $stmt->fetchAll() ?: [];
+
+    $subtotal = 0.0;
+    $sst = 0.0;
+    $total = 0.0;
+    $byPay = ['counter' => 0.0, 'cod' => 0.0, 'duitnow' => 0.0, 'other' => 0.0];
+    $byServe = ['dine_in' => 0.0, 'takeaway' => 0.0, 'delivery' => 0.0];
+    foreach ($orders as $r) {
+        $amt = (float) ($r['total_harga'] ?? 0);
+        $subtotal += (float) ($r['subtotal'] ?? 0);
+        $sst += (float) ($r['sst_jumlah'] ?? 0);
+        $total += $amt;
+        $serve = (string) ($r['jenis_hidang'] ?? 'dine_in');
+        if (!isset($byServe[$serve])) {
+            $byServe[$serve] = 0.0;
+        }
+        $byServe[$serve] += $amt;
+        $m = $hasPay ? (string) ($r['payment_method'] ?? 'counter') : 'counter';
+        if ($m === '' || $m === 'null') {
+            $m = 'counter';
+        }
+        if (!isset($byPay[$m])) {
+            $byPay['other'] += $amt;
+        } else {
+            $byPay[$m] += $amt;
+        }
+    }
+
+    $unpaid = $pdo->prepare(
+        "SELECT COUNT(*) AS c, COALESCE(SUM(total_harga), 0) AS t
+         FROM orders
+         WHERE shop_id = ?
+           AND status_bayar = 'belum_bayar'
+           AND status_order != 'dibatalkan'
+           AND waktu_order >= ? AND waktu_order < ?"
+    );
+    $unpaid->execute([$shopId, $start, $end]);
+    $u = $unpaid->fetch() ?: ['c' => 0, 't' => 0];
+
+    return [
+        'date' => $ymd,
+        'start' => $start,
+        'end' => $end,
+        'order_count' => count($orders),
+        'subtotal' => round($subtotal, 2),
+        'sst' => round($sst, 2),
+        'total' => round($total, 2),
+        'unpaid_count' => (int) ($u['c'] ?? 0),
+        'unpaid_total' => round((float) ($u['t'] ?? 0), 2),
+        'by_pay' => [
+            'counter' => round($byPay['counter'], 2),
+            'cod' => round($byPay['cod'], 2),
+            'duitnow' => round($byPay['duitnow'], 2),
+            'other' => round($byPay['other'], 2),
+        ],
+        'by_serve' => [
+            'dine_in' => round($byServe['dine_in'], 2),
+            'takeaway' => round($byServe['takeaway'], 2),
+            'delivery' => round($byServe['delivery'], 2),
+        ],
+        'orders' => $orders,
+    ];
+}

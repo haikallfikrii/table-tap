@@ -47,6 +47,7 @@ $accepting = shopIsOpenForOrders($shop);
   <?php if ($hoursOn && shopHoursLabel($shop) !== ''): ?>
     · <?= e(shopHoursLabel($shop)) ?>
   <?php endif; ?>
+  · <a href="<?= e(baseUrl('admin/daily_report.php')) ?>"><?= e(t('daily_closing_title')) ?></a>
 </p>
 
 <?php if ($isOwner): ?>
