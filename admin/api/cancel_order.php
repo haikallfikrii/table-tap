@@ -1,8 +1,8 @@
 <?php
 /**
- * Cancel / void an order — excluded from income & kitchen queues.
+ * Cancel / void an order — owner only.
  * POST JSON: { order_id }
- * Notifies the owner dashboard when staff (e.g. kasir) cancels.
+ * Notifies the owner dashboard when an order is cancelled.
  */
 
 declare(strict_types=1);
@@ -12,7 +12,7 @@ require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 require_once dirname(__DIR__, 2) . '/includes/shop.php';
 
 requirePost();
-$user = requireLoginApi(['kasir', 'owner']);
+$user = requireLoginApi(['owner']);
 
 $shopId = requireShopIdApi();
 $orderId = (int) (readJsonBody()['order_id'] ?? 0);

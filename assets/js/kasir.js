@@ -8,6 +8,7 @@
   const pollUrl = root.dataset.pollUrl;
   const paidUrl = root.dataset.paidUrl;
   const cancelUrl = root.dataset.cancelUrl || '';
+  const canCancel = root.dataset.canCancel === '1' && !!cancelUrl;
   const confirmUrl = root.dataset.confirmUrl || '';
   const splitUrl = root.dataset.splitUrl || '';
   const pickupUrl = root.dataset.pickupUrl;
@@ -312,7 +313,7 @@
   }
 
   async function cancelOrder(orderId) {
-    if (!cancelUrl) return;
+    if (!canCancel || !cancelUrl) return;
     if (!confirm(i18n.cancel_order_confirm || 'Cancel this order?')) return;
     const res = await fetch(cancelUrl, {
       method: 'POST',
@@ -568,9 +569,11 @@
                   : '') +
                 pickupBtns +
                 receiptSection(o) +
-                '<button type="button" class="btn btn-ghost btn-sm" data-cancel-order="' + o.id + '" style="color:var(--danger);margin-top:6px">' +
-                  esc(i18n.cancel_order || 'Cancel order') +
-                '</button>' +
+                (canCancel
+                  ? '<button type="button" class="btn btn-ghost btn-sm" data-cancel-order="' + o.id + '" style="color:var(--danger);margin-top:6px">' +
+                      esc(i18n.cancel_order || 'Cancel order') +
+                    '</button>'
+                  : '') +
               '</div>' +
             '</div>' +
           '</article>'
@@ -1048,6 +1051,7 @@
 
     const cancelBtn = e.target.closest('[data-cancel-order]');
     if (cancelBtn) {
+      if (!canCancel) return;
       const orderId = Number(cancelBtn.getAttribute('data-cancel-order'));
       if (!orderId) return;
       cancelBtn.disabled = true;
