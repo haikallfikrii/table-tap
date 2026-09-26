@@ -91,7 +91,9 @@ $retentionLabel = ($shop['retention_days'] ?? null) === null
           <td><?php if (!empty($r['customer_email'])): ?><a href="mailto:<?= e($r['customer_email']) ?>"><?= e($r['customer_email']) ?></a><?php else: ?>—<?php endif; ?></td>
           <td>
             <a class="btn btn-secondary btn-sm" href="<?= e(baseUrl('admin/receipt.php?order=' . (int) $r['id'] . '&print=1')) ?>" target="_blank" rel="noopener"><?= e(t('print_receipt')) ?></a>
+            <?php if (($user['role'] ?? '') === 'owner'): ?>
             <button type="button" class="btn btn-ghost btn-sm btn-void-order" style="color:var(--danger)" data-order="<?= (int) $r['id'] ?>"><?= e(t('cancel_order')) ?></button>
+            <?php endif; ?>
           </td>
         </tr>
       <?php endforeach; ?>
@@ -107,6 +109,7 @@ $retentionLabel = ($shop['retention_days'] ?? null) === null
   </div>
 <?php endif; ?>
 
+<?php if (($user['role'] ?? '') === 'owner'): ?>
 <script>
 (function () {
   const url = <?= json_encode(baseUrl('admin/api/cancel_order.php')) ?>;
@@ -134,5 +137,6 @@ $retentionLabel = ($shop['retention_days'] ?? null) === null
   });
 })();
 </script>
+<?php endif; ?>
 
 <?php require dirname(__DIR__, 2) . '/includes/admin_footer.php'; ?>

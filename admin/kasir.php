@@ -21,6 +21,7 @@ $showPrinter = true;
 $shopId = requireShopId();
 $shop = getShopOrFail($shopId);
 $printerPrefs = shopPrinterSettings($shop);
+$canCancelOrder = ($user['role'] ?? '') === 'owner';
 $adminScripts = [
     assetUrl('js/sound.js'),
     assetUrl('js/live-poll.js'),
@@ -157,7 +158,8 @@ $i18n = [
 <div id="orders-root" class="kasir-layout"
      data-poll-url="<?= e(baseUrl('admin/api/orders_poll.php')) ?>"
      data-paid-url="<?= e(baseUrl('admin/api/mark_paid.php')) ?>"
-     data-cancel-url="<?= e(baseUrl('admin/api/cancel_order.php')) ?>"
+     data-cancel-url="<?= e($canCancelOrder ? baseUrl('admin/api/cancel_order.php') : '') ?>"
+     data-can-cancel="<?= $canCancelOrder ? '1' : '0' ?>"
      data-confirm-url="<?= e(baseUrl('admin/api/confirm_payment.php')) ?>"
      data-split-url="<?= e(baseUrl('admin/api/split_bill.php')) ?>"
      data-pickup-url="<?= e(baseUrl('admin/api/pickup_action.php')) ?>"
