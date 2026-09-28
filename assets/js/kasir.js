@@ -58,6 +58,18 @@
   let splitSstRate = 0;
   let splitSstEnabled = false;
 
+  const cashOverlay = document.getElementById('cash-overlay');
+  const cashSheet = document.getElementById('cash-sheet');
+  const cashForm = document.getElementById('cash-form');
+  const cashInput = document.getElementById('cash-input');
+  const cashQuick = document.getElementById('cash-quick');
+  const cashChange = document.getElementById('cash-change');
+  const cashConfirm = document.getElementById('btn-cash-confirm');
+  const cashSkip = document.getElementById('btn-cash-skip');
+  let cashOrderId = 0;
+  let cashDueCents = 0;
+  let cashBusy = false;
+
   TableTapSound.bindButton(document.getElementById('btn-enable-sound'), {
     on: i18n.sound_on || 'Sound on',
   });
@@ -92,6 +104,8 @@
       takeaway: i18n.takeaway || 'Takeaway',
       subtotal: i18n.subtotal || 'Subtotal',
       total: i18n.total || 'Total',
+      cash_paid: i18n.cash_paid_label || 'Tunai',
+      cash_change: i18n.cash_change || 'Baki',
       thank_you: i18n.thank_you || 'Terima kasih!',
       split_from: i18n.split_from || 'Split from',
       test_item: i18n.print_test_item || 'Test print OK',
@@ -731,6 +745,132 @@
     splitOrderId = 0;
   }
 
+  function parseCashCents(raw) {
+    const s = String(raw || '').replace(/[^\d.,]/g, '').replace(',', '.');
+    if (!s) return null;
+    const n = Number(s);
+    return isFinite(n) ? Math.round(n * 100) : null;
+  }
+
+  function cashQuickAmounts(dueCents) {
+    const due = dueCents / 100;
+    const picks = [Math.ceil(due), Math.ceil(due / 5) * 5, Math.ceil(due / 10) * 10, 20, 50, 100];
+    const out = [];
+    picks.forEach(function (v) {
+      if (v * 100 > dueCents && out.indexOf(v) === -1) out.push(v);
+    });
+    return out.sort(function (a, b) { return a - b; }).slice(0, 5);
+  }
+
+  function updateCashPreview() {
+    const got = parseCashCents(cashInput && cashInput.value);
+    if (!cashChange) return;
+    if (got === null) {
+      cashChange.textContent = '';
+      cashChange.classList.remove('is-short');
+      if (cashConfirm) cashConfirm.disabled = true;
+      return;
+    }
+    const diff = got - cashDueCents;
+    const short = diff < 0;
+    cashChange.classList.toggle('is-short', short);
+    cashChange.innerHTML =
+      '<span>' + esc(short ? (i18n.cash_short || 'Short') : (i18n.cash_change || 'Change')) + '</span>' +
+      '<strong>' + esc(money(Math.abs(diff) / 100)) + '</strong>';
+    if (cashConfirm) cashConfirm.disabled = short || cashBusy;
+  }
+
+  function openCashModal(orderId) {
+    const order = latestOrders.find(function (o) { return o.id === orderId; });
+    if (!order || !cashSheet) return false;
+    cashOrderId = orderId;
+    cashDueCents = Math.round((Number(order.total_harga) || 0) * 100);
+    cashBusy = false;
+    const title = document.getElementById('cash-title');
+    if (title) {
+      title.textContent = (i18n.cash_title || 'Cash payment') + ' · #' + orderId + ' · ' + tableTitle(order.nomor_meja);
+    }
+    const dueEl = document.getElementById('cash-due');
+    if (dueEl) dueEl.textContent = money(cashDueCents / 100);
+    if (cashInput) cashInput.value = '';
+    if (cashQuick) {
+      cashQuick.innerHTML =
+        '<button type="button" class="btn btn-secondary btn-sm" data-cash-amt="' + (cashDueCents / 100).toFixed(2) + '">' +
+          esc(i18n.cash_exact || 'Exact') + '</button>' +
+        cashQuickAmounts(cashDueCents).map(function (v) {
+          return '<button type="button" class="btn btn-secondary btn-sm" data-cash-amt="' + v.toFixed(2) + '">RM ' + v + '</button>';
+        }).join('');
+    }
+    if (cashSkip) cashSkip.disabled = false;
+    updateCashPreview();
+    cashOverlay?.classList.add('open');
+    cashSheet.classList.add('open');
+    setTimeout(function () { cashInput?.focus(); }, 80);
+    return true;
+  }
+
+  function closeCashModal() {
+    cashOverlay?.classList.remove('open');
+    cashSheet?.classList.remove('open');
+    cashOrderId = 0;
+  }
+
+  async function markPaid(orderId, cash, onPaid) {
+    const res = await fetch(paidUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({ order_id: orderId }),
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Failed');
+    if (onPaid) onPaid();
+    if (autoPrint) {
+      let receipt = data.receipt || null;
+      if (cash) {
+        if (!receipt) {
+          try { receipt = await fetchReceipt(orderId); } catch (e) { receipt = null; }
+        }
+        if (receipt) {
+          receipt = Object.assign({}, receipt, {
+            cash_received: cash.received,
+            cash_change: cash.change,
+          });
+        }
+      }
+      await printPaidReceipt(orderId, receipt, { interactive: false });
+    }
+    await poll();
+  }
+
+  async function submitCash(withCash) {
+    if (!cashOrderId || cashBusy) return;
+    let cash = null;
+    if (withCash) {
+      const got = parseCashCents(cashInput && cashInput.value);
+      if (got === null || got < cashDueCents) return;
+      cash = { received: got / 100, change: (got - cashDueCents) / 100 };
+    }
+    cashBusy = true;
+    if (cashConfirm) cashConfirm.disabled = true;
+    if (cashSkip) cashSkip.disabled = true;
+    const orderId = cashOrderId;
+    let paid = false;
+    try {
+      await markPaid(orderId, cash, function () {
+        paid = true;
+        closeCashModal();
+      });
+    } catch (err) {
+      alert(err.message || 'Error');
+      if (!paid) {
+        cashBusy = false;
+        if (cashSkip) cashSkip.disabled = false;
+        updateCashPreview();
+      }
+    }
+  }
+
   function getSplitSelections() {
     const rows = [];
     let selectedUnits = 0;
@@ -1165,25 +1305,34 @@
     if (!btn) return;
     const orderId = Number(btn.getAttribute('data-mark-paid'));
     if (!orderId) return;
+    if (openCashModal(orderId)) return;
 
     btn.disabled = true;
     try {
-      const res = await fetch(paidUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ order_id: orderId }),
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Failed');
-      if (autoPrint) {
-        await printPaidReceipt(orderId, data.receipt, { interactive: false });
-      }
-      await poll();
+      await markPaid(orderId, null);
     } catch (err) {
       alert(err.message || 'Error');
       btn.disabled = false;
     }
+  });
+
+  cashInput?.addEventListener('input', updateCashPreview);
+  cashQuick?.addEventListener('click', function (e) {
+    const b = e.target.closest('[data-cash-amt]');
+    if (!b || !cashInput) return;
+    cashInput.value = b.getAttribute('data-cash-amt');
+    updateCashPreview();
+    cashInput.focus();
+  });
+  cashForm?.addEventListener('submit', function (e) {
+    e.preventDefault();
+    submitCash(true);
+  });
+  cashSkip?.addEventListener('click', function () { submitCash(false); });
+  document.getElementById('btn-close-cash')?.addEventListener('click', closeCashModal);
+  cashOverlay?.addEventListener('click', closeCashModal);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && cashSheet && cashSheet.classList.contains('open')) closeCashModal();
   });
 
   splitBody?.addEventListener('change', function (e) {

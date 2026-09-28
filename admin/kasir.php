@@ -80,6 +80,11 @@ $i18n = [
     'printer_disconnect' => t('printer_disconnect'),
     'printer_connected' => t('printer_connected'),
     'printer_reconnecting' => t('printer_reconnecting'),
+    'cash_title'    => t('cash_title'),
+    'cash_change'   => t('cash_change'),
+    'cash_short'    => t('cash_short'),
+    'cash_exact'    => t('cash_exact'),
+    'cash_paid_label' => t('cash_paid_label'),
     'printer_hint'  => t('printer_hint'),
     'kasir_printer_hint' => t('kasir_printer_hint'),
     'printer_unsupported' => t('printer_unsupported'),
@@ -196,6 +201,32 @@ $i18n = [
     <div id="split-total" class="split-total"></div>
     <button type="button" class="btn btn-primary" id="btn-split-confirm" style="width:100%" disabled>
       <?= e(t('split_confirm')) ?>
+    </button>
+  </div>
+</aside>
+
+<div class="sheet-overlay" id="cash-overlay"></div>
+<aside class="cart-sheet split-sheet cash-sheet" id="cash-sheet" aria-label="<?= e(t('cash_title')) ?>">
+  <div class="cart-sheet-header">
+    <h2 id="cash-title"><?= e(t('cash_title')) ?></h2>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-close-cash"><?= e(t('close')) ?></button>
+  </div>
+  <form class="cart-sheet-body" id="cash-form" autocomplete="off">
+    <div class="cash-due">
+      <span><?= e(t('cash_due')) ?></span>
+      <strong id="cash-due">RM 0.00</strong>
+    </div>
+    <label class="split-guest-label" for="cash-input"><?= e(t('cash_received')) ?></label>
+    <input type="text" id="cash-input" class="cash-input" inputmode="decimal" placeholder="0.00">
+    <div class="cash-change" id="cash-change" aria-live="polite"></div>
+    <div class="cash-quick" id="cash-quick"></div>
+  </form>
+  <div class="cart-sheet-footer">
+    <button type="submit" form="cash-form" class="btn btn-success" id="btn-cash-confirm" style="width:100%" disabled>
+      <?= e(t('cash_confirm')) ?>
+    </button>
+    <button type="button" class="btn btn-ghost btn-sm" id="btn-cash-skip" style="width:100%;margin-top:8px">
+      <?= e(t('cash_skip')) ?>
     </button>
   </div>
 </aside>

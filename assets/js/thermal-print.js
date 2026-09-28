@@ -494,6 +494,10 @@
       )));
     }
     chunks.push(line(padMoneyLine(labels.total || 'Total', formatRm(receipt && receipt.total_harga), width), { bold: true }));
+    if (receipt && Number(receipt.cash_received) > 0) {
+      chunks.push(line(padMoneyLine(labels.cash_paid || 'Tunai', formatRm(receipt.cash_received), width)));
+      chunks.push(line(padMoneyLine(labels.cash_change || 'Baki', formatRm(receipt.cash_change), width), { bold: true }));
+    }
     chunks.push(separator(width));
     chunks.push(line(labels.thank_you || (lang === 'en' ? 'Thank you!' : 'Terima kasih!'), { align: 'center' }));
     chunks.push(line('TableTap', { align: 'center' }));
