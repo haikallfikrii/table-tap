@@ -1139,7 +1139,7 @@ $iconLarge = assetUrl('img/brand/tabletap-icon-512.png');
       <span>© <span id="lp-year">2026</span> <?= e($config['app_name']) ?>. <?= e(t('lp_rights')) ?></span>
       <span class="foot-credit">
         <?= e(t('lp_developed_by')) ?>
-        <a href="https://dev-khalfikri.pantheonsite.io/" target="_blank" rel="noopener noreferrer">KalFikri</a>
+        <a href="https://haikallfikrii.github.io/" target="_blank" rel="noopener noreferrer">KalFikri</a>
         ·
         <a href="https://www.linkedin.com/in/muhamad-fikri-haikal-fullstack-web-developer/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         ·
