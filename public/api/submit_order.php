@@ -12,6 +12,7 @@ require_once dirname(__DIR__, 2) . '/includes/i18n.php';
 require_once dirname(__DIR__, 2) . '/includes/shift.php';
 require_once dirname(__DIR__, 2) . '/includes/delivery.php';
 
+registerOrderFailLogger('submit_order');
 requirePost();
 
 $body = readJsonBody();

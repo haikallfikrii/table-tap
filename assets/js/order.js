@@ -48,8 +48,30 @@
     }
   }
 
+  let lastSubmitFailure = { status: 0, body: '' };
+
+  function reportOrderFailure(err) {
+    try {
+      const url = new URL('../../public/api/order_client_log.php', resolveFetchUrl(submitUrl)).href;
+      const payload = JSON.stringify({
+        status: lastSubmitFailure.status,
+        body: lastSubmitFailure.body,
+        msg: String((err && err.message) || ''),
+        meja: meja || '',
+        staff: staffMode,
+        online: navigator.onLine,
+      });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon(url, new Blob([payload], { type: 'application/json' }));
+      } else {
+        fetch(url, { method: 'POST', body: payload, keepalive: true, headers: { 'Content-Type': 'application/json' } });
+      }
+    } catch (e) { /* ignore */ }
+  }
+
   async function parseJsonResponse(res) {
     const text = await res.text();
+    if (!res.ok) lastSubmitFailure = { status: res.status || 0, body: text.slice(0, 300) };
     if (!text) return {};
     try {
       return JSON.parse(text);
@@ -669,6 +691,7 @@
         throw new Error(i18n.order_failed);
       }
     } catch (err) {
+      reportOrderFailure(err);
       alert(friendlyOrderError(err));
       if (btn) {
         btn.disabled = false;

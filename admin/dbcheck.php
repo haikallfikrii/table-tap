@@ -78,6 +78,10 @@ try {
             ];
         }
         $out['logs'] = $logs;
+        $failLog = $root . '/storage/logs/order_fail.log';
+        $out['order_fail'] = is_file($failLog)
+            ? array_slice(array_filter(explode("\n", (string) file_get_contents($failLog))), -60)
+            : [];
     }
 
     if (!empty($_GET['write'])) {

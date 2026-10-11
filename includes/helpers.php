@@ -166,6 +166,47 @@ function readJsonBody(): array
     return is_array($data) ? $data : [];
 }
 
+/** Append one JSON line to storage/logs/order_fail.log (capped ~1 MB, rotated once). */
+function orderFailLog(array $entry): void
+{
+    $dir = dirname(__DIR__) . '/storage/logs';
+    if (!is_dir($dir) && !@mkdir($dir, 0775, true)) {
+        return;
+    }
+    $file = $dir . '/order_fail.log';
+    if (is_file($file) && filesize($file) > 1000000) {
+        @rename($file, $file . '.1');
+    }
+    $entry = ['at' => appNow()] + $entry;
+    @file_put_contents($file, json_encode($entry, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n", FILE_APPEND | LOCK_EX);
+}
+
+/** Log any non-2xx or fatal outcome of the current order-submit request. */
+function registerOrderFailLogger(string $source): void
+{
+    ob_start();
+    register_shutdown_function(static function () use ($source): void {
+        $code = (int) http_response_code();
+        $err = error_get_last();
+        $fatal = $err && in_array($err['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_RECOVERABLE_ERROR], true);
+        if ($code < 400 && !$fatal) {
+            return;
+        }
+        $body = json_decode((string) file_get_contents('php://input'), true);
+        $body = is_array($body) ? $body : [];
+        orderFailLog([
+            'src' => $source,
+            'code' => $code,
+            'resp' => mb_substr((string) ob_get_contents(), 0, 300),
+            'fatal' => $fatal ? mb_substr($err['message'] . ' @' . basename((string) $err['file']) . ':' . $err['line'], 0, 400) : null,
+            'meja' => (string) ($body['meja'] ?? ''),
+            'session' => !empty($body['session']),
+            'items' => is_array($body['items'] ?? null) ? count($body['items']) : 0,
+            'ua' => mb_substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 160),
+        ]);
+    });
+}
+
 function assetUrl(string $path): string
 {
     $rel = ltrim($path, '/');
@@ -743,6 +784,7 @@ function createShopOrder(
                 '/gone away|Lost connection|Error while sending|server has gone away|Deadlock|Lock wait timeout|SQLSTATE\[HY000\].*2006|SQLSTATE\[HY000\].*2013/i',
                 $msg
             );
+            orderFailLog(['src' => 'createShopOrder', 'attempt' => $attempts, 'shop' => $shopId, 'err' => mb_substr($msg, 0, 400)]);
             if (!$transient || $attempts >= 2) {
                 error_log('createShopOrder failed: ' . $msg);
                 jsonError(t('order_failed'), 500);
