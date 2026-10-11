@@ -78,6 +78,15 @@ try {
             ];
         }
         $out['logs'] = $logs;
+        $out['schema_cache'] = [];
+        foreach (glob($root . '/storage/cache/schema-*.json') ?: [] as $cf) {
+            $cd = json_decode((string) file_get_contents($cf), true);
+            $out['schema_cache'][basename($cf)] = [
+                'ok' => $cd['ok'] ?? null,
+                'at' => isset($cd['at']) ? date('Y-m-d H:i:s', (int) $cd['at']) : null,
+                'tables' => is_array($cd['tables'] ?? null) ? count($cd['tables']) : 0,
+            ];
+        }
         $failLog = $root . '/storage/logs/order_fail.log';
         $out['order_fail'] = is_file($failLog)
             ? array_slice(array_filter(explode("\n", (string) file_get_contents($failLog))), -60)
