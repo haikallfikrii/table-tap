@@ -30,7 +30,7 @@ function printJobsTableExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW TABLES LIKE 'print_jobs'")->fetch();
+        $exists = (bool) dbHasTable('print_jobs');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -44,7 +44,7 @@ function printBridgeColumnsExist(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM shops LIKE 'print_bridge_token'")->fetch();
+        $exists = (bool) dbHasColumn('shops', 'print_bridge_token');
     } catch (Throwable $e) {
         $exists = false;
     }

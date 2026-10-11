@@ -19,7 +19,7 @@ function orderingModeColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM shops LIKE 'ordering_mode'")->fetch();
+        $exists = (bool) dbHasColumn('shops', 'ordering_mode');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -33,7 +33,7 @@ function customerSessionsTableExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW TABLES LIKE 'customer_sessions'")->fetch();
+        $exists = (bool) dbHasTable('customer_sessions');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -47,7 +47,7 @@ function orderSessionColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'session_id'")->fetch();
+        $exists = (bool) dbHasColumn('orders', 'session_id');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -61,7 +61,7 @@ function sessionContactEmailColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM customer_sessions LIKE 'contact_email'")->fetch();
+        $exists = (bool) dbHasColumn('customer_sessions', 'contact_email');
     } catch (Throwable $e) {
         $exists = false;
     }

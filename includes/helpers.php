@@ -28,7 +28,7 @@ function orderCustomerEmailColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'customer_email'")->fetch();
+        $exists = (bool) dbHasColumn('orders', 'customer_email');
     } catch (Throwable $e) {
         $exists = false;
     }

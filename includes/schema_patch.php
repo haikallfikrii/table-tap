@@ -5,13 +5,13 @@
 
 declare(strict_types=1);
 
-function ensureAppSchema(PDO $pdo): void
+function ensureAppSchema(PDO $pdo): bool
 {
-    static $done = false;
-    if ($done) {
-        return;
+    static $done = null;
+    if ($done !== null) {
+        return $done;
     }
-    $done = true;
+    $done = false;
 
     try {
         $hasSound = $pdo->query("SHOW COLUMNS FROM shops LIKE 'sound_mode'")->fetch();
@@ -506,7 +506,10 @@ function ensureAppSchema(PDO $pdo): void
                 KEY idx_shop_alerts_created (shop_id, created_at)
              ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         );
+        $done = true;
     } catch (Throwable $e) {
         // Never block login if a host cannot ALTER; features degrade until migrate.sql is imported.
+        error_log('ensureAppSchema failed: ' . $e->getMessage());
     }
+    return $done;
 }

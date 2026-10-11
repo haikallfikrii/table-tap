@@ -12,7 +12,7 @@ function menuAddonsTableExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW TABLES LIKE 'menu_addons'")->fetch();
+        $exists = (bool) dbHasTable('menu_addons');
     } catch (Throwable $e) {
         $exists = false;
     }

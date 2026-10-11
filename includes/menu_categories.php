@@ -15,7 +15,7 @@ function menuCategoriesTableExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW TABLES LIKE 'menu_categories'")->fetch();
+        $exists = (bool) dbHasTable('menu_categories');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -29,7 +29,7 @@ function menuCategoryColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM menu_items LIKE 'menu_category_id'")->fetch();
+        $exists = (bool) dbHasColumn('menu_items', 'menu_category_id');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -43,7 +43,7 @@ function orderMenuCategoryKodColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM order_items LIKE 'menu_category_kod_saat_order'")->fetch();
+        $exists = (bool) dbHasColumn('order_items', 'menu_category_kod_saat_order');
     } catch (Throwable $e) {
         $exists = false;
     }

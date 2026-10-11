@@ -12,7 +12,7 @@ function orderGuestTokenColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'guest_token'")->fetch();
+        $exists = (bool) dbHasColumn('orders', 'guest_token');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -26,7 +26,7 @@ function orderSumberColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'sumber_order'")->fetch();
+        $exists = (bool) dbHasColumn('orders', 'sumber_order');
     } catch (Throwable $e) {
         $exists = false;
     }

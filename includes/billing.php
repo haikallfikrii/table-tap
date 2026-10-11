@@ -15,7 +15,7 @@ function orderSplitFromColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'split_from_order_id'")->fetch();
+        $exists = (bool) dbHasColumn('orders', 'split_from_order_id');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -135,12 +135,12 @@ function splitOrderBill(int $shopId, int $orderId, array $want, string $lang = '
     $pdo = db();
     $emailCol = orderCustomerEmailColumnExists() ? ', customer_email' : '';
     try {
-        $hasSession = (bool) $pdo->query("SHOW COLUMNS FROM orders LIKE 'session_id'")->fetch();
+        $hasSession = (bool) dbHasColumn('orders', 'session_id');
     } catch (Throwable $e) {
         $hasSession = false;
     }
     try {
-        $hasGuest = (bool) $pdo->query("SHOW COLUMNS FROM orders LIKE 'guest_token'")->fetch();
+        $hasGuest = (bool) dbHasColumn('orders', 'guest_token');
     } catch (Throwable $e) {
         $hasGuest = false;
     }

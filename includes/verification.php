@@ -47,7 +47,7 @@ function verificationTableExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW TABLES LIKE 'verification_codes'")->fetch();
+        $exists = (bool) dbHasTable('verification_codes');
     } catch (Throwable $e) {
         $exists = false;
     }

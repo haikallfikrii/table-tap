@@ -17,7 +17,7 @@ function deliveryColumnsExist(): bool
         return $ok;
     }
     try {
-        $ok = (bool) db()->query("SHOW COLUMNS FROM shops LIKE 'delivery_enabled'")->fetch();
+        $ok = (bool) dbHasColumn('shops', 'delivery_enabled');
     } catch (Throwable $e) {
         $ok = false;
     }
@@ -31,7 +31,7 @@ function orderDeliveryColumnsExist(): bool
         return $ok;
     }
     try {
-        $ok = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'payment_method'")->fetch();
+        $ok = (bool) dbHasColumn('orders', 'payment_method');
     } catch (Throwable $e) {
         $ok = false;
     }

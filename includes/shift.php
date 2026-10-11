@@ -12,7 +12,7 @@ function shiftColumnsExist(): bool
         return $ok;
     }
     try {
-        $ok = (bool) db()->query("SHOW TABLES LIKE 'cash_shifts'")->fetch();
+        $ok = (bool) dbHasTable('cash_shifts');
     } catch (Throwable $e) {
         $ok = false;
     }

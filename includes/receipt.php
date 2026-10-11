@@ -67,7 +67,7 @@ function fetchOrderReceipt(int $orderId, int $shopId, string $lang = 'my'): ?arr
     static $hasSplitCol = null;
     if ($hasSplitCol === null) {
         try {
-            $hasSplitCol = (bool) db()->query("SHOW COLUMNS FROM orders LIKE 'split_from_order_id'")->fetch();
+            $hasSplitCol = (bool) dbHasColumn('orders', 'split_from_order_id');
         } catch (Throwable $e) {
             $hasSplitCol = false;
         }

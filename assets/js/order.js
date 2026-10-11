@@ -86,8 +86,9 @@
 
     const status = res.status || 0;
     const transient = status === 0 || status === 408 || status === 429 || status >= 500;
-    if (transient && attempt < 2) {
-      await sleep(attempt === 0 ? 400 : 900);
+    const backoff = [600, 1500, 3000];
+    if (transient && attempt < backoff.length) {
+      await sleep(backoff[attempt]);
       return postOrder(payload, attempt + 1);
     }
     throw new Error(data.error || i18n.order_failed);

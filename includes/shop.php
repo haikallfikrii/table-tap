@@ -231,7 +231,7 @@ function shopAlertsTableExists(): bool
         return $ok;
     }
     try {
-        $ok = (bool) db()->query("SHOW TABLES LIKE 'shop_alerts'")->fetch();
+        $ok = (bool) dbHasTable('shop_alerts');
     } catch (Throwable $e) {
         $ok = false;
     }

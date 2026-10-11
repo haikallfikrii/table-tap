@@ -14,7 +14,7 @@ function stationsTableExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW TABLES LIKE 'stations'")->fetch();
+        $exists = (bool) dbHasTable('stations');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -28,7 +28,7 @@ function menuStationColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM menu_items LIKE 'station_id'")->fetch();
+        $exists = (bool) dbHasColumn('menu_items', 'station_id');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -42,7 +42,7 @@ function orderStationColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM order_items LIKE 'station_id_saat_order'")->fetch();
+        $exists = (bool) dbHasColumn('order_items', 'station_id_saat_order');
     } catch (Throwable $e) {
         $exists = false;
     }
@@ -56,7 +56,7 @@ function userStationColumnExists(): bool
         return $exists;
     }
     try {
-        $exists = (bool) db()->query("SHOW COLUMNS FROM users LIKE 'station_id'")->fetch();
+        $exists = (bool) dbHasColumn('users', 'station_id');
     } catch (Throwable $e) {
         $exists = false;
     }
