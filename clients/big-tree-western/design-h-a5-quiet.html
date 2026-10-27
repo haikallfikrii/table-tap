@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>H — A5 Akrilik · Quiet frame</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body { margin: 0; background: #dfe6e1; font-family: "Outfit", system-ui, sans-serif; color: #15241c; }
+    .face {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      padding: 8mm;
+      background:
+        linear-gradient(180deg, #f4f7f4 0%, #eef3ef 100%);
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 5mm;
+    }
+    .brand {
+      margin: 0;
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: 16pt;
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .side {
+      margin: 0;
+      font-size: 8pt;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #5f7468;
+    }
+    .photo {
+      flex: 1;
+      min-height: 0;
+      border-radius: 1.5mm;
+      overflow: hidden;
+      position: relative;
+      background: #111;
+    }
+    .photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 5mm;
+      align-items: end;
+      margin-top: 5mm;
+    }
+    .label {
+      margin: 0 0 1.5mm;
+      font-size: 7.5pt;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6a7d72;
+    }
+    .dish {
+      margin: 0;
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: 15pt;
+      line-height: 1.15;
+      max-width: 88mm;
+    }
+    .price {
+      margin: 2mm 0 0;
+      font-size: 9.5pt;
+      font-weight: 600;
+      color: #1b4332;
+    }
+    .hint {
+      margin: 3mm 0 0;
+      font-size: 8pt;
+      font-weight: 500;
+      color: #5f7468;
+      line-height: 1.4;
+    }
+    .qr-wrap {
+      width: 32mm;
+      height: 32mm;
+      padding: 2mm;
+      background: #fff;
+      border: 1px solid #c9d5cd;
+      border-radius: 1.5mm;
+    }
+    .table {
+      margin-top: 4mm;
+      padding-top: 3.5mm;
+      border-top: 1px solid #c9d5cd;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9pt;
+      font-weight: 600;
+      color: #3d5247;
+    }
+    .table strong {
+      font-family: "Instrument Serif", Georgia, serif;
+      font-size: 18pt;
+      font-weight: 400;
+      color: #15241c;
+    }
+    .face.back {
+      background: linear-gradient(180deg, #163528 0%, #0d2218 100%);
+      color: #eef5f0;
+    }
+    .face.back .side,
+    .face.back .label,
+    .face.back .hint { color: rgba(238, 245, 240, 0.62); }
+    .face.back .price { color: #a8d5b5; }
+    .face.back .table {
+      border-top-color: rgba(255,255,255,0.14);
+      color: rgba(238, 245, 240, 0.7);
+    }
+    .face.back .table strong { color: #fff; }
+    .face.back .qr-wrap { border-color: transparent; }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>H — A5 akrilik · Quiet frame · Depan + Belakang</span>
+    <div>
+      <label>Meja <select id="meja-select"></select></label>
+      <a href="index.html">← Gallery</a>
+      <button type="button" onclick="window.print()">Cetak 2 muka</button>
+    </div>
+  </div>
+
+  <div class="sheet sheet-a5-p face front">
+    <div class="top">
+      <h1 class="brand">Big Tree Western</h1>
+      <p class="side">Depan</p>
+    </div>
+    <div class="photo">
+      <img src="reco/lasagna-cheese.jpg" alt="Italian Lasagna Cheese" />
+    </div>
+    <div class="meta">
+      <div>
+        <p class="label">Must try</p>
+        <h2 class="dish">Italian Lasagna Cheese</h2>
+        <p class="price">RM 19.90</p>
+        <p class="hint">Imbas QR untuk menu penuh &amp; pesan terus.</p>
+      </div>
+      <div class="qr-wrap"><img class="qr-img" id="qr" src="qr/meja1.png" alt="QR" /></div>
+    </div>
+    <div class="table"><span>Meja</span><strong id="meja-num">1</strong></div>
+  </div>
+
+  <p class="pair-gap no-print">→ Belakang akrilik</p>
+
+  <div class="sheet sheet-a5-p face back">
+    <div class="top">
+      <h1 class="brand">Big Tree Western</h1>
+      <p class="side">Belakang</p>
+    </div>
+    <div class="photo">
+      <img src="reco/spaghetti-aglio-olio-grill-chop.jpg" alt="Aglio Olio Chicken Chop" />
+    </div>
+    <div class="meta">
+      <div>
+        <p class="label">Pasta malam ini</p>
+        <h2 class="dish">Aglio Olio + Grill Chop</h2>
+        <p class="price">dari RM 22.90</p>
+        <p class="hint">Pilih Spaghetti atau Macaroni dalam telefon.</p>
+      </div>
+      <div class="qr-wrap"><img class="qr-img qr-sync" src="qr/meja1.png" alt="QR" /></div>
+    </div>
+    <div class="table"><span>Meja</span><strong class="meja-num-sync">1</strong></div>
+  </div>
+
+  <script src="table-switcher.js"></script>
+  <script>
+    (function () {
+      var select = document.getElementById('meja-select');
+      function sync() {
+        var n = (select && select.value) || '1';
+        document.querySelectorAll('.meja-num-sync').forEach(function (el) { el.textContent = n; });
+        document.querySelectorAll('.qr-sync').forEach(function (el) {
+          el.src = 'qr/meja' + n + '.png';
+        });
+      }
+      if (select) select.addEventListener('change', sync);
+      sync();
+      setInterval(sync, 400);
+    })();
+  </script>
+</body>
+</html>

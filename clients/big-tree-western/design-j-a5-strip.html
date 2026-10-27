@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>J — A5 Akrilik · Soft strip</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Figtree:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body { margin: 0; background: #dde5e0; font-family: "Figtree", system-ui, sans-serif; color: #132018; }
+    .face {
+      box-sizing: border-box;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      background: #fff;
+    }
+    .banner {
+      padding: 7mm 8mm 5mm;
+      background: #143024;
+      color: #eef6f0;
+    }
+    .banner .kicker {
+      margin: 0 0 1.5mm;
+      font-size: 7pt;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #8fbf9c;
+    }
+    .banner h1 {
+      margin: 0;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 22pt;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+    .mid {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      min-height: 0;
+    }
+    .photo {
+      overflow: hidden;
+      background: #111;
+    }
+    .photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 6mm 6mm 6mm 5mm;
+      background: #f5f8f5;
+    }
+    .panel .tag {
+      margin: 0;
+      font-size: 7pt;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #5d7466;
+    }
+    .panel h2 {
+      margin: 2mm 0 0;
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 16pt;
+      font-weight: 700;
+      line-height: 1.15;
+      letter-spacing: -0.015em;
+    }
+    .panel .price {
+      margin: 3mm 0 0;
+      font-size: 10pt;
+      font-weight: 700;
+      color: #1b4332;
+    }
+    .panel .note {
+      margin: auto 0 0;
+      padding-top: 4mm;
+      font-size: 8pt;
+      font-weight: 500;
+      line-height: 1.4;
+      color: #5d7466;
+    }
+    .bottom {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 5mm;
+      align-items: center;
+      padding: 5mm 8mm 7mm;
+      border-top: 1px solid #e0e7e2;
+    }
+    .qr-wrap {
+      width: 30mm;
+      height: 30mm;
+      padding: 1.8mm;
+      border: 1px solid #d5ded8;
+      background: #fff;
+    }
+    .cta b {
+      display: block;
+      font-size: 10pt;
+      font-weight: 700;
+      margin-bottom: 1mm;
+    }
+    .cta span {
+      font-size: 8pt;
+      font-weight: 500;
+      color: #5d7466;
+    }
+    .meja {
+      text-align: right;
+    }
+    .meja span {
+      display: block;
+      font-size: 7pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #5d7466;
+    }
+    .meja strong {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 26pt;
+      font-weight: 700;
+      line-height: 1;
+      color: #143024;
+    }
+    .face.back .banner { background: #0f1c16; }
+    .face.back .panel { background: #eef3ef; }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>J — A5 akrilik · Soft strip · Depan + Belakang</span>
+    <div>
+      <label>Meja <select id="meja-select"></select></label>
+      <a href="index.html">← Gallery</a>
+      <button type="button" onclick="window.print()">Cetak 2 muka</button>
+    </div>
+  </div>
+
+  <div class="sheet sheet-a5-p face front">
+    <header class="banner">
+      <p class="kicker">Big Tree Western · Kangar</p>
+      <h1>Pesan dengan imbas</h1>
+    </header>
+    <div class="mid">
+      <div class="photo">
+        <img src="reco/hawaiian-burger.jpg" alt="Hawaiian Chicken Burger" />
+      </div>
+      <div class="panel">
+        <div>
+          <p class="tag">Burger</p>
+          <h2>Hawaiian Chicken Burger</h2>
+          <p class="price">RM 8.50</p>
+        </div>
+        <p class="note">Nanas grill + ayam. Ringkas, lazat, cepat.</p>
+      </div>
+    </div>
+    <div class="bottom">
+      <div class="qr-wrap"><img class="qr-img" id="qr" src="qr/meja1.png" alt="QR" /></div>
+      <div class="cta"><b>Imbas QR ini</b><span>Menu &amp; bayar dalam telefon</span></div>
+      <div class="meja"><span>Meja</span><strong id="meja-num">1</strong></div>
+    </div>
+  </div>
+
+  <p class="pair-gap no-print">→ Belakang akrilik</p>
+
+  <div class="sheet sheet-a5-p face back">
+    <header class="banner">
+      <p class="kicker">Big Tree Western · Kangar</p>
+      <h1>Satu lagi cadangan</h1>
+    </header>
+    <div class="mid">
+      <div class="photo">
+        <img src="reco/fish-and-chips.jpg" alt="Fish & Chips" />
+      </div>
+      <div class="panel">
+        <div>
+          <p class="tag">Western</p>
+          <h2>Fish &amp; Chips Tartar</h2>
+          <p class="price">dari RM 15.90</p>
+        </div>
+        <p class="note">Grill atau fried — pilih dalam menu digital.</p>
+      </div>
+    </div>
+    <div class="bottom">
+      <div class="qr-wrap"><img class="qr-img qr-sync" src="qr/meja1.png" alt="QR" /></div>
+      <div class="cta"><b>Imbas QR ini</b><span>Tiada app · terus order</span></div>
+      <div class="meja"><span>Meja</span><strong class="meja-num-sync">1</strong></div>
+    </div>
+  </div>
+
+  <script src="table-switcher.js"></script>
+  <script>
+    (function () {
+      var select = document.getElementById('meja-select');
+      function sync() {
+        var n = (select && select.value) || '1';
+        document.querySelectorAll('.meja-num-sync').forEach(function (el) { el.textContent = n; });
+        document.querySelectorAll('.qr-sync').forEach(function (el) {
+          el.src = 'qr/meja' + n + '.png';
+        });
+      }
+      if (select) select.addEventListener('change', sync);
+      sync();
+      setInterval(sync, 400);
+    })();
+  </script>
+</body>
+</html>

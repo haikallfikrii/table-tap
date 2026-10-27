@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>F — Sticker square</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@800&family=DM+Sans:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body { margin: 0; background: #e8ebe6; font-family: "DM Sans", system-ui, sans-serif; }
+    .sheet {
+      background: #fff;
+      border: 2px solid #1b4332;
+      border-radius: 4mm;
+      box-sizing: border-box;
+      padding: 5mm;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 2mm;
+    }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+    }
+    .top .brand { font-size: 8pt; letter-spacing: 0.04em; color: #1b4332; }
+    .top .num { font-size: 18pt; letter-spacing: -0.03em; color: #1b4332; }
+    .qr-wrap {
+      width: 62mm;
+      height: 62mm;
+      margin: 0 auto;
+      border: 1px solid #d5ddd7;
+      border-radius: 2mm;
+      padding: 2mm;
+      box-sizing: border-box;
+    }
+    .foot {
+      text-align: center;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #52796f;
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>F — Sticker / kotak 100×100mm · nombor + QR</span>
+    <div>
+      <label>Meja <select id="meja-select"></select></label>
+      <a href="index.html">← Gallery</a>
+      <button type="button" onclick="window.print()">Cetak</button>
+    </div>
+  </div>
+  <div class="sheet sheet-square">
+    <div class="top">
+      <span class="brand">BIG TREE</span>
+      <span class="num">#<span id="meja-num">1</span></span>
+    </div>
+    <div class="qr-wrap">
+      <img class="qr-img" id="qr" src="qr/meja1.png" alt="QR Meja" />
+    </div>
+    <div class="foot">Imbas · Pesan</div>
+  </div>
+  <script src="table-switcher.js"></script>
+</body>
+</html>

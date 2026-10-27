@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>E — Tent landscape</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body { margin: 0; background: #e4ebe5; font-family: "DM Sans", system-ui, sans-serif; }
+    .sheet {
+      background: #fff;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      box-sizing: border-box;
+    }
+    .left {
+      background: linear-gradient(160deg, #081c15 0%, #1b4332 55%, #2d6a4f 100%);
+      color: #f4f7f2;
+      padding: 7mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .left h1 {
+      font-family: "Syne", sans-serif;
+      font-size: 16pt;
+      font-weight: 800;
+      margin: 0;
+      line-height: 1.05;
+    }
+    .left .tag {
+      margin-top: 3mm;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #95d5b2;
+    }
+    .left .hint {
+      font-size: 9pt;
+      font-weight: 600;
+      line-height: 1.35;
+      max-width: 48mm;
+    }
+    .right {
+      padding: 6mm;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3mm;
+    }
+    .qr-wrap {
+      width: 46mm;
+      height: 46mm;
+      border: 1.5px solid #d7e0d9;
+      border-radius: 3mm;
+      padding: 2.5mm;
+      box-sizing: border-box;
+    }
+    .meja {
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      font-size: 12pt;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #1b4332;
+    }
+    .meja strong { font-size: 22pt; letter-spacing: -0.03em; }
+    .fold {
+      position: absolute;
+      left: 0; right: 0; top: 50%;
+      border-top: 1px dashed rgba(255,255,255,0.25);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>E — Tent / landscape A6 · lipat tengah</span>
+    <div>
+      <label>Meja <select id="meja-select"></select></label>
+      <a href="index.html">← Gallery</a>
+      <button type="button" onclick="window.print()">Cetak</button>
+    </div>
+  </div>
+  <div class="sheet sheet-a6-l" style="position:relative">
+    <div class="fold no-print" style="border-color:#9bb5a5"></div>
+    <div class="left">
+      <div>
+        <h1>Big Tree<br />Western</h1>
+        <div class="tag">Kangar</div>
+      </div>
+      <div class="hint">Imbas QR di sebelah — menu digital, order terus ke dapur &amp; bar.</div>
+    </div>
+    <div class="right">
+      <div class="qr-wrap">
+        <img class="qr-img" id="qr" src="qr/meja1.png" alt="QR Meja" />
+      </div>
+      <div class="meja">Meja <strong id="meja-num">1</strong></div>
+    </div>
+  </div>
+  <script src="table-switcher.js"></script>
+</body>
+</html>

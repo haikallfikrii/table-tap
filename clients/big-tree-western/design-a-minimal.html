@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>A — Minimal · nombor + QR sahaja</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body { margin: 0; background: #e7eee8; font-family: "DM Sans", system-ui, sans-serif; }
+    .sheet {
+      background: #fff;
+      color: #14231a;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      padding: 8mm;
+      box-sizing: border-box;
+    }
+    .meja-label {
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      font-size: 11pt;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      text-align: center;
+      color: #52796f;
+    }
+    .meja-num {
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      font-size: 42pt;
+      line-height: 0.95;
+      text-align: center;
+      letter-spacing: -0.04em;
+      margin: 1mm 0 4mm;
+    }
+    .qr-wrap {
+      width: 58mm;
+      height: 58mm;
+      margin: 0 auto;
+      border: 1.5px solid #d8e2db;
+      border-radius: 3mm;
+      padding: 3mm;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    .foot {
+      text-align: center;
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6b7f72;
+      margin-top: 5mm;
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>A — Minimal (nombor + QR) · A6</span>
+    <div>
+      <label>Meja
+        <select id="meja-select"></select>
+      </label>
+      <a href="index.html">← Gallery</a>
+      <button type="button" onclick="window.print()">Cetak</button>
+    </div>
+  </div>
+
+  <div class="sheet sheet-a6-p" id="card">
+    <div>
+      <div class="meja-label">Meja</div>
+      <div class="meja-num" id="meja-num">1</div>
+    </div>
+    <div class="qr-wrap">
+      <img class="qr-img" id="qr" src="qr/meja1.png" alt="QR Meja" />
+    </div>
+    <div class="foot">Imbas · Pesan</div>
+  </div>
+
+  <script src="table-switcher.js"></script>
+</body>
+</html>

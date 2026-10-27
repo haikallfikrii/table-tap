@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>I — Akrilik 10×14.8cm · 4+4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    @page { size: 100mm 148mm; margin: 0; }
+    body { margin: 0; background: #e4e2dc; font-family: "Sora", system-ui, sans-serif; color: #1c1b19; }
+    .face {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      padding: 4.5mm;
+      background: #f7f6f2;
+    }
+    .head {
+      text-align: center;
+      margin-bottom: 3mm;
+      flex-shrink: 0;
+    }
+    .head .mark {
+      width: 5mm;
+      height: 0.9mm;
+      margin: 0 auto 1.5mm;
+      background: #1b4332;
+    }
+    .head h1 {
+      margin: 0;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .head p {
+      margin: 1mm 0 0;
+      font-size: 6pt;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6b6860;
+    }
+    .grid4 {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 2.2mm;
+    }
+    .plate {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.8mm;
+      background: #222;
+      min-height: 0;
+    }
+    .plate img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .plate .cap {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 6mm 2.2mm 2mm;
+      background: linear-gradient(180deg, transparent 0%, rgba(10, 10, 8, 0.9) 70%);
+      color: #f7f6f2;
+    }
+    .plate .cap strong {
+      display: block;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 6.8pt;
+      font-weight: 700;
+      line-height: 1.12;
+      letter-spacing: -0.01em;
+    }
+    .foot {
+      margin-top: 3mm;
+      flex-shrink: 0;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 3mm;
+      align-items: center;
+      padding-top: 2.5mm;
+      border-top: 1px solid #d5d2c8;
+    }
+    .qr-wrap {
+      width: 20mm;
+      height: 20mm;
+      padding: 1mm;
+      background: #fff;
+      border: 1px solid #d5d2c8;
+    }
+    .scan {
+      margin: 0;
+      font-size: 6.5pt;
+      font-weight: 500;
+      line-height: 1.3;
+      color: #4a4842;
+    }
+    .scan b {
+      display: block;
+      font-size: 8pt;
+      font-weight: 700;
+      color: #1c1b19;
+      margin-bottom: 0.4mm;
+    }
+    .meja-block { text-align: right; }
+    .meja-block span {
+      display: block;
+      font-size: 5.5pt;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6b6860;
+    }
+    .meja-block strong {
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 16pt;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .face.back {
+      background: #1a2420;
+      color: #f2f4f1;
+    }
+    .face.back .head .mark { background: #7cb892; }
+    .face.back .head p,
+    .face.back .scan,
+    .face.back .meja-block span { color: rgba(242, 244, 241, 0.58); }
+    .face.back .scan b,
+    .face.back .meja-block strong { color: #fff; }
+    .face.back .foot { border-top-color: rgba(255,255,255,0.12); }
+    .face.back .qr-wrap { border-color: transparent; }
+    .howto {
+      max-width: 560px;
+      margin: 14px auto;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1px solid #d5d2c8;
+      border-radius: 12px;
+      font-size: 0.86rem;
+      color: #4a4842;
+      line-height: 1.45;
+    }
+    .howto strong { color: #1b4332; }
+  </style>
+</head>
+<body data-max-meja="26">
+  <div class="print-bar no-print">
+    <span>I — Akrilik 10×14.8cm · duplex 1 lembar</span>
+    <div>
+      <label>Meja <select id="meja-select"></select></label>
+      <a href="print-a4-cut-i.html">Cetak A4 + potong</a>
+      <a href="index.html">← Gallery</a>
+      <button type="button" onclick="window.print()">Cetak meja ini</button>
+    </div>
+  </div>
+
+  <div class="howto no-print">
+    <strong>Printer tiada custom size / duplex?</strong> Guna
+    <a href="print-a4-cut-i.html">print-a4-cut-i.html</a> —
+    cetak di A4 glossy (4 kad · lebar 100mm · tinggi ~140mm), potong, masuk akrilik.
+  </div>
+
+  <div class="sheet sheet-acrylic-a6 face front">
+    <header class="head">
+      <div class="mark" aria-hidden="true"></div>
+      <h1>Big Tree Western</h1>
+      <p>Cadangan chef</p>
+    </header>
+    <div class="grid4">
+      <article class="plate">
+        <img src="reco/lasagna-cheese.jpg" alt="Lasagna Cheese" />
+        <div class="cap"><strong>Lasagna Cheese</strong></div>
+      </article>
+      <article class="plate">
+        <img src="reco/grill-chicken-chop-parmigiana.jpg" alt="Grill Chicken Chop Parmigiana" />
+        <div class="cap"><strong>Grill Chicken Chop Parmigiana</strong></div>
+      </article>
+      <article class="plate">
+        <img src="reco/ribeye-beef-steak.jpg" alt="Ribeye Beef Steak" />
+        <div class="cap"><strong>Ribeye Beef Steak</strong></div>
+      </article>
+      <article class="plate">
+        <img src="reco/fish-and-chips.jpg" alt="Fried Fish &amp; Chips" />
+        <div class="cap"><strong>Fried Fish &amp; Chips</strong></div>
+      </article>
+    </div>
+    <div class="foot">
+      <div class="qr-wrap"><img class="qr-img" id="qr" src="qr/meja1.png" alt="QR" /></div>
+      <p class="scan"><b>Imbas &amp; pesan</b>Harga dalam telefon</p>
+      <div class="meja-block"><span>Meja</span><strong id="meja-num">1</strong></div>
+    </div>
+  </div>
+
+  <p class="pair-gap no-print">halaman 2 = belakang (duplex)</p>
+
+  <div class="sheet sheet-acrylic-a6 face back">
+    <header class="head">
+      <div class="mark" aria-hidden="true"></div>
+      <h1>Big Tree Western</h1>
+      <p>Juga digemari</p>
+    </header>
+    <div class="grid4">
+      <article class="plate">
+        <img src="reco/tomyam-teragung.jpg" alt="Tomyam Teragung" />
+        <div class="cap"><strong>Tomyam Teragung</strong></div>
+      </article>
+      <article class="plate">
+        <img src="reco/laksa-goreng.jpg" alt="Laksa Goreng" />
+        <div class="cap"><strong>Laksa Goreng</strong></div>
+      </article>
+      <article class="plate">
+        <img src="reco/ayam-kunyit.jpg" alt="Ayam Kunyit" />
+        <div class="cap"><strong>Ayam Kunyit</strong></div>
+      </article>
+      <article class="plate">
+        <img src="reco/spaghetti-tom-yam-seafood.jpg" alt="Spaghetti Tom Yam Seafood" />
+        <div class="cap"><strong>Spaghetti Tom Yam Seafood</strong></div>
+      </article>
+    </div>
+    <div class="foot">
+      <div class="qr-wrap"><img class="qr-img qr-sync" src="qr/meja1.png" alt="QR" /></div>
+      <p class="scan"><b>Imbas &amp; pesan</b>Kangar · 5 petang</p>
+      <div class="meja-block"><span>Meja</span><strong class="meja-num-sync">1</strong></div>
+    </div>
+  </div>
+
+  <script src="table-switcher.js"></script>
+  <script>
+    (function () {
+      var select = document.getElementById('meja-select');
+      function sync() {
+        var n = (select && select.value) || '1';
+        document.querySelectorAll('.meja-num-sync').forEach(function (el) { el.textContent = n; });
+        document.querySelectorAll('.qr-sync').forEach(function (el) {
+          el.src = 'qr/meja' + n + '.png';
+          el.alt = 'QR Meja ' + n;
+        });
+      }
+      if (select) select.addEventListener('change', sync);
+      sync();
+      setInterval(sync, 300);
+    })();
+  </script>
+</body>
+</html>

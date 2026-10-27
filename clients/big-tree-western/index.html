@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Big Tree Western — Design QR Meja</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #14231a;
+      --muted: #5a6f62;
+      --line: #d5e0d8;
+      --bg: #eef3ef;
+      --card: #fff;
+      --accent: #1b4332;
+      --accent-2: #52b788;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "DM Sans", system-ui, sans-serif;
+      background:
+        radial-gradient(90% 60% at 10% 0%, rgba(82, 183, 136, 0.18), transparent 55%),
+        linear-gradient(180deg, #f7faf7 0%, var(--bg) 100%);
+      color: var(--ink);
+      padding: 36px 20px 64px;
+      line-height: 1.5;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    h1 {
+      font-family: "Syne", sans-serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+    }
+    .sub { color: var(--muted); max-width: 640px; margin-bottom: 28px; }
+    .note {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 28px;
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+    .note strong { color: var(--accent); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 28px rgba(20, 35, 26, 0.06);
+    }
+    .tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #e6f4ec;
+      color: #1b4332;
+      margin-bottom: 10px;
+    }
+    .tag.minimal { background: #eef0ee; color: #3d4a42; }
+    .card h2 {
+      font-family: "Syne", sans-serif;
+      font-size: 1.15rem;
+      margin-bottom: 6px;
+    }
+    .card p { font-size: 0.9rem; color: var(--muted); margin-bottom: 14px; min-height: 2.8em; }
+    .links { display: flex; flex-wrap: wrap; gap: 8px; }
+    .links a {
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 9px 14px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #fff;
+      background: var(--accent);
+    }
+    .links a.ghost {
+      background: #fff;
+      color: var(--accent);
+      border: 1px solid var(--line);
+    }
+    .preview {
+      margin: 0 0 14px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      aspect-ratio: 105 / 90;
+      background: #f3f6f3;
+      display: grid;
+      place-items: center;
+      font-family: "Syne", sans-serif;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: 0.04em;
+    }
+    .preview.dark { background: #14231a; color: #52b788; }
+    .preview.split { background: linear-gradient(180deg, #1a1a1a 42%, #fff 42%); color: #52b788; }
+    .preview.tent { background: linear-gradient(90deg, #1b4332 52%, #fff 52%); color: #95d5b2; }
+    .preview.sticker { background: #fff; border: 2px solid #1b4332; aspect-ratio: 1; max-width: 160px; margin-left: auto; margin-right: auto; }
+    h3 {
+      margin: 36px 0 12px;
+      font-family: "Syne", sans-serif;
+      font-size: 1.05rem;
+    }
+    .qr-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+    .qr-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px;
+      text-align: center;
+    }
+    .qr-card img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: contain;
+      background: #fff;
+      border-radius: 8px;
+    }
+    .qr-card a {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Big Tree Western — QR meja</h1>
+    <p class="sub">
+      QR diambil dari dashboard meja TableTap (Meja 1–12).
+      Buka design, pilih nombor meja, lalu Cetak / Save as PDF.
+      Untuk akrilik Big Tree: guna saiz <strong>10 × 14.8 cm</strong> (duplex 1 lembar) — cetak muka depan, kemudian muka belakang.
+    </p>
+
+    <div class="note">
+      <strong>Tip cetak akrilik:</strong> Chrome → Print → Custom <strong>100 × 148 mm</strong> · Duplex ON · Margins None · Background graphics ON.
+      Setiap design A5 ada <em>2 muka</em> (depan + belakang) dengan foto menu berbeza untuk insert double-sided.
+      Fail QR mentah ada dalam folder <code>qr/</code>.
+    </div>
+
+    <h3 style="margin-top:8px">A5 akrilik potret — cadangan menu</h3>
+    <p class="sub" style="margin-bottom:16px">Minimal &amp; elegan. Depan dan belakang berbeza — sesuai stand akrilik satu meja.</p>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">A5 · Akrilik</span>
+        <div class="preview" style="background:linear-gradient(180deg,#111 55%,#0d1210 55%);color:#d8c4a0;aspect-ratio:148/210;max-height:200px">FULL BLEED</div>
+        <h2>G — Full-bleed</h2>
+        <p>Foto besar edge-to-edge. Depan: Parmigiana · Belakang: Marvellous.</p>
+        <div class="links"><a href="design-g-a5-fullbleed.html">Buka</a></div>
+      </article>
+
+      <article class="card">
+        <span class="tag">A5 · Akrilik</span>
+        <div class="preview" style="background:linear-gradient(180deg,#f4f7f4 70%,#163528 70%);color:#1b4332;aspect-ratio:148/210;max-height:200px">QUIET</div>
+        <h2>H — Quiet frame</h2>
+        <p>Bingkai lembut. Depan: Lasagna · Belakang: Aglio Olio Chop.</p>
+        <div class="links"><a href="design-h-a5-quiet.html">Buka</a></div>
+      </article>
+
+      <article class="card">
+        <span class="tag">A5 · Akrilik</span>
+        <div class="preview" style="background:linear-gradient(180deg,#f7f6f2 50%,#1a2420 50%);color:#1b4332;aspect-ratio:148/210;max-height:200px">4+4</div>
+        <h2>I — 4+4 · 10×14.8cm (pilihan client)</h2>
+        <p>Depan: Lasagna, Parmigiana, Ribeye, Fish &amp; Chips. Belakang: Tomyam Teragung, Laksa Goreng, Ayam Kunyit, Spaghetti Tomyam. Tiada harga.</p>
+        <div class="links">
+          <a href="print-a4-cut-i.html">Cetak A4 + potong</a>
+          <a class="ghost" href="design-i-a5-dual.html">Preview satu meja</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <span class="tag">A5 · Akrilik</span>
+        <div class="preview" style="background:linear-gradient(90deg,#143024 38%,#fff 38%);color:#8fbf9c;aspect-ratio:148/210;max-height:200px">STRIP</div>
+        <h2>J — Soft strip</h2>
+        <p>Header + foto sisi. Depan: Hawaiian Burger · Belakang: Fish &amp; Chips.</p>
+        <div class="links"><a href="design-j-a5-strip.html">Buka</a></div>
+      </article>
+    </div>
+
+    <h3>A6 / sticker — design sedia ada</h3>
+    <div class="grid">
+      <article class="card">
+        <span class="tag minimal">Minimal</span>
+        <div class="preview">MEJA + QR</div>
+        <h2>A — Minimal putih</h2>
+        <p>Hanya nombor meja + QR. Paling bersih untuk demo cepat.</p>
+        <div class="links">
+          <a href="design-a-minimal.html">Buka</a>
+          <a class="ghost" href="print-all-minimal.html">Cetak 1–12</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <span class="tag minimal">Minimal</span>
+        <div class="preview dark">MEJA + QR</div>
+        <h2>B — Minimal gelap</h2>
+        <p>Versi gelap — nombor besar + QR putih. Bagus di meja kayu gelap.</p>
+        <div class="links"><a href="design-b-minimal-dark.html">Buka</a></div>
+      </article>
+
+      <article class="card">
+        <span class="tag">Brand</span>
+        <div class="preview" style="background:linear-gradient(180deg,#1b4332,#081c15);color:#95d5b2">BIG TREE</div>
+        <h2>C — Brand hijau</h2>
+        <p>Nama kedai + QR + chip meja. Untuk first impression demo.</p>
+        <div class="links"><a href="design-c-brand-green.html">Buka</a></div>
+      </article>
+
+      <article class="card">
+        <span class="tag">Brand</span>
+        <div class="preview split">SCAN</div>
+        <h2>D — Split berani</h2>
+        <p>Header hitam + QR di bawah. Nampak “western food court”.</p>
+        <div class="links"><a href="design-d-split-bold.html">Buka</a></div>
+      </article>
+
+      <article class="card">
+        <span class="tag">Tent</span>
+        <div class="preview tent">TENT</div>
+        <h2>E — Landscape tent</h2>
+        <p>A6 landscape, lipat tengah — satu sisi brand, satu sisi QR.</p>
+        <div class="links"><a href="design-e-tent-landscape.html">Buka</a></div>
+      </article>
+
+      <article class="card">
+        <span class="tag minimal">Sticker</span>
+        <div class="preview sticker">#QR</div>
+        <h2>F — Sticker kotak</h2>
+        <p>100×100mm — nombor + QR sahaja, sesuai lekat terus di meja.</p>
+        <div class="links"><a href="design-f-sticker.html">Buka</a></div>
+      </article>
+    </div>
+
+    <h3>QR mentah (dari dashboard)</h3>
+    <p class="sub" style="margin-bottom:14px">Download PNG terus jika mahu edit manual. Meja 1–26.</p>
+    <div class="qr-grid" id="qr-grid"></div>
+  </div>
+  <script>
+    var grid = document.getElementById('qr-grid');
+    for (var n = 1; n <= 26; n++) {
+      var el = document.createElement('div');
+      el.className = 'qr-card';
+      el.innerHTML =
+        '<img src="qr/meja' + n + '.png" alt="Meja ' + n + '" />' +
+        '<a download="bigtree-meja' + n + '.png" href="qr/meja' + n + '.png">Meja ' + n + ' · PNG</a>';
+      grid.appendChild(el);
+    }
+  </script>
+</body>
+</html>

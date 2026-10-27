@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cetak semua · Design I 10×14.8cm · Meja 1–26</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    @page { size: 100mm 148mm; margin: 0; }
+    body { margin: 0; background: #e4e2dc; font-family: "Sora", system-ui, sans-serif; color: #1c1b19; }
+    .face {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      padding: 4.5mm;
+      background: #f7f6f2;
+    }
+    .head { text-align: center; margin-bottom: 3mm; flex-shrink: 0; }
+    .head .mark { width: 6mm; height: 1mm; margin: 0 auto 2mm; background: #1b4332; }
+    .head h1 {
+      margin: 0;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .head p {
+      margin: 1.5mm 0 0;
+      font-size: 6pt;
+      font-weight: 500;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #6b6860;
+    }
+    .grid4 {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 2.2mm;
+    }
+    .plate {
+      position: relative;
+      overflow: hidden;
+      border-radius: 1mm;
+      background: #222;
+      min-height: 0;
+    }
+    .plate img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .plate .cap {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 8mm 3mm 2.5mm;
+      background: linear-gradient(180deg, transparent 0%, rgba(10, 10, 8, 0.88) 72%);
+      color: #f7f6f2;
+    }
+    .plate .cap strong {
+      display: block;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 6.8pt;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+    .foot {
+      margin-top: 4mm;
+      flex-shrink: 0;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 4mm;
+      align-items: center;
+      padding-top: 3.5mm;
+      border-top: 1px solid #d5d2c8;
+    }
+    .qr-wrap {
+      width: 20mm;
+      height: 20mm;
+      padding: 1.4mm;
+      background: #fff;
+      border: 1px solid #d5d2c8;
+    }
+    .scan { margin: 0; font-size: 8pt; font-weight: 500; line-height: 1.35; color: #4a4842; }
+    .scan b { display: block; font-size: 9.5pt; font-weight: 700; color: #1c1b19; margin-bottom: 0.6mm; }
+    .meja-block { text-align: right; }
+    .meja-block span {
+      display: block;
+      font-size: 6.5pt;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6b6860;
+    }
+    .meja-block strong {
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 16pt;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .face.back { background: #1a2420; color: #f2f4f1; }
+    .face.back .head .mark { background: #7cb892; }
+    .face.back .head p,
+    .face.back .scan,
+    .face.back .meja-block span { color: rgba(242, 244, 241, 0.58); }
+    .face.back .scan b,
+    .face.back .meja-block strong { color: #fff; }
+    .face.back .foot { border-top-color: rgba(255,255,255,0.12); }
+    .face.back .qr-wrap { border-color: transparent; }
+    .hint {
+      max-width: 720px;
+      margin: 16px auto;
+      padding: 12px 16px;
+      background: #fff;
+      border: 1px solid #d5d2c8;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      color: #4a4842;
+    }
+    .hint code { font-size: 0.84em; }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>Design I · Cetak pukal akrilik (depan+belakang)</span>
+    <div>
+      <label>Dari
+        <select id="from-meja"></select>
+      </label>
+      <label>Hingga
+        <select id="to-meja"></select>
+      </label>
+      <button type="button" id="btn-apply">Paparkan</button>
+      <a href="design-i-a5-dual.html">Satu meja</a>
+      <a href="index.html">← Gallery</a>
+      <button type="button" onclick="window.print()">Cetak julat</button>
+    </div>
+  </div>
+
+  <p class="hint no-print">
+    Tip: cetak ikut batch (contoh 1–8, 9–16, 17–26) supaya mudah masukkan ke akrilik.
+    Print → <strong>100 × 148 mm</strong> · Duplex <strong>long edge</strong> · Margins <strong>None</strong> · Background ON. Satu lembar = depan+belakang.
+    Setiap meja = 2 muka (depan lalu belakang). Pastikan fail <code>qr/mejaN.png</code> sudah ada.
+  </p>
+
+  <div id="print-root"></div>
+
+  <template id="tpl-pair">
+    <div class="sheet sheet-acrylic-a6 face front">
+      <header class="head">
+        <div class="mark" aria-hidden="true"></div>
+        <h1>Big Tree Western</h1>
+        <p>Cadangan chef</p>
+      </header>
+      <div class="grid4">
+        <article class="plate">
+          <img src="reco/lasagna-cheese.jpg" alt="Lasagna Cheese" />
+          <div class="cap"><strong>Lasagna Cheese</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/grill-chicken-chop-parmigiana.jpg" alt="Grill Chicken Chop Parmigiana" />
+          <div class="cap"><strong>Grill Chicken Chop Parmigiana</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/ribeye-beef-steak.jpg" alt="Ribeye Beef Steak" />
+          <div class="cap"><strong>Ribeye Beef Steak</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/fish-and-chips.jpg" alt="Fried Fish &amp; Chips" />
+          <div class="cap"><strong>Fried Fish &amp; Chips</strong></div>
+        </article>
+      </div>
+      <div class="foot">
+        <div class="qr-wrap"><img class="qr-img qr-front" src="" alt="QR" /></div>
+        <p class="scan"><b>Imbas &amp; pesan</b>Harga &amp; menu penuh dalam telefon</p>
+        <div class="meja-block"><span>Meja</span><strong class="num-front">1</strong></div>
+      </div>
+    </div>
+    <div class="sheet sheet-acrylic-a6 face back">
+      <header class="head">
+        <div class="mark" aria-hidden="true"></div>
+        <h1>Big Tree Western</h1>
+        <p>Juga digemari</p>
+      </header>
+      <div class="grid4">
+        <article class="plate">
+          <img src="reco/tomyam-teragung.jpg" alt="Tomyam Teragung" />
+          <div class="cap"><strong>Tomyam Teragung</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/laksa-goreng.jpg" alt="Laksa Goreng" />
+          <div class="cap"><strong>Laksa Goreng</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/ayam-kunyit.jpg" alt="Ayam Kunyit" />
+          <div class="cap"><strong>Ayam Kunyit</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/spaghetti-tom-yam-seafood.jpg" alt="Spaghetti Tom Yam Seafood" />
+          <div class="cap"><strong>Spaghetti Tom Yam Seafood</strong></div>
+        </article>
+      </div>
+      <div class="foot">
+        <div class="qr-wrap"><img class="qr-img qr-back" src="" alt="QR" /></div>
+        <p class="scan"><b>Imbas &amp; pesan</b>Kangar · buka 5 petang</p>
+        <div class="meja-block"><span>Meja</span><strong class="num-back">1</strong></div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    (function () {
+      var MAX = 26;
+      var fromSel = document.getElementById('from-meja');
+      var toSel = document.getElementById('to-meja');
+      var root = document.getElementById('print-root');
+      var tpl = document.getElementById('tpl-pair');
+
+      function fillSelect(sel, selected) {
+        sel.innerHTML = '';
+        for (var i = 1; i <= MAX; i++) {
+          var opt = document.createElement('option');
+          opt.value = String(i);
+          opt.textContent = String(i);
+          if (i === selected) opt.selected = true;
+          sel.appendChild(opt);
+        }
+      }
+
+      function render(from, to) {
+        from = Math.max(1, Math.min(MAX, from));
+        to = Math.max(from, Math.min(MAX, to));
+        root.innerHTML = '';
+        for (var n = from; n <= to; n++) {
+          var frag = tpl.content.cloneNode(true);
+          frag.querySelector('.num-front').textContent = String(n);
+          frag.querySelector('.num-back').textContent = String(n);
+          var src = 'qr/meja' + n + '.png';
+          frag.querySelector('.qr-front').src = src;
+          frag.querySelector('.qr-front').alt = 'QR Meja ' + n;
+          frag.querySelector('.qr-back').src = src;
+          frag.querySelector('.qr-back').alt = 'QR Meja ' + n;
+          root.appendChild(frag);
+        }
+        fromSel.value = String(from);
+        toSel.value = String(to);
+        var url = new URL(window.location.href);
+        url.searchParams.set('from', String(from));
+        url.searchParams.set('to', String(to));
+        history.replaceState(null, '', url);
+      }
+
+      var params = new URLSearchParams(window.location.search);
+      var from0 = parseInt(params.get('from') || '1', 10) || 1;
+      var to0 = parseInt(params.get('to') || String(MAX), 10) || MAX;
+      fillSelect(fromSel, from0);
+      fillSelect(toSel, to0);
+      document.getElementById('btn-apply').addEventListener('click', function () {
+        render(parseInt(fromSel.value, 10), parseInt(toSel.value, 10));
+      });
+      render(from0, to0);
+    })();
+  </script>
+</body>
+</html>

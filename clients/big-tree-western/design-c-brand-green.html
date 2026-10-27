@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>C — Big Tree brand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,800&family=DM+Sans:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    body { margin: 0; background: #dfe8e1; font-family: "DM Sans", system-ui, sans-serif; }
+    .sheet {
+      background:
+        radial-gradient(120% 80% at 50% -10%, #2d6a4f 0%, transparent 55%),
+        linear-gradient(180deg, #1b4332 0%, #081c15 100%);
+      color: #f4f7f2;
+      display: flex;
+      flex-direction: column;
+      padding: 7mm;
+      box-sizing: border-box;
+    }
+    .brand {
+      text-align: center;
+      margin-bottom: 3mm;
+    }
+    .brand .mark {
+      display: inline-block;
+      width: 9mm;
+      height: 9mm;
+      border-radius: 50%;
+      border: 1.5px solid #95d5b2;
+      margin-bottom: 2mm;
+      background:
+        radial-gradient(circle at 50% 60%, #52b788 0 28%, transparent 29%),
+        radial-gradient(circle at 35% 40%, #95d5b2 0 16%, transparent 17%),
+        radial-gradient(circle at 65% 38%, #95d5b2 0 14%, transparent 15%);
+    }
+    .brand h1 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 16pt;
+      font-weight: 800;
+      line-height: 1.05;
+      margin: 0;
+    }
+    .brand p {
+      margin: 1.5mm 0 0;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #95d5b2;
+    }
+    .qr-panel {
+      margin: auto 0;
+      background: #fff;
+      border-radius: 4mm;
+      padding: 4mm;
+      display: grid;
+      gap: 3mm;
+      justify-items: center;
+    }
+    .qr-wrap { width: 48mm; height: 48mm; }
+    .cta {
+      text-align: center;
+      color: #14231a;
+    }
+    .cta strong {
+      display: block;
+      font-size: 11pt;
+      font-weight: 800;
+    }
+    .cta span {
+      display: block;
+      margin-top: 1mm;
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: #4a6356;
+    }
+    .table-chip {
+      margin-top: auto;
+      align-self: center;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 2mm;
+      padding: 2mm 4mm;
+      border: 1px solid rgba(149, 213, 178, 0.45);
+      border-radius: 999px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+    }
+    .table-chip em {
+      font-style: normal;
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 18pt;
+      color: #b7e4c7;
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>C — Brand Big Tree · A6</span>
+    <div>
+      <label>Meja <select id="meja-select"></select></label>
+      <a href="index.html">← Gallery</a>
+      <button type="button" onclick="window.print()">Cetak</button>
+    </div>
+  </div>
+  <div class="sheet sheet-a6-p">
+    <header class="brand">
+      <div class="mark" aria-hidden="true"></div>
+      <h1>Big Tree Western</h1>
+      <p>Kangar · Perlis</p>
+    </header>
+    <div class="qr-panel">
+      <div class="qr-wrap">
+        <img class="qr-img" id="qr" src="qr/meja1.png" alt="QR Meja" />
+      </div>
+      <div class="cta">
+        <strong>Imbas &amp; pesan</strong>
+        <span>Tiada app · menu dalam telefon</span>
+      </div>
+    </div>
+    <div class="table-chip">MEJA <em id="meja-num">1</em></div>
+  </div>
+  <script src="table-switcher.js"></script>
+</body>
+</html>

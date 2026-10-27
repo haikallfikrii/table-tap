@@ -1,0 +1,58 @@
+/* Big Tree Western — A6 / A5 meja print helpers */
+@page { margin: 0; size: auto; }
+
+@media print {
+  html, body { margin: 0; padding: 0; background: #fff !important; }
+  .no-print { display: none !important; }
+  .sheet { box-shadow: none !important; margin: 0 !important; page-break-after: always; }
+  .sheet:last-child { page-break-after: auto; }
+  .pair-gap { display: none !important; }
+}
+
+.print-bar {
+  position: sticky; top: 0; z-index: 99;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 12px 20px; background: #14231a; color: #f4f7f2;
+  font-family: "DM Sans", "Segoe UI", system-ui, sans-serif; font-size: 0.88rem;
+}
+.print-bar button, .print-bar select {
+  font: inherit; font-weight: 700; padding: 8px 14px; border: none;
+  border-radius: 8px; cursor: pointer;
+}
+.print-bar button { background: #52b788; color: #0d1f16; }
+.print-bar a { color: #95d5b2; margin-right: 10px; }
+.print-bar select { background: #1e3328; color: #f4f7f2; border: 1px solid #2d4a3a; }
+
+.sheet-a6-p { width: 105mm; height: 148mm; }
+.sheet-a6-l { width: 148mm; height: 105mm; }
+/* Exact acrylic insert Big Tree measured: 10 × 14.8 cm */
+.sheet-acrylic-a6 { width: 100mm; height: 148mm; }
+.sheet-a5-p { width: 148mm; height: 210mm; }
+.sheet-square { width: 100mm; height: 100mm; }
+
+.sheet {
+  margin: 20px auto;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 12px 36px rgba(20, 35, 26, 0.2);
+}
+
+.pair-gap {
+  max-width: 148mm;
+  margin: 8px auto 0;
+  text-align: center;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5a6f62;
+}
+
+.qr-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #fff;
+}

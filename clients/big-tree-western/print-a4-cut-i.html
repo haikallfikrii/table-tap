@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cetak A4 · potong 10×14.8cm · Design I</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    @page { size: A4 portrait; margin: 0; }
+
+    @media print {
+      html, body { background: #fff !important; margin: 0; padding: 0; }
+      .no-print { display: none !important; }
+      .a4-sheet {
+        box-shadow: none !important;
+        margin: 0 !important;
+        page-break-after: always;
+      }
+      .a4-sheet:last-child { page-break-after: auto; }
+    }
+
+    body {
+      margin: 0;
+      background: #d8ddd9;
+      font-family: "Sora", system-ui, sans-serif;
+      color: #1c1b19;
+    }
+
+    .howto {
+      max-width: 760px;
+      margin: 14px auto;
+      padding: 14px 16px;
+      background: #fff;
+      border: 1px solid #cfd6d1;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: #445048;
+    }
+    .howto strong { color: #143024; }
+    .howto ol { margin: 8px 0 0; padding-left: 1.2em; }
+
+    .a4-sheet {
+      width: 210mm;
+      height: 297mm;
+      margin: 16px auto;
+      background: #fff;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      position: relative;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    /* 4× A6 (akrilik ~100×148) pada A4 — 2×2.
+       Margin atas supaya printer tak potong tepi; tinggi kad dikurangkan sedikit. */
+    :root {
+      --card-w: 100mm;
+      --card-h: 145mm;
+      --grid-w: 200mm;
+      --grid-h: 290mm;
+      --pad-x: 5mm;
+      --pad-top: 4mm;
+      --pad-bottom: 3mm; /* 4 + 290 + 3 = 297 */
+    }
+
+    .cut-grid {
+      position: absolute;
+      top: var(--pad-top);
+      left: var(--pad-x);
+      display: grid;
+      grid-template-columns: var(--card-w) var(--card-w);
+      grid-template-rows: var(--card-h) var(--card-h);
+      width: var(--grid-w);
+      height: var(--grid-h);
+      gap: 0;
+    }
+
+    .slot {
+      width: var(--card-w);
+      height: var(--card-h);
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    /* Empty slots stay pure white — no hatch/guides so unused paper can be reused */
+    .slot.empty {
+      background: #fff;
+    }
+
+    .marks {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .marks i {
+      position: absolute;
+      width: 4mm;
+      height: 4mm;
+      border-color: #888;
+      border-style: solid;
+      border-width: 0;
+    }
+    .marks .tl { top: -0.3mm; left: -0.3mm; border-top-width: 0.3mm; border-left-width: 0.3mm; }
+    .marks .tr { top: -0.3mm; right: -0.3mm; border-top-width: 0.3mm; border-right-width: 0.3mm; }
+    .marks .bl { bottom: -0.3mm; left: -0.3mm; border-bottom-width: 0.3mm; border-left-width: 0.3mm; }
+    .marks .br { bottom: -0.3mm; right: -0.3mm; border-bottom-width: 0.3mm; border-right-width: 0.3mm; }
+
+    .cut-guide-v {
+      position: absolute;
+      top: var(--pad-top);
+      height: var(--grid-h);
+      left: calc(var(--pad-x) + var(--card-w));
+      width: 0;
+      border-left: 0.3mm dashed #999;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .cut-guide-h {
+      position: absolute;
+      left: var(--pad-x);
+      width: var(--grid-w);
+      top: calc(var(--pad-top) + var(--card-h));
+      height: 0;
+      border-top: 0.3mm dashed #999;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .sheet-label { display: none; }
+
+    @media screen {
+      .sheet-label {
+        display: block;
+        position: absolute;
+        top: -7mm;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 8pt;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #888;
+      }
+      .a4-sheet { margin-top: 28px; }
+    }
+
+    /* ===== Card face ===== */
+    .face {
+      width: 100%;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      padding: 3.8mm 4mm 4.2mm;
+      background: #f7f6f2;
+      overflow: hidden;
+    }
+    .head { text-align: center; margin-bottom: 3mm; flex-shrink: 0; }
+    .head .mark {
+      width: 5mm; height: 0.9mm; margin: 0 auto 1.5mm; background: #1b4332;
+    }
+    .head h1 {
+      margin: 0;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 10.5pt;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    .head p {
+      margin: 1mm 0 0;
+      font-size: 6pt;
+      font-weight: 500;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6b6860;
+    }
+    .grid4 {
+      flex: 1;
+      min-height: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 2.2mm;
+    }
+    .plate {
+      position: relative;
+      overflow: hidden;
+      border-radius: 0.8mm;
+      background: #222;
+      min-height: 0;
+    }
+    .plate img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .plate .cap {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 6mm 2.2mm 2mm;
+      background: linear-gradient(180deg, transparent 0%, rgba(10, 10, 8, 0.9) 70%);
+      color: #f7f6f2;
+    }
+    .plate .cap strong {
+      display: block;
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 6.8pt;
+      font-weight: 700;
+      line-height: 1.12;
+    }
+    .foot {
+      margin-top: 2.5mm;
+      flex-shrink: 0;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 2.5mm;
+      align-items: center;
+      padding-top: 2mm;
+      border-top: 1px solid #d5d2c8;
+    }
+    .qr-wrap {
+      width: 18mm;
+      height: 18mm;
+      padding: 0.8mm;
+      background: #fff;
+      border: 1px solid #d5d2c8;
+      box-sizing: border-box;
+    }
+    .qr-wrap img { width: 100%; height: 100%; display: block; }
+    .scan {
+      margin: 0;
+      font-size: 6.5pt;
+      font-weight: 500;
+      line-height: 1.3;
+      color: #4a4842;
+    }
+    .scan b {
+      display: block;
+      font-size: 8pt;
+      font-weight: 700;
+      color: #1c1b19;
+      margin-bottom: 0.4mm;
+    }
+    .meja-block { text-align: right; }
+    .meja-block span {
+      display: block;
+      font-size: 5.5pt;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6b6860;
+    }
+    .meja-block strong {
+      font-family: "Libre Baskerville", Georgia, serif;
+      font-size: 16pt;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .face.back { background: #1a2420; color: #f2f4f1; }
+    .face.back .head .mark { background: #7cb892; }
+    .face.back .head p,
+    .face.back .scan,
+    .face.back .meja-block span { color: rgba(242, 244, 241, 0.58); }
+    .face.back .scan b,
+    .face.back .meja-block strong { color: #fff; }
+    .face.back .foot { border-top-color: rgba(255,255,255,0.12); }
+    .face.back .qr-wrap { border-color: transparent; }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>A4 duplex · 4× A6 (~100×145 mm, margin atas)</span>
+    <div>
+      <label>Muka
+        <select id="side-mode">
+          <option value="front">Depan sahaja</option>
+          <option value="back">Belakang sahaja</option>
+          <option value="both" selected>Bolak-balik (duplex)</option>
+        </select>
+      </label>
+      <label>Dari <select id="from-meja"></select></label>
+      <label>Hingga <select id="to-meja"></select></label>
+      <button type="button" id="btn-apply">Paparkan</button>
+      <a href="design-i-a5-dual.html">Satu kad</a>
+      <a href="index.html">← Gallery</a>
+      <button type="button" onclick="window.print()">Cetak A4</button>
+    </div>
+  </div>
+
+  <div class="howto no-print">
+    <strong>Kertas A4 · saiz A6 (~100 × 145 mm)</strong> — 4 kad sehelai, 2×2.
+    Ada <strong>~4 mm</strong> jarak dari tepi atas supaya tak terpotong printer.
+    Slot kosong kekal putih supaya sisa kertas boleh dipakai lagi.
+    <ol>
+      <li>Pilih <em>Bolak-balik (duplex)</em> — halaman 1 = depan, halaman 2 = belakang (sudah di-mirror).</li>
+      <li>Print → Paper <strong>A4</strong> · Duplex <strong>Flip on long edge</strong> · Margins <strong>None</strong> · Scale <strong>100%</strong> · Background <strong>ON</strong>.</li>
+      <li>Potong ikut crop mark → masuk akrilik 10×14.8 cm.</li>
+    </ol>
+  </div>
+
+  <div id="print-root"></div>
+
+  <template id="tpl-front">
+    <div class="face front">
+      <header class="head">
+        <div class="mark" aria-hidden="true"></div>
+        <h1>Big Tree Western</h1>
+        <p>Cadangan chef</p>
+      </header>
+      <div class="grid4">
+        <article class="plate">
+          <img src="reco/lasagna-cheese.jpg" alt="" />
+          <div class="cap"><strong>Lasagna Cheese</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/grill-chicken-chop-parmigiana.jpg" alt="" />
+          <div class="cap"><strong>Grill Chicken Chop Parmigiana</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/ribeye-beef-steak.jpg" alt="" />
+          <div class="cap"><strong>Ribeye Beef Steak</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/fish-and-chips.jpg" alt="" />
+          <div class="cap"><strong>Fried Fish &amp; Chips</strong></div>
+        </article>
+      </div>
+      <div class="foot">
+        <div class="qr-wrap"><img class="qr-img" src="" alt="QR" /></div>
+        <p class="scan"><b>Imbas &amp; pesan</b>Harga dalam telefon</p>
+        <div class="meja-block"><span>Meja</span><strong class="num">1</strong></div>
+      </div>
+    </div>
+  </template>
+
+  <template id="tpl-back">
+    <div class="face back">
+      <header class="head">
+        <div class="mark" aria-hidden="true"></div>
+        <h1>Big Tree Western</h1>
+        <p>Juga digemari</p>
+      </header>
+      <div class="grid4">
+        <article class="plate">
+          <img src="reco/tomyam-teragung.jpg" alt="" />
+          <div class="cap"><strong>Tomyam Teragung</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/laksa-goreng.jpg" alt="" />
+          <div class="cap"><strong>Laksa Goreng</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/ayam-kunyit.jpg" alt="" />
+          <div class="cap"><strong>Ayam Kunyit</strong></div>
+        </article>
+        <article class="plate">
+          <img src="reco/spaghetti-tom-yam-seafood.jpg" alt="" />
+          <div class="cap"><strong>Spaghetti Tom Yam Seafood</strong></div>
+        </article>
+      </div>
+      <div class="foot">
+        <div class="qr-wrap"><img class="qr-img" src="" alt="QR" /></div>
+        <p class="scan"><b>Imbas &amp; pesan</b>Kangar · 5 petang</p>
+        <div class="meja-block"><span>Meja</span><strong class="num">1</strong></div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    (function () {
+      var MAX = 26;
+      var root = document.getElementById('print-root');
+      var fromSel = document.getElementById('from-meja');
+      var toSel = document.getElementById('to-meja');
+      var modeSel = document.getElementById('side-mode');
+      var tplFront = document.getElementById('tpl-front');
+      var tplBack = document.getElementById('tpl-back');
+
+      function fill(sel, v) {
+        sel.innerHTML = '';
+        for (var i = 1; i <= MAX; i++) {
+          var o = document.createElement('option');
+          o.value = String(i);
+          o.textContent = String(i);
+          if (i === v) o.selected = true;
+          sel.appendChild(o);
+        }
+      }
+
+      function makeCard(side, n) {
+        var tpl = side === 'back' ? tplBack : tplFront;
+        var node = tpl.content.cloneNode(true);
+        var face = node.querySelector('.face');
+        face.querySelector('.num').textContent = String(n);
+        var img = face.querySelector('.qr-img');
+        img.src = 'qr/meja' + n + '.png';
+        img.alt = 'QR Meja ' + n;
+        return face;
+      }
+
+      function makeA4Page(side, nums) {
+        // nums = up to 4 meja numbers in TL, TR, BL, BR order
+        var page = document.createElement('div');
+        page.className = 'a4-sheet';
+
+        var filled = nums.filter(function (n) { return n != null; });
+        var label = document.createElement('div');
+        label.className = 'sheet-label';
+        label.textContent = (side === 'back' ? 'BELAKANG (mirror duplex)' : 'DEPAN') +
+          ' · Meja ' + filled.join(', ') + ' · A6 100×148 mm';
+        page.appendChild(label);
+
+        var grid = document.createElement('div');
+        grid.className = 'cut-grid';
+
+        function wrapSlot(n) {
+          var slot = document.createElement('div');
+          slot.className = 'slot' + (n != null ? '' : ' empty');
+          if (n != null) {
+            var marks = document.createElement('div');
+            marks.className = 'marks';
+            marks.innerHTML = '<i class="tl"></i><i class="tr"></i><i class="bl"></i><i class="br"></i>';
+            slot.appendChild(makeCard(side, n));
+            slot.appendChild(marks);
+          }
+          return slot;
+        }
+
+        for (var i = 0; i < 4; i++) {
+          grid.appendChild(wrapSlot(nums[i] != null ? nums[i] : null));
+        }
+        page.appendChild(grid);
+
+        /* Full cross guides only when all 4 slots filled — otherwise unused
+           half stays blank so the rest of the sheet can be reused. */
+        if (filled.length === 4) {
+          var gv = document.createElement('div');
+          gv.className = 'cut-guide-v';
+          page.appendChild(gv);
+          var gh = document.createElement('div');
+          gh.className = 'cut-guide-h';
+          page.appendChild(gh);
+        }
+
+        return page;
+      }
+
+      /** Long-edge duplex: swap L↔R within each row so backs land behind fronts. */
+      function mirrorForDuplex(nums) {
+        return [nums[1], nums[0], nums[3], nums[2]];
+      }
+
+      function render() {
+        var from = Math.max(1, Math.min(MAX, parseInt(fromSel.value, 10) || 1));
+        var to = Math.max(from, Math.min(MAX, parseInt(toSel.value, 10) || MAX));
+        var mode = modeSel.value;
+        root.innerHTML = '';
+
+        function emitSide(side, mirror) {
+          for (var n = from; n <= to; n += 4) {
+            var nums = [
+              n,
+              (n + 1 <= to) ? n + 1 : null,
+              (n + 2 <= to) ? n + 2 : null,
+              (n + 3 <= to) ? n + 3 : null
+            ];
+            if (mirror) nums = mirrorForDuplex(nums);
+            root.appendChild(makeA4Page(side, nums));
+          }
+        }
+
+        if (mode === 'front') emitSide('front', false);
+        else if (mode === 'back') emitSide('back', true);
+        else {
+          emitSide('front', false);
+          emitSide('back', true);
+        }
+
+        var url = new URL(window.location.href);
+        url.searchParams.set('from', String(from));
+        url.searchParams.set('to', String(to));
+        url.searchParams.set('side', mode);
+        history.replaceState(null, '', url);
+      }
+
+      var params = new URLSearchParams(window.location.search);
+      fill(fromSel, parseInt(params.get('from') || '1', 10) || 1);
+      fill(toSel, parseInt(params.get('to') || '8', 10) || 8);
+      modeSel.value = params.get('side') || 'both';
+      document.getElementById('btn-apply').addEventListener('click', render);
+      modeSel.addEventListener('change', render);
+      render();
+    })();
+  </script>
+</body>
+</html>
