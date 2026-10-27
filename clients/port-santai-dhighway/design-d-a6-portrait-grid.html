@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Design D — A6 Portrait Grid Foto</title>
+  <link rel="stylesheet" href="shared-a6.css" />
+  <style>
+    @page { size: 105mm 148mm; }
+    body { margin: 0; background: #e8e1d6; font-family: "Segoe UI", Inter, system-ui, sans-serif; }
+    .sheet {
+      background: #fbf8f4;
+      color: #17150f;
+      padding: 4mm;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5mm;
+    }
+    .brand-mini { text-align: center; padding-bottom: 1mm; border-bottom: 1.5px solid #2a9d8f; }
+    .brand-mini h1 em { font-style: italic; color: #2a9d8f; }
+    .menu-cell { border: 1px solid #e8e1d6; }
+    .menu-cell .price { color: #2a9d8f; }
+    .menu-cell .badge {
+      font-size: 5pt; font-weight: 800; background: #e6f6f4; color: #1a7a6e;
+      padding: 0.3mm 1.5mm; border-radius: 3px; margin-left: 1mm;
+    }
+    .bottom {
+      display: grid;
+      grid-template-columns: 22mm 1fr;
+      gap: 3mm;
+      align-items: center;
+      margin-top: auto;
+    }
+    .qr-slot { width: 22mm; height: 22mm; color: #2a9d8f; }
+    .scan-line { color: #17150f; }
+    .scan-sub { font-size: 5.5pt; color: #5b564c; margin-top: 0.5mm; }
+    .table-row { margin-top: 1.5mm; }
+    .table-pill { color: #2a9d8f; }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>Design D — A6 Portrait · grid foto 2×2</span>
+    <div><a href="index.html">← Kembali</a><button type="button" onclick="window.print()">Cetak A6</button></div>
+  </div>
+
+  <div class="sheet sheet-a6-p">
+    <header class="brand-mini">
+      <h1>Port Santai <em>D'Highway</em></h1>
+      <p class="sub">Menu pilihan · Imbas &amp; pesan</p>
+    </header>
+
+    <div class="menu-photo-grid">
+      <article class="menu-cell">
+        <img src="assets/port-santai-menu-nasi-lemak.png" alt="Nasi Lemak Port" />
+        <div class="meta">
+          <div class="name">Nasi Lemak Port<span class="badge">Hot</span></div>
+          <div class="price">RM12</div>
+        </div>
+      </article>
+      <article class="menu-cell">
+        <img src="assets/port-santai-menu-mee-goreng.png" alt="Mee Goreng" />
+        <div class="meta">
+          <div class="name">Mee Goreng Santai</div>
+          <div class="price">RM10</div>
+        </div>
+      </article>
+      <article class="menu-cell">
+        <img src="assets/port-santai-menu-ikan-bakar.png" alt="Ikan Bakar" />
+        <div class="meta">
+          <div class="name">Ikan Bakar Port</div>
+          <div class="price">RM18</div>
+        </div>
+      </article>
+      <article class="menu-cell">
+        <img src="assets/port-santai-menu-ketam.png" alt="Ketam" />
+        <div class="meta">
+          <div class="name">Ketam Masak Lemak</div>
+          <div class="price">RM28</div>
+        </div>
+      </article>
+    </div>
+
+    <div class="bottom">
+      <div class="qr-slot">QR<small>Meja</small></div>
+      <div>
+        <div class="scan-line">Imbas &amp; Pesan</div>
+        <p class="scan-sub">Menu penuh dalam telefon</p>
+        <div class="table-row"><span class="table-pill">Meja ___</span></div>
+      </div>
+    </div>
+
+    <footer class="foot-notes">
+      <p><strong>Tiada telefon?</strong> Sila panggil pelayan.</p>
+      <p><strong>Penting:</strong> Semak pesanan sebelum hantar.</p>
+    </footer>
+  </div>
+</body>
+</html>

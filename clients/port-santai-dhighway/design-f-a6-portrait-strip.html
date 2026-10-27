@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Design F — A6 Portrait Strip Foto</title>
+  <link rel="stylesheet" href="shared-a6.css" />
+  <style>
+    @page { size: 105mm 148mm; }
+    body { margin: 0; background: #0d1520; font-family: "Segoe UI", Inter, system-ui, sans-serif; }
+    .sheet {
+      background: linear-gradient(180deg, #0f1c2e, #152238);
+      color: #fbf8f4;
+      padding: 3.5mm;
+      display: flex;
+      flex-direction: column;
+      gap: 2.5mm;
+    }
+    .brand-mini { text-align: center; }
+    .brand-mini h1 {
+      font-family: Georgia, serif;
+      font-size: 10.5pt;
+      color: #d4af37;
+    }
+    .brand-mini .sub { color: rgba(251,248,244,0.55); font-size: 5.5pt; letter-spacing: 0.1em; text-transform: uppercase; }
+    .menu-photo-grid.cols-4 .menu-cell .meta { padding: 1mm 1.5mm; }
+    .menu-photo-grid.cols-4 .menu-cell .name { font-size: 5.5pt; color: #fbf8f4; }
+    .menu-photo-grid.cols-4 .menu-cell .price { color: #d4af37; font-size: 6pt; }
+    .menu-cell { background: rgba(255,255,255,0.06); border: 1px solid rgba(212,175,55,0.2); }
+    .qr-block {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+      padding: 2.5mm;
+      background: rgba(0,0,0,0.25);
+      border-radius: 6px;
+      border: 1px solid rgba(212,175,55,0.2);
+    }
+    .qr-slot { width: 24mm; height: 24mm; color: #d4af37; flex-shrink: 0; background: rgba(255,255,255,0.04); }
+    .scan-line { color: #d4af37; }
+    .scan-sub { font-size: 5.5pt; color: rgba(251,248,244,0.55); }
+    .table-pill { color: #d4af37; border-color: rgba(212,175,55,0.4); margin-top: 1mm; }
+    .foot-notes { color: rgba(251,248,244,0.65); margin-top: auto; }
+    .foot-notes strong { color: #d4af37; }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>Design F — A6 Portrait · strip 4 foto</span>
+    <div><a href="index.html">← Kembali</a><button type="button" onclick="window.print()">Cetak A6</button></div>
+  </div>
+
+  <div class="sheet sheet-a6-p">
+    <header class="brand-mini">
+      <h1>Port Santai D'Highway</h1>
+      <p class="sub">Signature · Scan to order</p>
+    </header>
+
+    <div class="menu-photo-grid cols-4">
+      <article class="menu-cell">
+        <img src="assets/port-santai-menu-nasi-lemak.png" alt="" />
+        <div class="meta"><div class="name">Nasi Lemak</div><div class="price">RM12</div></div>
+      </article>
+      <article class="menu-cell">
+        <img src="assets/port-santai-menu-mee-goreng.png" alt="" />
+        <div class="meta"><div class="name">Mee Goreng</div><div class="price">RM10</div></div>
+      </article>
+      <article class="menu-cell">
+        <img src="assets/port-santai-menu-ikan-bakar.png" alt="" />
+        <div class="meta"><div class="name">Ikan Bakar</div><div class="price">RM18</div></div>
+      </article>
+      <article class="menu-cell">
+        <img src="assets/port-santai-menu-ketam.png" alt="" />
+        <div class="meta"><div class="name">Ketam</div><div class="price">RM28</div></div>
+      </article>
+    </div>
+
+    <section class="qr-block">
+      <div class="qr-slot">QR<small>Meja</small></div>
+      <div>
+        <div class="scan-line">Imbas · Pesan · Nikmati</div>
+        <p class="scan-sub">Menu penuh dalam telefon</p>
+        <span class="table-pill">Meja ___</span>
+      </div>
+    </section>
+
+    <footer class="foot-notes">
+      <p><strong>Tiada telefon?</strong> Sila panggil pelayan.</p>
+      <p><strong>Penting:</strong> Semak item &amp; kuantiti sebelum hantar.</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Port Santai D'Highway — Design C Malam Port</title>
+  <link rel="stylesheet" href="shared-print.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #0d1520;
+      font-family: "Segoe UI", Inter, system-ui, sans-serif;
+    }
+    .sheet {
+      width: 148mm;
+      min-height: 210mm;
+      margin: 24px auto;
+      background: linear-gradient(165deg, #0f1c2e 0%, #152238 55%, #1a2a42 100%);
+      color: #fbf8f4;
+      padding: 12mm 11mm;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      border: 1px solid rgba(212,175,55,0.25);
+    }
+    .brand {
+      text-align: center;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(212,175,55,0.35);
+    }
+    .brand .crest {
+      width: 52px;
+      height: 52px;
+      margin: 0 auto 8px;
+      border: 2px solid #d4af37;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 24px;
+      background: rgba(212,175,55,0.08);
+    }
+    .brand h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.28rem;
+      letter-spacing: 0.02em;
+    }
+    .brand h1 em {
+      font-style: italic;
+      color: #d4af37;
+    }
+    .brand .tagline {
+      font-size: 0.7rem;
+      color: rgba(251,248,244,0.65);
+      margin-top: 4px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .section-label {
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #d4af37;
+      margin-bottom: 7px;
+    }
+    .menu-grid { font-size: 0.88rem; gap: 9px; }
+    .menu-item .name { color: #fbf8f4; }
+    .menu-item .price { color: #d4af37; }
+    .menu-item .badge {
+      background: rgba(212,175,55,0.2);
+      color: #f0d878;
+      border: 1px solid rgba(212,175,55,0.4);
+    }
+    .menu-card {
+      background: rgba(255,255,255,0.04);
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .qr-wrap {
+      text-align: center;
+      padding: 10px 0;
+    }
+    .qr-slot {
+      width: 40mm;
+      height: 40mm;
+      margin: 0 auto 8px;
+      color: #d4af37;
+      font-size: 0.82rem;
+      background: rgba(255,255,255,0.04);
+      border-color: rgba(212,175,55,0.5);
+    }
+    .scan-title {
+      font-size: 1rem;
+      font-weight: 800;
+      color: #d4af37;
+      letter-spacing: 0.04em;
+    }
+    .scan-sub {
+      font-size: 0.7rem;
+      color: rgba(251,248,244,0.6);
+      margin-top: 3px;
+    }
+    .table-row { text-align: center; margin-top: 8px; }
+    .table-pill {
+      color: #d4af37;
+      border-color: rgba(212,175,55,0.45);
+      font-size: 0.82rem;
+    }
+    .foot-notes {
+      margin-top: auto;
+      padding: 10px 12px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      border: 1px solid rgba(212,175,55,0.15);
+      color: rgba(251,248,244,0.75);
+    }
+    .foot-notes strong { color: #d4af37; }
+    .foot-notes p + p { margin-top: 6px; }
+    .powered {
+      text-align: center;
+      font-size: 0.58rem;
+      color: rgba(251,248,244,0.35);
+      letter-spacing: 0.06em;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>Design C — Malam Port (A5 premium card)</span>
+    <div>
+      <a href="index.html">← Kembali</a>
+      <button type="button" onclick="window.print()">Cetak</button>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <header class="brand">
+      <div class="crest" aria-hidden="true">⚓</div>
+      <h1>Port Santai <em>D'Highway</em></h1>
+      <p class="tagline">Seafood · Port · Santai</p>
+    </header>
+
+    <section class="menu-card">
+      <div class="section-label">Signature menu</div>
+      <div class="menu-grid">
+        <div class="menu-item">
+          <span class="name">Ketam Masak Lemak<span class="badge">Signature</span></span>
+          <span class="price">RM28</span>
+        </div>
+        <div class="menu-item">
+          <span class="name">Sotong Goreng Tepung</span>
+          <span class="price">RM14</span>
+        </div>
+        <div class="menu-item">
+          <span class="name">Nasi Lemak Ikan Bilis</span>
+          <span class="price">RM9</span>
+        </div>
+        <div class="menu-item">
+          <span class="name">Limau Ais</span>
+          <span class="price">RM3.50</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="qr-wrap">
+      <div class="qr-slot">QR<br /><small>Meja ini</small></div>
+      <div class="scan-title">Imbas · Pesan · Nikmati</div>
+      <p class="scan-sub">Menu penuh &amp; harga terkini dalam telefon</p>
+      <div class="table-row"><span class="table-pill">Meja ___</span></div>
+    </section>
+
+    <footer class="foot-notes">
+      <p><strong>Tiada telefon?</strong> Sila panggil pelayan — kami bantu ambil pesanan.</p>
+      <p><strong>Semak pesanan:</strong> Pastikan item, kuantiti &amp; catatan betul sebelum hantar.</p>
+    </footer>
+
+    <p class="powered">Powered by TableTap</p>
+  </div>
+</body>
+</html>

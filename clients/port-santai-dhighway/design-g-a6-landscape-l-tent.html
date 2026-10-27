@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Design G — A6 Landscape L-Tent (lipat)</title>
+  <link rel="stylesheet" href="shared-a6.css" />
+  <style>
+    @page { size: 148mm 105mm; }
+    body { margin: 0; background: #ccc; font-family: "Segoe UI", Inter, system-ui, sans-serif; }
+    /* Satu helaian = 2 muka bila dilipat tengah (tent L) */
+    .sheet {
+      background: #fbf8f4;
+      color: #17150f;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .panel {
+      padding: 3mm;
+      display: flex;
+      flex-direction: column;
+      gap: 2mm;
+      min-height: 105mm;
+      min-width: 0;
+    }
+    .panel-front { border-right: none; }
+    .panel-back {
+      background: #fff1e6;
+      align-items: center;
+      text-align: center;
+      justify-content: center;
+    }
+    .brand-mini h1 em { font-style: italic; color: #e85d04; }
+    .menu-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2mm;
+      flex: 1;
+    }
+    .menu-cell.compact img { aspect-ratio: 4/3; }
+    .menu-cell.compact .meta { padding: 1mm 1.5mm; }
+    .menu-cell.compact .name { font-size: 6pt; }
+    .menu-cell.compact .price { color: #e85d04; font-size: 6.5pt; }
+    .menu-cell { border: 1px solid #e8e1d6; border-radius: 5px; overflow: hidden; background: #fff; }
+    .panel-back .qr-slot { width: 32mm; height: 32mm; color: #e85d04; margin: 0 auto 2mm; }
+    .panel-back .scan-line { color: #c44d03; font-size: 9pt; }
+    .panel-back .scan-sub { font-size: 6pt; color: #5b564c; margin: 1mm 0 2mm; }
+    .panel-back .table-pill { color: #e85d04; }
+    .panel-back .foot-notes { max-width: 62mm; text-align: center; font-size: 5.5pt; margin-top: 2mm; }
+    .rotate-hint {
+      font-size: 5pt;
+      color: #999;
+      text-align: center;
+      margin-top: auto;
+      padding-top: 1mm;
+    }
+    .no-print .hint-box {
+      max-width: 148mm;
+      margin: 12px auto;
+      padding: 12px 16px;
+      background: #fff;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      color: #5b564c;
+      border: 1px solid #e8e1d6;
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>Design G — A6 Landscape · lipat tengah jadi tent</span>
+    <div><a href="index.html">← Kembali</a><button type="button" onclick="window.print()">Cetak A6</button></div>
+  </div>
+
+  <div class="hint-box no-print">
+    <strong>Cara lipat L-tent:</strong> Cetak A6 landscape → lipat di garis tengah → muka kanan (QR) hadap pelanggan, muka kiri (menu foto) belakang. Laminating 250gsm disyorkan.
+  </div>
+
+  <div class="sheet sheet-a6-l">
+    <div class="fold-guide" aria-hidden="true"></div>
+    <span class="fold-label no-print">lipat di sini</span>
+
+    <!-- Muka belakang tent: menu foto -->
+    <section class="panel panel-front">
+      <header class="brand-mini">
+        <h1>Port Santai <em>D'Highway</em></h1>
+        <p class="sub">Menu pilihan hari ini</p>
+      </header>
+      <div class="menu-row">
+        <article class="menu-cell compact">
+          <img src="assets/port-santai-menu-nasi-lemak.png" alt="" />
+          <div class="meta"><div class="name">Nasi Lemak Port</div><div class="price">RM12</div></div>
+        </article>
+        <article class="menu-cell compact">
+          <img src="assets/port-santai-menu-mee-goreng.png" alt="" />
+          <div class="meta"><div class="name">Mee Goreng</div><div class="price">RM10</div></div>
+        </article>
+        <article class="menu-cell compact">
+          <img src="assets/port-santai-menu-ikan-bakar.png" alt="" />
+          <div class="meta"><div class="name">Ikan Bakar</div><div class="price">RM18</div></div>
+        </article>
+        <article class="menu-cell compact">
+          <img src="assets/port-santai-menu-ketam.png" alt="" />
+          <div class="meta"><div class="name">Ketam Lemak</div><div class="price">RM28</div></div>
+        </article>
+      </div>
+      <p class="rotate-hint">Muka menu · belakang tent</p>
+    </section>
+
+    <!-- Muka depan tent: QR -->
+    <section class="panel panel-back">
+      <div class="brand-mini">
+        <h1>Port Santai <em>D'Highway</em></h1>
+      </div>
+      <div class="qr-slot">QR<small>Meja ___</small></div>
+      <div class="scan-line">Imbas &amp; Pesan</div>
+      <p class="scan-sub">Menu penuh · Hantar ke dapur</p>
+      <span class="table-pill">Meja ___</span>
+      <footer class="foot-notes">
+        <p><strong>Tiada telefon?</strong> Sila panggil pelayan.</p>
+        <p><strong>Semak pesanan</strong> sebelum hantar.</p>
+      </footer>
+    </section>
+  </div>
+</body>
+</html>

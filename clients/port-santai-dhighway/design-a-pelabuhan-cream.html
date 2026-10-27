@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Port Santai D'Highway — Design A Pelabuhan Cream</title>
+  <link rel="stylesheet" href="shared-print.css" />
+  <style>
+    body {
+      margin: 0;
+      background: #e8e1d6;
+      font-family: Georgia, "Times New Roman", serif;
+    }
+    .sheet {
+      width: 148mm;
+      min-height: 210mm;
+      margin: 24px auto;
+      background: linear-gradient(180deg, #fbf8f4 0%, #f5efe8 100%);
+      color: #17150f;
+      padding: 14mm 12mm;
+      box-shadow: 0 12px 40px rgba(23,21,15,0.15);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .brand {
+      text-align: center;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #2a9d8f;
+    }
+    .brand .icon {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 6px;
+      background: #2a9d8f;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+    }
+    .brand h1 {
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+    .brand h1 em { font-style: italic; color: #2a9d8f; }
+    .brand .tagline {
+      font-family: "Segoe UI", Inter, system-ui, sans-serif;
+      font-size: 0.72rem;
+      color: #5b564c;
+      margin-top: 4px;
+    }
+    .section-label {
+      font-family: "Segoe UI", Inter, system-ui, sans-serif;
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #2a9d8f;
+      margin-bottom: 6px;
+    }
+    .menu-grid { font-size: 0.92rem; }
+    .menu-item .badge { background: #e6f6f4; color: #1a7a6e; }
+    .menu-item .price { color: #2a9d8f; }
+    .qr-block {
+      text-align: center;
+      margin: 6px 0;
+    }
+    .qr-slot {
+      width: 42mm;
+      height: 42mm;
+      margin: 0 auto 8px;
+      color: #2a9d8f;
+      font-size: 0.85rem;
+    }
+    .scan-title {
+      font-family: "Segoe UI", Inter, system-ui, sans-serif;
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    .scan-sub {
+      font-family: "Segoe UI", Inter, system-ui, sans-serif;
+      font-size: 0.75rem;
+      color: #5b564c;
+      margin-top: 2px;
+    }
+    .table-row { text-align: center; margin: 4px 0; }
+    .table-pill { color: #2a9d8f; font-family: "Segoe UI", Inter, system-ui, sans-serif; font-size: 0.85rem; }
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e8e1d6, transparent);
+      margin: 4px 0;
+    }
+    .foot-notes {
+      font-family: "Segoe UI", Inter, system-ui, sans-serif;
+      color: #5b564c;
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px dashed #c8bfb0;
+    }
+    .foot-notes strong { color: #17150f; }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>Design A — Pelabuhan Cream (A5 tent)</span>
+    <div>
+      <a href="index.html">← Kembali</a>
+      <button type="button" onclick="window.print()">Cetak</button>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <header class="brand">
+      <div class="icon" aria-hidden="true">⚓</div>
+      <h1>Port Santai <em>D'Highway</em></h1>
+      <p class="tagline">Hentian selesa · Hidangan port &amp; kampung</p>
+    </header>
+
+    <section>
+      <div class="section-label">Menu pilihan</div>
+      <div class="menu-grid">
+        <div class="menu-item">
+          <span class="name">Nasi Lemak Port Special<span class="badge">Hot</span></span>
+          <span class="price">RM12</span>
+        </div>
+        <div class="menu-item">
+          <span class="name">Mee Goreng Santai</span>
+          <span class="price">RM10</span>
+        </div>
+        <div class="menu-item">
+          <span class="name">Sup Tulang Highway</span>
+          <span class="price">RM15</span>
+        </div>
+        <div class="menu-item">
+          <span class="name">Teh Ais Bandung</span>
+          <span class="price">RM4</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="divider"></div>
+
+    <section class="qr-block">
+      <div class="qr-slot">QR<br /><small>Meja ini</small></div>
+      <div class="scan-title">Imbas &amp; Pesan</div>
+      <p class="scan-sub">Pilih menu penuh dalam telefon · Hantar terus ke dapur</p>
+      <div class="table-row"><span class="table-pill">Meja ___</span></div>
+    </section>
+
+    <footer class="foot-notes">
+      <p><strong>Tiada telefon?</strong> Sila panggil pelayan. Kami bantu ambil pesanan.</p>
+      <p><strong>Penting:</strong> Sila semak pesanan anda sebelum hantar. Pastikan item &amp; kuantiti betul.</p>
+    </footer>
+  </div>
+</body>
+</html>

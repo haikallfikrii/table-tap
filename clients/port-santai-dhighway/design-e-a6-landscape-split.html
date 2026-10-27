@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <title>Design E — A6 Landscape Split</title>
+  <link rel="stylesheet" href="shared-a6.css" />
+  <style>
+    @page { size: 148mm 105mm; }
+    body { margin: 0; background: #3d2a1a; font-family: "Segoe UI", Inter, system-ui, sans-serif; }
+    .sheet {
+      background: linear-gradient(90deg, #fff8f0 58%, #ffe8d4 100%);
+      color: #17150f;
+      padding: 3.5mm;
+      display: grid;
+      grid-template-columns: 1fr 38mm;
+      gap: 3mm;
+    }
+    .left { display: flex; flex-direction: column; gap: 2mm; min-width: 0; }
+    .brand-mini h1 span { color: #e85d04; font-style: italic; }
+    .menu-photo-grid { flex: 1; }
+    .menu-cell { border: 1px solid rgba(232,93,4,0.2); box-shadow: 0 1px 4px rgba(23,21,15,0.06); }
+    .menu-cell .price { color: #c44d03; }
+    .right {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+      background: rgba(255,255,255,0.45);
+      border-radius: 6px;
+      padding: 2.5mm 2mm;
+      border: 1px solid rgba(232,93,4,0.25);
+    }
+    .qr-slot { width: 28mm; height: 28mm; color: #e85d04; flex-shrink: 0; }
+    .scan-line { color: #c44d03; font-size: 7.5pt; }
+    .scan-sub { font-size: 5pt; color: #5b564c; margin: 1mm 0; }
+    .table-pill { color: #e85d04; font-size: 6pt; }
+    .foot-notes { text-align: left; width: 100%; font-size: 5pt; }
+    .stripe {
+      position: absolute; left: 0; right: 0; bottom: 0; height: 2.5mm;
+      background: repeating-linear-gradient(90deg, #17150f 0, #17150f 5mm, #e85d04 5mm, #e85d04 10mm);
+    }
+    .sheet { padding-bottom: 5mm; }
+  </style>
+</head>
+<body>
+  <div class="print-bar no-print">
+    <span>Design E — A6 Landscape · foto kiri, QR kanan</span>
+    <div><a href="index.html">← Kembali</a><button type="button" onclick="window.print()">Cetak A6</button></div>
+  </div>
+
+  <div class="sheet sheet-a6-l">
+    <div class="stripe" aria-hidden="true"></div>
+    <section class="left">
+      <header class="brand-mini">
+        <h1>Port Santai <span>D'Highway</span></h1>
+        <p class="sub">Menu unggulan</p>
+      </header>
+      <div class="menu-photo-grid">
+        <article class="menu-cell">
+          <img src="assets/port-santai-menu-nasi-lemak.png" alt="" />
+          <div class="meta"><div class="name">Nasi Lemak Port</div><div class="price">RM12</div></div>
+        </article>
+        <article class="menu-cell">
+          <img src="assets/port-santai-menu-mee-goreng.png" alt="" />
+          <div class="meta"><div class="name">Mee Goreng</div><div class="price">RM10</div></div>
+        </article>
+        <article class="menu-cell">
+          <img src="assets/port-santai-menu-ikan-bakar.png" alt="" />
+          <div class="meta"><div class="name">Ikan Bakar</div><div class="price">RM18</div></div>
+        </article>
+        <article class="menu-cell">
+          <img src="assets/port-santai-menu-ketam.png" alt="" />
+          <div class="meta"><div class="name">Ketam Lemak</div><div class="price">RM28</div></div>
+        </article>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="qr-slot">QR<small>Meja</small></div>
+      <div>
+        <div class="scan-line">Imbas &amp; Pesan</div>
+        <p class="scan-sub">Tiada app</p>
+        <span class="table-pill">Meja ___</span>
+      </div>
+      <footer class="foot-notes">
+        <p><strong>Tiada HP?</strong> Panggil pelayan.</p>
+        <p><strong>Semak</strong> pesanan sebelum hantar.</p>
+      </footer>
+    </aside>
+  </div>
+</body>
+</html>
