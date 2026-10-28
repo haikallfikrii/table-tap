@@ -12,4 +12,7 @@ Widget chat popup (`chatlmWidgetHtml`) dipasang di:
 - Halaman login staf
 
 WhatsApp: https://wa.me/601125352270  
-Laman: https://tabletap.jomsite.com · https://tabletap.my
+Laman utama: https://tabletap.my  
+Staging / legacy: https://tabletap.jomsite.com
+
+Related ops docs: [`../deploy.md`](../deploy.md) · [`../roles.md`](../roles.md) · [`../cron.md`](../cron.md)
