@@ -5,3 +5,14 @@ assets/uploads/**/*
 *.log
 .env
 .env.*
+
+# Local sales / PII — never publish phone lists
+leads/
+
+# Raw WhatsApp photo dumps (use curated reco/ assets instead)
+clients/**/bigtree menu/
+clients/**/WhatsApp Image*
+
+# Runtime caches written on the server
+storage/cache/
+storage/logs/
