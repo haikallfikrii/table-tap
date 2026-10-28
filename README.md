@@ -38,6 +38,17 @@ QR ordering system for Malaysian F&B — customers scan a table QR, order from t
 
 Do **not** commit `config/config.php`, `leads/`, or raw WhatsApp photo dumps.
 
+## Docs
+
+| Doc | Topic |
+|-----|--------|
+| [`docs/deploy.md`](docs/deploy.md) | Hostinger branches / pull |
+| [`docs/roles.md`](docs/roles.md) | Owner, kasir, dapur, waiter |
+| [`docs/cron.md`](docs/cron.md) | Cron + seed scripts |
+| [`docs/print-bridge.md`](docs/print-bridge.md) | Wi-Fi ESC/POS bridge |
+| [`docs/ai-agent/`](docs/ai-agent/) | ChatLM system prompt |
+| [`SECURITY.md`](SECURITY.md) | Secrets & reporting |
+
 ## Client kits
 
 See [`clients/README.md`](clients/README.md) for Big Tree Western, Port Santai, and how to print table QR packs.
