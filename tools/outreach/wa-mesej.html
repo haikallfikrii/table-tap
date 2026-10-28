@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TableTap — Salin Mesej WA Outreach</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+      background: #ece5dd;
+      color: #111;
+    }
+    h1 { font-size: 1.1rem; margin: 0 0 4px; }
+    .sub { font-size: 0.85rem; color: #555; margin-bottom: 16px; }
+    #copyBtn {
+      width: 100%;
+      padding: 16px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background: #25d366;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+    #copyBtn:active { background: #1da851; }
+    #copyBtn.ok { background: #128c7e; }
+    .hint { font-size: 0.8rem; color: #666; text-align: center; margin-bottom: 20px; }
+    #preview {
+      background: #dcf8c6;
+      border-radius: 12px 12px 12px 4px;
+      padding: 14px 16px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      box-shadow: 0 1px 2px rgba(0,0,0,.12);
+    }
+    .field { margin-top: 12px; }
+    .field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #333;
+    }
+    .field input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mesej WA — Outreach TableTap</h1>
+  <p class="sub">Isi maklumat kedai &amp; diri, kemudian tekan salin untuk tampal di WhatsApp.</p>
+
+  <div class="field">
+    <label for="kedai">Nama kedai</label>
+    <input type="text" id="kedai" placeholder="cth: Nyamai Cafe" value="">
+  </div>
+  <div class="field">
+    <label for="menu">Hidangan yang dipuji (pilihan)</label>
+    <input type="text" id="menu" placeholder="cth: Laksa Sarawak dengan Mee Kolok" value="">
+  </div>
+  <div class="field">
+    <label for="nama">Nama anda</label>
+    <input type="text" id="nama" placeholder="cth: Khalfikri" value="">
+  </div>
+  <div class="field">
+    <label for="tel">Nombor telefon</label>
+    <input type="tel" id="tel" placeholder="cth: 012-345 6789" value="">
+  </div>
+
+  <button type="button" id="copyBtn">Salin Semua (1 Klik)</button>
+  <p class="hint">Selepas salin, buka WhatsApp → tampal (paste) terus.</p>
+
+  <div id="preview" aria-hidden="true"></div>
+  <textarea id="raw" hidden></textarea>
+
+<script>
+(function () {
+  const TEMPLATE = `Assalamualaikum dan selamat petang.
+
+Saya {{NAMA}}, pelanggan {{KEDAI}}. Saya dah datang makan sini beberapa kali.{{MENU_LINE}} Setiap kali datang, makanan tetap konsisten. Alhamdulillah, saya memang suka sangat.
+
+Saya tulis ni bukan nak kritik, cuma nak kongsi sebagai pelanggan tetap. Setakat pengalaman saya makan di sini, order masih guna menu fizikal dan staf ambil pesanan secara manual. Catatan jualan pun nampak masih ditulis sendiri. Memang biasa untuk kedai makan, tapi bila ramai, risiko order tertinggal atau rekod jualan tak kemas agak tinggi.
+
+Sebab tu saya nak kongsi TableTap. Sistem pesanan QR ringkas untuk kedai makan kecil di Malaysia, termasuk di Perlis. Saya sendiri yang bangunkan sistem ni.
+
+Cara ia berfungsi:
+
+1. Pelanggan imbas QR di meja, pilih menu dalam telefon, terus hantar pesanan.
+
+2. Pesanan makanan masuk terus ke skrin dapur. Font besar, senang dibaca sambil masak.
+
+3. Pesanan minuman masuk skrin berasingan, supaya dapur dengan kaunter minuman tak bercampur.
+
+4. Kasir nampak semua pesanan masa nyata. Bila pelanggan bayar, status lunas direkod terus.
+
+5. Laporan jualan harian, mingguan dan bulanan tersusun. Senang semak untung dan menu yang laris.
+
+Kelebihan untuk {{KEDAI}}:
+
+• Kurang salah tulis order masa peak malam
+• Staf tak perlu kejar meja satu persatu
+• Menu digital, tukar harga atau tanda habis terus dari telefon
+• Rekod jualan lebih teratur, tak payah buku nota bercecer
+• Tak perlu beli mesin POS mahal, telefon atau tablet staf sudah cukup
+• Resit boleh cetak atau hantar sebagai e-resit
+
+Harga mula dari RM29 sebulan. Jauh lebih murah berbanding sistem besar yang susah diajar staf.
+
+Kalau pihak tuan atau puan berminat, saya boleh datang 15 hingga 20 minit tunjuk demo di kedai, pada waktu yang sesuai, sebelum waktu sibuk. Tiada paksaan. Saya cuma nak bantu operasi lebih kemas supaya tuan atau puan boleh fokus pada masakan, bukan urusan kertas.
+
+Terima kasih. Maaf ganggu. Boleh reply bila senang.
+
+{{NAMA}}
+TableTap
+{{TEL}}`;
+
+  const kedaiEl = document.getElementById('kedai');
+  const menuEl = document.getElementById('menu');
+  const namaEl = document.getElementById('nama');
+  const telEl = document.getElementById('tel');
+  const preview = document.getElementById('preview');
+  const raw = document.getElementById('raw');
+  const btn = document.getElementById('copyBtn');
+
+  function buildMessage() {
+    const kedai = kedaiEl.value.trim() || '[Nama Kedai]';
+    const menu = menuEl.value.trim();
+    const nama = namaEl.value.trim() || '[Nama Anda]';
+    const tel = telEl.value.trim() || '[nombor telefon]';
+    const menuLine = menu
+      ? ' ' + menu + ' memang istimewa.'
+      : '';
+    return TEMPLATE
+      .replace(/\{\{KEDAI\}\}/g, kedai)
+      .replace(/\{\{MENU_LINE\}\}/g, menuLine)
+      .replace(/\{\{NAMA\}\}/g, nama)
+      .replace(/\{\{TEL\}\}/g, tel);
+  }
+
+  function refreshPreview() {
+    const text = buildMessage();
+    preview.textContent = text;
+    raw.value = text;
+  }
+
+  [kedaiEl, menuEl, namaEl, telEl].forEach(function (el) {
+    el.addEventListener('input', refreshPreview);
+  });
+  refreshPreview();
+
+  async function copyAll() {
+    const text = buildMessage();
+    raw.value = text;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        raw.removeAttribute('hidden');
+        raw.style.position = 'fixed';
+        raw.style.left = '-9999px';
+        raw.select();
+        document.execCommand('copy');
+        raw.setAttribute('hidden', '');
+      }
+      btn.textContent = '✓ Dah disalin! Tampal di WhatsApp';
+      btn.classList.add('ok');
+      setTimeout(function () {
+        btn.textContent = 'Salin Semua (1 Klik)';
+        btn.classList.remove('ok');
+      }, 2500);
+    } catch (e) {
+      alert('Salin gagal. Sila pilih teks dalam kotak hijau dan salin manual.');
+    }
+  }
+
+  btn.addEventListener('click', copyAll);
+})();
+</script>
+</body>
+</html>
