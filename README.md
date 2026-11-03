@@ -45,6 +45,8 @@ Do **not** commit `config/config.php`, `leads/`, or raw WhatsApp photo dumps.
 | [`docs/deploy.md`](docs/deploy.md) | Hostinger branches / pull |
 | [`docs/roles.md`](docs/roles.md) | Owner, kasir, dapur, waiter |
 | [`docs/cron.md`](docs/cron.md) | Cron + seed scripts |
+| [`docs/meta-ads.md`](docs/meta-ads.md) | WhatsApp Meta Ads playbook |
+| [`docs/meta-ads-checklist.md`](docs/meta-ads-checklist.md) | Pre-publish Ads checklist |
 | [`docs/print-bridge.md`](docs/print-bridge.md) | Wi-Fi ESC/POS bridge |
 | [`docs/ai-agent/`](docs/ai-agent/) | ChatLM system prompt |
 | [`SECURITY.md`](SECURITY.md) | Secrets & reporting |
