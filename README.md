@@ -49,6 +49,7 @@ Do **not** commit `config/config.php`, `leads/`, or raw WhatsApp photo dumps.
 | [`docs/meta-ads-checklist.md`](docs/meta-ads-checklist.md) | Pre-publish Ads checklist |
 | [`docs/meta-ads-day4-review.md`](docs/meta-ads-day4-review.md) | Day-4 Ads review decisions |
 | [`docs/seo.md`](docs/seo.md) | Sitemap, robots, blog SEO |
+| [`docs/marketing/`](docs/marketing/) | Flow/Veo ad scripts + ingredient still prompts |
 | [`tools/outreach/wa-balasan-demo.md`](tools/outreach/wa-balasan-demo.md) | WA reply scripts for ad leads |
 | [`docs/print-bridge.md`](docs/print-bridge.md) | Wi-Fi ESC/POS bridge |
 | [`docs/ai-agent/`](docs/ai-agent/) | ChatLM system prompt |
