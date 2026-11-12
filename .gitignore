@@ -5,6 +5,16 @@ assets/uploads/**/*
 *.log
 .env
 .env.*
+!.env.example
+!**/.env.example
+
+# Fear-ad local tooling / bulky intermediates (keep scripts + stills + final exports)
+assets/img/social/films/fear-30s/.venv/
+assets/img/social/films/fear-30s/clips/src/
+assets/img/social/films/fear-30s/clips/frames/
+assets/img/social/films/fear-30s/vo/*.aiff
+assets/img/social/films/fear-30s/vo/*.caf
+assets/img/social/films/fear-30s/vo/sample-*.mp3
 
 # Local sales / PII — never publish phone lists
 leads/
