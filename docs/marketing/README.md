@@ -4,5 +4,6 @@
 |------|-----|
 | [`flow-ad-fear-30s.md`](flow-ad-fear-30s.md) | 25–30s Google Flow / Veo fear ad, audio + multi-account consistency |
 | [`flow-ingredients-prompts.md`](flow-ingredients-prompts.md) | Text prompts to generate locked owner/kedai ingredient stills |
+| [`../../assets/img/social/films/fear-30s/`](../../assets/img/social/films/fear-30s/) | **Execution pack** — ingredients PNG, prompts, end card, FFmpeg assemble |
 
 Related Ads ops: [`../meta-ads.md`](../meta-ads.md), [`../meta-ads-checklist.md`](../meta-ads-checklist.md).
