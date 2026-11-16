@@ -22,9 +22,10 @@ Do **not** use Traffic or “boost post for likes”. Auto budget 2× boost: lea
 - Geo: Perlis, Kedah, Penang, Perak
 - Age: 28–55
 - Placements: Advantage+ OK (incl. WhatsApp Status)
-- Two ads in the **same** ad set (let Meta pick the winner):
+- Up to three ads in the **same** ad set (let Meta pick the winner):
   1. `TT_Ad_Duit_*` — money/ops pain (kira kertas, pager)
   2. `TT_WA_Operasi_Peak` — peak/chaos ops
+  3. `TT_Ad_Fear_Peak_v2` — fear ≤30s (`fear-30s/export/tabletap-fear-30s-v2.mp4`) — see [`marketing/fear-ad-upload-meta.md`](marketing/fear-ad-upload-meta.md)
 
 ## Creative notes
 
