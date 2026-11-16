@@ -45,6 +45,11 @@ Do **not** commit `config/config.php`, `leads/`, or raw WhatsApp photo dumps.
 | [`docs/deploy.md`](docs/deploy.md) | Hostinger branches / pull |
 | [`docs/roles.md`](docs/roles.md) | Owner, kasir, dapur, waiter |
 | [`docs/cron.md`](docs/cron.md) | Cron + seed scripts |
+| [`docs/architecture-overview.md`](docs/architecture-overview.md) | High-level request flow |
+| [`docs/onboarding-new-shop.md`](docs/onboarding-new-shop.md) | New shop go-live checklist |
+| [`docs/troubleshooting-order-fail.md`](docs/troubleshooting-order-fail.md) | Failed order submit playbook |
+| [`docs/printer-kasir.md`](docs/printer-kasir.md) | Kasir Bluetooth printer tips |
+| [`docs/faq-owner.md`](docs/faq-owner.md) | Short owner FAQ |
 | [`docs/meta-ads.md`](docs/meta-ads.md) | WhatsApp Meta Ads playbook |
 | [`docs/meta-ads-checklist.md`](docs/meta-ads-checklist.md) | Pre-publish Ads checklist |
 | [`docs/meta-ads-day4-review.md`](docs/meta-ads-day4-review.md) | Day-4 Ads review decisions |
