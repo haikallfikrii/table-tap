@@ -8,6 +8,8 @@
 | [`demo-runbook.md`](demo-runbook.md) | 15–20 min online / on-site demo script |
 | [`pricing-talk-track.md`](pricing-talk-track.md) | RM29 / RM49 / RM99 talk track after ads |
 | [`creative-testing-matrix.md`](creative-testing-matrix.md) | Duit vs Peak vs Fear v2 test rules |
+| [`ig-reel-checklist.md`](ig-reel-checklist.md) | Reel quality checklist before boost/Ads |
+| [`ad-budget-cheatsheet.md`](ad-budget-cheatsheet.md) | IDR daily budget / top-up cheatsheet |
 | [`../../assets/img/social/films/fear-30s/`](../../assets/img/social/films/fear-30s/) | **Execution pack** — ingredients, VO, export MP4, FFmpeg |
 
 Related Ads ops: [`../meta-ads.md`](../meta-ads.md), [`../meta-ads-checklist.md`](../meta-ads-checklist.md).  
