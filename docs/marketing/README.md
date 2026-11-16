@@ -4,6 +4,11 @@
 |------|-----|
 | [`flow-ad-fear-30s.md`](flow-ad-fear-30s.md) | 25–30s Google Flow / Veo fear ad, audio + multi-account consistency |
 | [`flow-ingredients-prompts.md`](flow-ingredients-prompts.md) | Text prompts to generate locked owner/kedai ingredient stills |
-| [`../../assets/img/social/films/fear-30s/`](../../assets/img/social/films/fear-30s/) | **Execution pack** — ingredients PNG, prompts, end card, FFmpeg assemble |
+| [`fear-ad-upload-meta.md`](fear-ad-upload-meta.md) | Upload fear v2 into existing WhatsApp campaign |
+| [`demo-runbook.md`](demo-runbook.md) | 15–20 min online / on-site demo script |
+| [`pricing-talk-track.md`](pricing-talk-track.md) | RM29 / RM49 / RM99 talk track after ads |
+| [`creative-testing-matrix.md`](creative-testing-matrix.md) | Duit vs Peak vs Fear v2 test rules |
+| [`../../assets/img/social/films/fear-30s/`](../../assets/img/social/films/fear-30s/) | **Execution pack** — ingredients, VO, export MP4, FFmpeg |
 
-Related Ads ops: [`../meta-ads.md`](../meta-ads.md), [`../meta-ads-checklist.md`](../meta-ads-checklist.md).
+Related Ads ops: [`../meta-ads.md`](../meta-ads.md), [`../meta-ads-checklist.md`](../meta-ads-checklist.md).  
+WA quick replies: [`../../tools/outreach/wa-quick-replies.txt`](../../tools/outreach/wa-quick-replies.txt).
