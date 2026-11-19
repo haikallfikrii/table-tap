@@ -50,6 +50,11 @@ Do **not** commit `config/config.php`, `leads/`, or raw WhatsApp photo dumps.
 | [`docs/troubleshooting-order-fail.md`](docs/troubleshooting-order-fail.md) | Failed order submit playbook |
 | [`docs/printer-kasir.md`](docs/printer-kasir.md) | Kasir Bluetooth printer tips |
 | [`docs/faq-owner.md`](docs/faq-owner.md) | Short owner FAQ |
+| [`docs/daily-ops-checklist.md`](docs/daily-ops-checklist.md) | Daily business + commit habit |
+| [`docs/support-whatsapp-playbook.md`](docs/support-whatsapp-playbook.md) | Support WA triage templates |
+| [`docs/staff-training-script.md`](docs/staff-training-script.md) | 15-min staff training script |
+| [`docs/menu-photo-guidelines.md`](docs/menu-photo-guidelines.md) | Menu photo guidelines |
+| [`docs/github-daily-habit.md`](docs/github-daily-habit.md) | Keep GitHub green with real commits |
 | [`docs/meta-ads.md`](docs/meta-ads.md) | WhatsApp Meta Ads playbook |
 | [`docs/meta-ads-checklist.md`](docs/meta-ads-checklist.md) | Pre-publish Ads checklist |
 | [`docs/meta-ads-day4-review.md`](docs/meta-ads-day4-review.md) | Day-4 Ads review decisions |

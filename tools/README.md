@@ -11,5 +11,6 @@ Small local helpers for TableTap ops and sales. Open HTML files directly in a br
 | `outreach/wa-quick-replies.txt` | Short WhatsApp Business quick-reply labels. |
 | `outreach/ads-lead-log.template.csv` | Empty CSV columns for logging ad chats. |
 | `outreach/follow-up-drip.md` | H0–H7 follow-up messages for ad leads. |
+| `outreach/objection-handling.md` | Short objection replies in BM. |
 
 Do **not** store prospect phone lists in this repo. Keep CSVs with numbers only on your machine (see root `.gitignore` → `leads/`).
