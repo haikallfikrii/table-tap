@@ -55,6 +55,10 @@ Do **not** commit `config/config.php`, `leads/`, or raw WhatsApp photo dumps.
 | [`docs/staff-training-script.md`](docs/staff-training-script.md) | 15-min staff training script |
 | [`docs/menu-photo-guidelines.md`](docs/menu-photo-guidelines.md) | Menu photo guidelines |
 | [`docs/github-daily-habit.md`](docs/github-daily-habit.md) | Keep GitHub green with real commits |
+| [`docs/cash-change-kasir.md`](docs/cash-change-kasir.md) | Kasir cash tendered / change sheet |
+| [`docs/shift-closing.md`](docs/shift-closing.md) | Shift + daily closing report |
+| [`docs/delivery-cod-duitnow.md`](docs/delivery-cod-duitnow.md) | Delivery COD / DuitNow kasir flow |
+| [`docs/packages-feature-map.md`](docs/packages-feature-map.md) | Mula / Standard / Pro feature map |
 | [`docs/meta-ads.md`](docs/meta-ads.md) | WhatsApp Meta Ads playbook |
 | [`docs/meta-ads-checklist.md`](docs/meta-ads-checklist.md) | Pre-publish Ads checklist |
 | [`docs/meta-ads-day4-review.md`](docs/meta-ads-day4-review.md) | Day-4 Ads review decisions |
