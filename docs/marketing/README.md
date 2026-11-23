@@ -12,6 +12,7 @@
 | [`ad-budget-cheatsheet.md`](ad-budget-cheatsheet.md) | IDR daily budget / top-up cheatsheet |
 | [`weekly-ads-review.md`](weekly-ads-review.md) | Sunday/Monday Ads scorecard template |
 | [`caption-bank.md`](caption-bank.md) | Ready-to-paste Ads/Reel captions + WA prefill |
+| [`landing-cta-notes.md`](landing-cta-notes.md) | Landing page CTA and pricing message guardrails |
 | [`../../assets/img/social/films/fear-30s/`](../../assets/img/social/films/fear-30s/) | **Execution pack** — ingredients, VO, export MP4, FFmpeg |
 
 Related Ads ops: [`../meta-ads.md`](../meta-ads.md), [`../meta-ads-checklist.md`](../meta-ads-checklist.md).  
