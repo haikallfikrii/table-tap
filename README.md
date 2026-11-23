@@ -59,6 +59,10 @@ Do **not** commit `config/config.php`, `leads/`, or raw WhatsApp photo dumps.
 | [`docs/shift-closing.md`](docs/shift-closing.md) | Shift + daily closing report |
 | [`docs/delivery-cod-duitnow.md`](docs/delivery-cod-duitnow.md) | Delivery COD / DuitNow kasir flow |
 | [`docs/packages-feature-map.md`](docs/packages-feature-map.md) | Mula / Standard / Pro feature map |
+| [`docs/split-bill.md`](docs/split-bill.md) | Kasir split bill flow |
+| [`docs/cafe-mode.md`](docs/cafe-mode.md) | Cafe / counter QR sessions |
+| [`docs/sst-settings.md`](docs/sst-settings.md) | SST enable + rate behavior |
+| [`docs/guest-token-privacy.md`](docs/guest-token-privacy.md) | Guest token isolation on orders |
 | [`docs/meta-ads.md`](docs/meta-ads.md) | WhatsApp Meta Ads playbook |
 | [`docs/meta-ads-checklist.md`](docs/meta-ads-checklist.md) | Pre-publish Ads checklist |
 | [`docs/meta-ads-day4-review.md`](docs/meta-ads-day4-review.md) | Day-4 Ads review decisions |
