@@ -63,6 +63,10 @@ Do **not** commit `config/config.php`, `leads/`, or raw WhatsApp photo dumps.
 | [`docs/cafe-mode.md`](docs/cafe-mode.md) | Cafe / counter QR sessions |
 | [`docs/sst-settings.md`](docs/sst-settings.md) | SST enable + rate behavior |
 | [`docs/guest-token-privacy.md`](docs/guest-token-privacy.md) | Guest token isolation on orders |
+| [`docs/self-pickup.md`](docs/self-pickup.md) | Self-pickup fulfillment mode |
+| [`docs/sound-alerts.md`](docs/sound-alerts.md) | Dashboard sound modes |
+| [`docs/e-receipt.md`](docs/e-receipt.md) | E-receipt / SMTP notes |
+| [`docs/table-qr-print.md`](docs/table-qr-print.md) | Printing table QR kits |
 | [`docs/meta-ads.md`](docs/meta-ads.md) | WhatsApp Meta Ads playbook |
 | [`docs/meta-ads-checklist.md`](docs/meta-ads-checklist.md) | Pre-publish Ads checklist |
 | [`docs/meta-ads-day4-review.md`](docs/meta-ads-day4-review.md) | Day-4 Ads review decisions |
