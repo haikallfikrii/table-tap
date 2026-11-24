@@ -67,6 +67,10 @@ Do **not** commit `config/config.php`, `leads/`, or raw WhatsApp photo dumps.
 | [`docs/sound-alerts.md`](docs/sound-alerts.md) | Dashboard sound modes |
 | [`docs/e-receipt.md`](docs/e-receipt.md) | E-receipt / SMTP notes |
 | [`docs/table-qr-print.md`](docs/table-qr-print.md) | Printing table QR kits |
+| [`docs/staff-order.md`](docs/staff-order.md) | Staff key-in orders (Grab/phone) |
+| [`docs/hours-open-close.md`](docs/hours-open-close.md) | Shop open/close hours |
+| [`docs/i18n-keys.md`](docs/i18n-keys.md) | my/en language key pairs |
+| [`docs/schema-cache.md`](docs/schema-cache.md) | Schema cache on shared hosting |
 | [`docs/meta-ads.md`](docs/meta-ads.md) | WhatsApp Meta Ads playbook |
 | [`docs/meta-ads-checklist.md`](docs/meta-ads-checklist.md) | Pre-publish Ads checklist |
 | [`docs/meta-ads-day4-review.md`](docs/meta-ads-day4-review.md) | Day-4 Ads review decisions |

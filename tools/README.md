@@ -15,5 +15,6 @@ Small local helpers for TableTap ops and sales. Open HTML files directly in a br
 | `outreach/demo-confirm-templates.md` | Confirm + reminder templates for booked demos. |
 | `outreach/first-message-variants.md` | Cold/warm first WhatsApp message variants. |
 | `outreach/closing-script.md` | Soft-close script after a live demo. |
+| `outreach/post-demo-summary.md` | WA summary to send after a demo. |
 
 Do **not** store prospect phone lists in this repo. Keep CSVs with numbers only on your machine (see root `.gitignore` → `leads/`).

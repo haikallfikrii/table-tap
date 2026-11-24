@@ -14,6 +14,7 @@
 | [`caption-bank.md`](caption-bank.md) | Ready-to-paste Ads/Reel captions + WA prefill |
 | [`landing-cta-notes.md`](landing-cta-notes.md) | Landing page CTA and pricing message guardrails |
 | [`competitor-one-liners.md`](competitor-one-liners.md) | Honest one-liners vs nota/POS/PDF menu |
+| [`reel-hook-formulas.md`](reel-hook-formulas.md) | 3-second Reel/Ads hook formulas |
 | [`../../assets/img/social/films/fear-30s/`](../../assets/img/social/films/fear-30s/) | **Execution pack** — ingredients, VO, export MP4, FFmpeg |
 
 Related Ads ops: [`../meta-ads.md`](../meta-ads.md), [`../meta-ads-checklist.md`](../meta-ads-checklist.md).  
